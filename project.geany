@@ -1,0 +1,73 @@
+[editor]
+line_wrapping=false
+line_break_column=72
+auto_continue_multiline=true
+
+[file_prefs]
+final_new_line=true
+ensure_convert_new_lines=false
+strip_trailing_spaces=false
+replace_tabs=false
+
+[indentation]
+indent_width=4
+indent_type=1
+indent_hard_tab_width=8
+detect_indent=false
+detect_indent_width=false
+indent_mode=2
+
+[project]
+name=CrocNDoc
+base_path=.\\
+description=
+file_patterns=*.c;*.h;*.vl;*.bat;*.cc;
+
+[long line marker]
+long_line_behaviour=1
+long_line_column=72
+
+[files]
+current_page=-1
+
+[build-menu]
+EX_00_LB=_Execute
+EX_00_CM="%p\\make_c.bat" run
+EX_00_WD=%p
+CFT_00_LB=_Compile
+CFT_00_CM="%p\\make_c.bat" compile
+CFT_00_WD=%p
+CFT_01_LB=_Build
+CFT_01_CM="%p\\make_c.bat" build
+CFT_01_WD=%p
+CFT_02_LB=_Lint
+CFT_02_CM="%p\\make_c.bat" lint
+CFT_02_WD=%p
+filetypes=C;C++;Batch;None;
+NF_03_LB=File Lint
+NF_03_CM=C:\\Programme\\Cppcheck\\cppcheck --language=c --enable=all --template=gcc "%f"
+NF_03_WD=
+C++FT_00_LB=_Compile
+C++FT_00_CM="%p\\make_c.bat" compile
+C++FT_00_WD=%p
+C++FT_01_LB=_Build
+C++FT_01_CM="%p\\make_c.bat" build
+C++FT_01_WD=%p
+C++FT_02_LB=_Lint
+C++FT_02_CM="%p\\make_c.bat" lint
+C++FT_02_WD=%p
+NoneFT_00_LB=Compile
+NoneFT_00_CM="%p\\make_c.bat" compile
+NoneFT_00_WD=%p
+NoneFT_01_LB=Build
+NoneFT_01_CM="%p\\make_c.bat" build
+NoneFT_01_WD=%p
+BatchFT_00_LB=Compile
+BatchFT_00_CM="%p\\make_c.bat" compile
+BatchFT_00_WD=%p
+BatchFT_01_LB=Build
+BatchFT_01_CM="%p\\make_c.bat" build
+BatchFT_01_WD=%p
+BatchFT_02_LB=Lint
+BatchFT_02_CM="%p\\make_c.bat" lint
+BatchFT_02_WD=%p
