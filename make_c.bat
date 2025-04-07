@@ -73,9 +73,9 @@ set GCC_FLAGS_OPTIMIZE=-fno-ipa-reference -ftree-ter -fno-gcse
 set GCC_FLAGS_WARN=-W -Wall -Werror -Wextra -Wlogical-op -Wdisabled-optimization -Wmissing-noreturn -Wpadded -Wredundant-decls -Winline  -Wstrict-overflow=5 -Wconversion -Winit-self -Wswitch-default -Wswitch-enum -Wno-error=switch -Wstrict-aliasing=0
 set GCC_FLAGS= %GCC_FLAGS_GENERAL% %GCC_FLAGS_C% %GCC_FLAGS_6809% %GCC_FLAGS_WARN% %GCC_FLAGS_OPTIMIZE% 
 
-set GCC_INC= -I .\include -I %GCC_PATH%\vectrex\include\system -I %GCC_PATH%\vectrex\include\lib -I .\source -I .\source\lib
-for /d %%D in (.\source\lib\*) do (
-	set GCC_INC=!GCC_INC! -I .\source\lib\%%~nxD
+set GCC_INC= -I .\include -I %GCC_PATH%\vectrex\include\system -I %GCC_PATH%\vectrex\include\lib -I .\src -I .\src\lib
+for /d %%D in (.\src\lib\*) do (
+	set GCC_INC=!GCC_INC! -I .\src\lib\%%~nxD
 )
 
 @REM ---------------------------------------------------------------------------------------------
@@ -211,10 +211,10 @@ exit /B 0
 	)
 	if [%ENABLE_PREPROCESSING%]==[yes] (
 		echo preprocessing %CPATH%%CFILE%.c
-		%GCC% %GCC_INC% %GCC_FLAGS% %COPT% -E -o %CDEST%\%CPATH%%CFILE%.i source\%CPATH%%CFILE%.c || exit \b
+		%GCC% %GCC_INC% %GCC_FLAGS% %COPT% -E -o %CDEST%\%CPATH%%CFILE%.i src\%CPATH%%CFILE%.c || exit \b
 	)
 	echo compiling %CPATH%%CFILE%.c
-	%GCC% %GCC_INC% %GCC_FLAGS% %COPT% -o %CDEST%\%CPATH%%CFILE%.s source\%CPATH%%CFILE%.c || exit \b
+	%GCC% %GCC_INC% %GCC_FLAGS% %COPT% -o %CDEST%\%CPATH%%CFILE%.s src\%CPATH%%CFILE%.c || exit \b
 exit /B 0
 
 :transfer - REL_FILE REL_DEST GCC_OPT REL_PATH
@@ -230,7 +230,7 @@ exit /B 0
 		)
 	)
 	echo transferring %CPATH%%CFILE%.s 
-	@copy source\%CPATH%%CFILE%.s %CDEST%\%CPATH%%CFILE%.s || exit \b
+	@copy src\%CPATH%%CFILE%.s %CDEST%\%CPATH%%CFILE%.s || exit \b
 exit /B 0
 
 :optimize - FILE FOLDER
@@ -355,22 +355,22 @@ exit /B 0
 	call :make_clean %PROJECT% %OPT%
 	call :separator
 	echo compiling project %PROJECT% ...
-	for /R source %%F in (*.c) do (
+	for /R src %%F in (*.c) do (
 		call :line
 		set DRIVE=%%~dF
 		set ABS_PATH=!DRIVE!%%~pF
-		set REL_PATH=!ABS_PATH:%CD%\source\=!
+		set REL_PATH=!ABS_PATH:%CD%\src\=!
 		set ABS_FILE=%%~nF
-		set REL_FILE=!ABS_FILE:%CD%\source\=!
+		set REL_FILE=!ABS_FILE:%CD%\src\=!
 		call :compile !REL_FILE! build\src %OPT% !REL_PATH! 
 	)
-	for /R source %%F in (*.s) do (
+	for /R src %%F in (*.s) do (
 		call :line
 		set DRIVE=%%~dF
 		set ABS_PATH=!DRIVE!%%~pF
-		set REL_PATH=!ABS_PATH:%CD%\source\=!
+		set REL_PATH=!ABS_PATH:%CD%\src\=!
 		set ABS_FILE=%%~nF
-		set REL_FILE=!ABS_FILE:%CD%\source\=!
+		set REL_FILE=!ABS_FILE:%CD%\src\=!
 		call :transfer !REL_FILE! build\src %OPT% !REL_PATH! 
 	)
 	if [%ENABLE_ASSEMBLY_OPTIMIZATION%]==[yes] (
@@ -461,7 +461,7 @@ exit /B 0
 	set FILES=
 	call :separator
 	echo linting project %PROJECT% ...
-	start /B /W C:\Programme\Cppcheck\cppcheck -j 1 --quiet -D CPPCHECK --platform=vectrex --language=c --std=c99 --template=gcc --enable=all --suppress=arithOperationsOnVoidPointer --suppress=unusedLabel -I %GCC_PATH%\vectrex\include\system -I %GCC_PATH%\vectrex\include\lib .\source
+	start /B /W C:\Programme\Cppcheck\cppcheck -j 1 --quiet -D CPPCHECK --platform=vectrex --language=c --std=c99 --template=gcc --enable=all --suppress=arithOperationsOnVoidPointer --suppress=unusedLabel -I %GCC_PATH%\vectrex\include\system -I %GCC_PATH%\vectrex\include\lib .\src
 	REM start /B /W C:\Programme\Cppcheck\cppcheck -j 1 --quiet -D CPPCHECK -D INLINE_RUM=0 --platform=vectrex --language=c --std=c99 --enable=warning,style,performance,portability,information,unusedFunction,missingInclude --template=gcc --suppress=arithOperationsOnVoidPointer --suppress=unusedLabel -I %GCC%\vectrex\include\system -I %GCC%\vectrex\include\lib %GCC%\vectrex\source .\source
 	REM start /B /W C:\Programme\Cppcheck\cppcheck --std=c99 --quiet -j 1 -D CPPCHECK -D INLINE_RUM=0 --platform=vectrex --enable=all --template=gcc --suppress=arithOperationsOnVoidPointer -I %GCC%\vectrex\include\system -I %GCC%\vectrex\include\lib .\source
 	REM start /B /W C:\Programme\Cppcheck\cppcheck -j 1 -D INLINE_RUM=0 --platform=vectrex --language=c --enable=unusedFunction --std=c99 --template=gcc --suppress=arithOperationsOnVoidPointer -I %GCC%\vectrex\include\system -I %GCC%\vectrex\include\lib .\source\level.c
