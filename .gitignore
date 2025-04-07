@@ -1,6 +1,10 @@
 # Created by https://www.toptal.com/developers/gitignore/api/c,c++,cmake,windows,linux,visualstudio,visualstudiocode,clion,rider
 # Edit at https://www.toptal.com/developers/gitignore?templates=c,c++,cmake,windows,linux,visualstudio,visualstudiocode,clion,rider
 
+### Project ###
+build/
+bin/
+
 ### C ###
 # Prerequisites
 *.d
