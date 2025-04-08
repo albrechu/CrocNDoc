@@ -59,6 +59,14 @@ set SREC2BIN=%SREC2BIN_PATH%\srec2bin.exe
 set FINDSTR_PATH=%TOOLS_PATH%\findstr
 set FINDSTR=%FINDSTR_PATH%\findstr.exe
 
+if not exist ".\build\rel" (
+	mkdir ".\build\rel"
+)
+
+if not exist ".\build\bin" (
+	mkdir ".\build\bin"
+)
+
 @REM ---------------------------------------------------------------------------------------------
 @REM configure gcc flags, do not edit
 
@@ -178,8 +186,8 @@ exit /B 0
 @REM make target subprocedures, do not edit
 
 :clean
-	call :wipe bin
 	call :wipe build
+	call :wipe build\bin
 	call :wipe build\rel
 	rmdir /s /q build\lib
 	mkdir build\lib
@@ -326,13 +334,13 @@ exit /B 0
 
 	echo building %PROJECT%.bin
 	if exist .\build\%PROJECT%_ram.bin (
-		@copy /b .\build\%PROJECT%_rom.bin+.\build\%PROJECT%_ram.bin .\bin\%PROJECT%.bin 1>nul || exit \b
+		@copy /b .\build\%PROJECT%_rom.bin+.\build\%PROJECT%_ram.bin .\build\bin\%PROJECT%.bin 1>nul || exit \b
 	) else (
-		@copy /b .\build\%PROJECT%_rom.bin .\bin\%PROJECT%.bin 1>nul || exit \b
+		@copy /b .\build\%PROJECT%_rom.bin .\build\bin\%PROJECT%.bin 1>nul || exit \b
 	)
 
-	@copy /b .\build\%PROJECT%.map .\bin\%PROJECT%.lst 1>nul || exit \b
-	%RXREPL% --no-backup --return-count -f .\bin\%PROJECT%.lst -a --options %RXREPL_PATH%\rules_labels.txt
+	@copy /b .\build\%PROJECT%.map .\build\bin\%PROJECT%.lst 1>nul || exit \b
+	%RXREPL% --no-backup --return-count -f .\build\bin\%PROJECT%.lst -a --options %RXREPL_PATH%\rules_labels.txt
 
 	call :getFilesize .\bin\%PROJECT%.bin
 	@echo bin size is !fileSize! bytes
@@ -472,7 +480,7 @@ exit /B 0
 @REM run script for ParaJVE
 
 :make_run_vectrex_online - PROJECT
-	start "%PROJECT%" ..\..\..\Emulators\VectrexEmulator_0_2_6_Alpha\VectrexOnline.exe .\bin\%PROJECT%.bin
+	start "%PROJECT%" ..\..\..\Emulators\VectrexEmulator_0_2_6_Alpha\VectrexOnline.exe .\build\bin\%PROJECT%.bin
 exit /B 0
 
 :make_run_jsvecx - PROJECT
@@ -484,7 +492,7 @@ exit /B 0
 	set PROJECT=%1
 	call :separator
 	@del ..\..\ParaJVE\project\project.bin
-	@copy .\bin\%PROJECT%.bin ..\..\ParaJVE\project\project.bin 1>nul || exit \b
+	@copy .\build\bin\%PROJECT%.bin ..\..\ParaJVE\project\project.bin 1>nul || exit \b
 	@del ..\..\ParaJVE\project\project.png
 	@copy .\overlay\%PROJECT%.png ..\..\ParaJVE\project\project.png 1>nul
 	@del ..\..\ParaJVE\project\project.pdf
