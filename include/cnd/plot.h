@@ -22,87 +22,54 @@
  * SOFTWARE.
  */
 
-#ifndef TYPES_H
-#define TYPES_H
+/////////////////////////////////////////////////////////////////////////
+//	Includes
+//
+#include <cnd/types.h>
+#include <cnd/defines.h>
 
 /////////////////////////////////////////////////////////////////////////
-//	Integral Types
+//	Defines
 //
-typedef unsigned int  u8;
-typedef signed   int  i8;
-typedef unsigned long u16;
-typedef signed long   i16;
-typedef u8            event_t;
-typedef u8            result_t;
-typedef u8            tick_t;
-typedef i8            bool;
+#define PLOT g_plot
 
-enum /* Generic */
+/////////////////////////////////////////////////////////////////////////
+//	Types
+//
+enum Plot_
 {
-	true  = 1,
-	false = 0,
-	null  = 0,
+    Plot_None,
+    Plot_WakeUp,
 };
+typedef u8 Plot;
+typedef u8 PlotPoint;
+
+typedef struct plot_t
+{
+    // [[current]]
+    PlotPoint const* point;
+    const char*      word;
+    char             msg[0x40];
+    u8               msgIdx;
+    v2i              msgPos;
+    PlotPoint        pointIdx;
+    u8               points;
+    u8               wordIdx;
+    u8               wordLen;
+    // [[config]]
+    u8 typeWriterTicks;
+} plot_t;
 
 /////////////////////////////////////////////////////////////////////////
-//	Function Pointers
+//	Globals
 //
-typedef void(*procedure_t)(void);
+extern plot_t g_plot;
 
 /////////////////////////////////////////////////////////////////////////
-//	Math Types
+//	Functions
 //
-typedef struct v2i
-{
-	i8 x;
-	i8 y;
-} v2i;
-
-typedef union vec2
-{
-	struct 
-	{
-		i8 x_msb;
-		i8 x_lsb;
-		i8 y_msb;
-		i8 y_lsb;
-	};
-	struct
-	{
-		i16 x;
-		i16 y;
-	};
-} vec2;
-
-#define VEC_IS_LOCAL(vec) (vec.x_msb | vec.y_msb) == 0 || (vec.x_msb | vec.y_msb) == -1 // Checks whether a 16 bit vector is within 8-bit coords.
-#define VEC_IS_GLOBAL(vec) (vec.x_msb | vec.y_msb) != 0 && (vec.x_msb | vec.y_msb) != -1
-
-/** 
-* @brief rect_t is a rectangle defined by its position and size.
-* 
-* Right-Handed Coordinate System (RHCS):
-*              127
-*               + top
-*               |
-* left 128 - ---0--- + 127 right
-*               |
-*               - bottom
-*              128
-*/
-typedef union rect_t
-{
-	struct // attributes
-	{
-		v2i pos; // bottom-left
-		v2i size;
-	};
-	struct // components
-	{
-		i8 x; // left
-		i8 y; // bottom
-		i8 width; 
-		i8 height;
-	};
-} rect_t, *rect;
-
-#endif /* TYPES_H */
+void plot_set_plot(const Plot plot);
+void plot_typewriter_next(const u8 ticks);
+bool plot_skip(void);
+void plot_print(void);
+void plot_init(void);

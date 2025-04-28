@@ -22,46 +22,54 @@
  * SOFTWARE.
  */
 
-#ifndef MESH_H
-#define MESH_H
-
 /////////////////////////////////////////////////////////////////////////
 //	Includes
 //
-#include <types.h>
-#include <defines.h>
+#include <cnd/game.h>
+#include <cnd/track.h>
+#include <vectrex.h>
+#include <lib/assert/assert.h>
 
 /////////////////////////////////////////////////////////////////////////
-//	Types
-//
-/**
- * @brief Mesh_ is a look up enumeration
- */
-enum Mesh_
+//	>> Entry <<
+//	
+i8 main()
 {
-	Mesh_CrocIdleRight,
-	Mesh_CrocIdleLeft,
-	Mesh_CrocArm,
-	Mesh_CrocArmForward,
-	Mesh_CrocTail,
-	Mesh_DocIdleRight,
-	Mesh_DocIdleLeft,
-	Mesh_MantisRight,
-	Mesh_MantisLeft,
-	Mesh_BarrelLeft,
-	Mesh_Barrel,
-	Mesh_BarellRight,
-	Mesh_CrateLeft,
-	Mesh_Crate,
-	Mesh_CrateRight,
-	Mesh_Jumper,
-};
-typedef i8 Mesh;
+	// Init
+	game_init();
+	// (Re-)Configure game 
+soft_reset:
+	game_soft_reset();
+	
+	/**
+	* Game Loop
+	*/
+	while(GAME.state)
+	{
+		game_start_frame();
+		
+		/**
+		 * Read Input
+		 */
+		Joy_Digital();
+		Intensity_5F(); // Joy_Digital disables the intensity for ✨✨MAGICAL✨✨ reasons when second controller is enabled.
+		Read_Btns();    // Read buttons of controller
+		BTNS = Vec_Buttons;
+    	JOYS = U8(Vec_Joy_1_X < 0) << Input_JoyLeftBit  | 
+		       U8(Vec_Joy_1_X > 0) << Input_JoyRightBit | 
+		       U8(Vec_Joy_1_Y < 0) << Input_JoyUpBit    | 
+		       U8(Vec_Joy_1_Y > 0) << Input_JoyDownBit;
 
-/////////////////////////////////////////////////////////////////////////
-//	Getter Functions
-//
-i8 CONST* mesh_get(Mesh const mesh);
-void      mesh_load(Mesh const mesh, bool const mirror, i8 __out* destination);
+		/**	
+		 * Update (e.g. kinematics, collision detection, ...)
+		 */
+		g_update_table[GAME.state]();
 
-#endif /* MESH_H */
+		/**	
+		 * Render
+		 */
+		g_render_table[GAME.state]();
+	}
+	// Reset game
+	goto soft_reset;
+}

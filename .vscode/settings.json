@@ -1,0 +1,15 @@
+{
+    "files.associations": {
+        "types.h": "c",
+        "defines.h": "c",
+        "xutils.h": "c",
+        "vectrex.h": "c",
+        "track.h": "c",
+        "print.h": "c",
+        "assert.h": "c",
+        "world.h": "c",
+        "mesh.h": "c",
+        "monitor.h": "c",
+        "static_assert.h": "c"
+    }
+}

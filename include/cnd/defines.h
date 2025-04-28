@@ -22,24 +22,50 @@
  * SOFTWARE.
  */
 
-#ifndef XUTILITY_H
-#define XUTILITY_H
+#ifndef DEFINES_H
+#define DEFINES_H
 
 /////////////////////////////////////////////////////////////////////////
-//	Defines
+//	Attributes
 //
-#define MEMZERO(ref) memzero(sizeof ref, &ref);
+#define force_inline __attribute__((always_inline)) // GCC-specific
+#define __out			// Indicates that its state does not matter - it is merely written to.
+#define __in           // Indicates that it is merely used.
+#define __inout        // Indicates that both is used and written to.
+#define HAS_SIZE(size) // Indicates the size in bytes.
+#define CONST          // Indicates that it is expected that this value is never changed.
 
 /////////////////////////////////////////////////////////////////////////
-//	Includes
+//	Configuration
 //
-#include <types.h>
-#include <defines.h>
+#define ENGLISH
+//#define GERMAN
+#define DEVELOPMENT
 
 /////////////////////////////////////////////////////////////////////////
-//	Utility Functions
+//	Macro Helper Values
 //
-void memzero(u16 const bytes, void __out* data);
-void beam_set_position(const i8 y, const i8 x);
+#define EOS "\x80" // End of String
 
-#endif /* XUTILITY_H */
+/////////////////////////////////////////////////////////////////////////
+//	Macro Helper Functions
+//
+#define VSTR(literal)       literal EOS  // Vectrex string
+// Define function pointer with return value
+#define DEFINE_RET_PFN(func, addr, ret, ...) \
+	typedef ret (*func##_t)(__VA_ARGS__);\
+	static const func##_t func = (func##_t)addr
+// Define function pointer without return value
+#define DEFINE_PFN(func, addr, ...) \
+	DEFINE_RET_PFN(func, addr, void, __VA_ARGS__)
+
+#define LENGTH(n) n-1 
+#define MIN8(x, y) y + ((x - y) & ((x - y) >> 7))
+#define MAX8(x, y) x - ((x - y) & ((x - y) >> 7))
+
+#define U8(x) ((u8)(x))
+#define I8(x) ((i8)(x))
+#define U16(x) ((u16)(x))
+#define I16(x) ((i16)(x))
+
+#endif /* DEFINES_H */

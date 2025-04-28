@@ -22,27 +22,19 @@
  * SOFTWARE.
  */
 
+#ifndef MESH_H
+#define MESH_H
+
 /////////////////////////////////////////////////////////////////////////
 //	Includes
 //
-#include <types.h>
-#include <defines.h>
+#include <cnd/types.h>
+#include <cnd/defines.h>
 
 /////////////////////////////////////////////////////////////////////////
-//	Types
+//	Getter Functions
 //
-enum Plot_
-{
-    Plot_None,
-    Plot_WakeUp,
-};
-typedef u8 Plot;
-typedef u8 PlotPoint;
+i8 CONST* mesh_get(Mesh const mesh);
+void      mesh_load(Mesh const mesh, bool const mirror, i8 __out* destination);
 
-/////////////////////////////////////////////////////////////////////////
-//	Functions
-//
-void plot_set_plot(const Plot plot);
-void plot_typewriter_next(const u8 ticks);
-bool plot_skip(void);
-void plot_print(void);
+#endif /* MESH_H */

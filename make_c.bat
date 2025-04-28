@@ -20,8 +20,8 @@ setlocal enableextensions enabledelayedexpansion
 
 set ENABLE_PREPROCESSING=no
 set ENABLE_C_DEBUGGING=yes
-set ENABLE_C_OPTIMIZATION=no
-set ENABLE_ASSEMBLY_OPTIMIZATION=no
+set ENABLE_C_OPTIMIZATION=yes
+set ENABLE_ASSEMBLY_OPTIMIZATION=yes
 set C_OPTIMIZATION_LEVEL=-O2
 
 @REM ---------------------------------------------------------------------------------------------
@@ -295,7 +295,7 @@ exit /B 0
 		set LINK_LIBS=-l %%~nF.lib !LINK_LIBS!
 	)
 	echo with libraries !LINK_LIBS!
-	%ASLINK% -n -m -x -u -w -s %LINK_PATH% %LINK_LIBS% .\build\rel\config_memory_map.rel !LFILES! !RFILES! 1>nul || exit \b
+	%ASLINK% -n -m -x -u -w -s %LINK_PATH% %LINK_LIBS% .\build\rel\cnd_config_memory_map.rel !LFILES! !RFILES! 1>nul || exit \b
 exit /B 0
 
 @REM ---------------------------------------------------------------------------------------------
@@ -342,7 +342,7 @@ exit /B 0
 	@copy /b .\build\%PROJECT%.map .\build\bin\%PROJECT%.lst 1>nul || exit \b
 	%RXREPL% --no-backup --return-count -f .\build\bin\%PROJECT%.lst -a --options %RXREPL_PATH%\rules_labels.txt
 
-	call :getFilesize .\bin\%PROJECT%.bin
+	call :getFilesize .\build\bin\%PROJECT%.bin
 	@echo bin size is !fileSize! bytes
 exit /B 0
 

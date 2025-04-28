@@ -25,7 +25,8 @@
 /////////////////////////////////////////////////////////////////////////
 //	Includes
 //
-#include <plot.h>
+#include <cnd/plot.h>
+#include <cnd/xutils.h>
 #include <vectrex.h>
 
 /////////////////////////////////////////////////////////////////////////
@@ -39,7 +40,7 @@
 #define MSG_C(cnt) MSG(CROC, cnt)
 #define MSG_D(cnt) MSG(DOC, cnt)
 #define MSG_END 0x00
-#define WORD_LU(word, arr) case word: g_word = arr; g_wordLen = sizeof arr; break
+#define WORD_LU(wd, arr) case wd: PLOT.word = arr; PLOT.wordLen = sizeof arr; break
 
 /////////////////////////////////////////////////////////////////////////
 //	Globals
@@ -64,7 +65,7 @@ enum Word_
     Word_Laser,
 };
 
-PlotPoint g_wakeUp[] = 
+const PlotPoint g_wakeUp[] = 
 {
     MSG_D(5),
     Word_Snort,
@@ -78,52 +79,46 @@ PlotPoint g_wakeUp[] =
     MSG_END,
 };
 
-PlotPoint* g_plots[] = 
+const PlotPoint* g_plots[] = 
 {
     g_wakeUp,
 };
 
-// [[current]]
-static char        g_msgBuf[0x80]; 
-static u8          g_msgIdx = 0;
-static v2i         g_msgPos;
-static PlotPoint   g_plotPointIdx = 0;
-static u8          g_plotPoints = 0;
-static PlotPoint*  g_plot      = null;
-static const char* g_word      = null;
-static u8          g_wordIdx   = 0;
-static u8          g_wordLen   = 0;
-// [[config]]
-static u8        g_typeWriterSpeed = 4;
-
+plot_t g_plot;
 
 /////////////////////////////////////////////////////////////////////////
 //	Functions
 //
+void plot_init(void) 
+{
+    MEMZERO(PLOT);
+    PLOT.typeWriterTicks = 4;
+}
+
 void plot_typewriter_next(const u8 ticks)
 {
-    if (g_typeWriterSpeed ^ (g_typeWriterSpeed & ticks))
+    if (PLOT.typeWriterTicks ^ (PLOT.typeWriterTicks & ticks))
     {
     next_char:
-        if (g_wordIdx < g_wordLen) // Next character
+        if (PLOT.wordIdx < PLOT.wordLen) // Next character
         {
-            g_msgBuf[g_msgIdx++] = g_word[g_wordIdx++];
+            PLOT.msg[PLOT.msgIdx++] = PLOT.word[PLOT.wordIdx++];
         }
-        else if (g_plotPointIdx < g_plotPoints) // Next word
+        else if (PLOT.pointIdx < PLOT.points) // Next word
         {
         next_word:
-            switch (g_plot[g_plotPointIdx++])
+            switch (PLOT.point[PLOT.pointIdx++])
             {
             case Word_Space: 
-                g_msgBuf[g_msgIdx++] = ' ';
-                g_wordLen = 0;
+                PLOT.msg[PLOT.msgIdx++] = ' ';
+                PLOT.wordLen = 0;
                 goto next_word;
             case Word_Dot: 
-                g_msgBuf[g_msgIdx]     = '.';
-                g_msgBuf[g_msgIdx + 1] = '.';
-                g_msgBuf[g_msgIdx + 2] = '.';
-                g_msgIdx += 3;
-                g_wordLen = 0;
+                PLOT.msg[PLOT.msgIdx]     = '.';
+                PLOT.msg[PLOT.msgIdx + 1] = '.';
+                PLOT.msg[PLOT.msgIdx + 2] = '.';
+                PLOT.msgIdx += 3;
+                PLOT.wordLen = 0;
                 break;
             WORD_LU(Word_Snort, snort);
             WORD_LU(Word_Wheeze, wheeze);
@@ -134,48 +129,47 @@ void plot_typewriter_next(const u8 ticks)
             default:
                 break;
             }
-            g_wordIdx = 0;
+            PLOT.wordIdx = 0;
             goto next_char;
         }
         else 
         {            
-            g_msgIdx = 0;
-            if (g_plot[g_plotPointIdx]) // Next message
+            PLOT.msgIdx = 0;
+            if (PLOT.point[PLOT.pointIdx]) // Next message
             {
-                switch (g_plot[g_plotPointIdx] & 0x3)
+                switch (PLOT.point[PLOT.pointIdx] & 0x3)
                 {
                 case NARRATOR:
-                    g_msgPos.y = -100;
-                    g_msgPos.x = -50;                    
+                    PLOT.msgPos.y = -100;
+                    PLOT.msgPos.x = -50;                    
                     break;
                 case CROC:
-                    g_msgPos.y = 100;
-                    g_msgPos.x = -50;
+                    PLOT.msgPos.y = 100;
+                    PLOT.msgPos.x = -50;
                     break;
                 case DOC:
-                    g_msgPos.y = 100;
-                    g_msgPos.x = 50;
+                    PLOT.msgPos.y = 100;
+                    PLOT.msgPos.x = 50;
                     break;
                 default:
                     break;
                 }
-                g_plotPoints   = g_plot[g_plotPointIdx] >> 2;
-                ++g_plotPointIdx;
+                PLOT.points = PLOT.point[PLOT.pointIdx] >> 2;
+                ++PLOT.pointIdx;
             }
             else // MSG_END
             {
-                Print_Str_d(10, 10, "END OF STRING\x80");
-                g_plot       = null;
-                g_plotPoints = 0;
+                PLOT.point  = null;
+                PLOT.points = 0;
             }
         }
-        g_msgBuf[g_msgIdx] = '\x80';
+        PLOT.msg[PLOT.msgIdx] = '\x80';
     }
 }
 
 bool plot_skip(void)
 {
-    if (g_plot == null) // End of plot
+    if (PLOT.point == null) // End of plot
     {
         return true;
     }
@@ -184,22 +178,22 @@ bool plot_skip(void)
         u8 ticks = 0;
         do
         {
-            ticks ^= g_typeWriterSpeed;
-            plot_typewriter_next(g_typeWriterSpeed);
-        } while (g_plotPointIdx < g_plotPoints);
+            ticks ^= PLOT.typeWriterTicks;
+            plot_typewriter_next(PLOT.typeWriterTicks);
+        } while (PLOT.pointIdx < PLOT.points);
         return false; 
     }
 }
 
 void plot_print(void)
 {
-    Print_Str_d(g_msgPos.y, g_msgPos.x, g_msgBuf);
+    Print_Str_d(PLOT.msgPos.y, PLOT.msgPos.x, PLOT.msg);
 }
 
 void plot_set_plot(const Plot plot)
 {
-    g_plot    = g_plots[plot];
-    g_msgIdx  = 0;
-    g_wordIdx = 0;
-    plot_typewriter_next(g_typeWriterSpeed);   
+    PLOT.point = g_plots[plot];
+    PLOT.msgIdx  = 0;
+    PLOT.wordIdx = 0;
+    plot_typewriter_next(PLOT.typeWriterTicks);   
 }

@@ -25,43 +25,15 @@
 /////////////////////////////////////////////////////////////////////////
 //	Includes
 //
-#include <game.h>
-#include <track.h>
+#include <cnd/xutils.h>
 
 /////////////////////////////////////////////////////////////////////////
-//	>> Entry <<
-//	
-i8 main()
+//	Utility Functions
+//
+
+void beam_set_position(const i8 y, const i8 x)
 {
-	// Init
-	game_init();
-	// (Re-)Configure game 
-soft_reset:
-	game_soft_reset();
-	/**
-	* Game Loop
-	*/
-	while(GAME.state)
-	{
-		game_start_frame();
-		
-		/**
-		 * Process Player Actions
-		 */
-		input_fetch();
-		// Update Player
-		action_update();
-
-		/**	
-		 * Update (e.g. kinematics, collision detection, ...)
-		 */
-		game_update();
-
-		/**	
-		 * Render
-		 */
-		game_render();
-	}
-	// Reset game
-	goto soft_reset;
+	dp_VIA_cntl      = 0xCC;
+	dp_VIA_t1_cnt_lo = 0x90;
+	Moveto_d(y, x);
 }

@@ -25,57 +25,50 @@
 #ifndef TRACK_H
 #define TRACK_H
 
-#include <defines.h>
-#include <types.h>
+#include <cnd/types.h>
 
 enum Note_
 {
-    Note_G2 = 0x00U, Note_GS2 = 0x01U,
-    Note_A2 = 0x02U, Note_AS2 = 0x03U,
-    Note_B2 = 0x04U,
-    Note_C3 = 0x05U, Note_CS3 =	0x06U,
-    Note_D3 = 0x07U, Note_DS3 =	0x08U,
-    Note_E3 = 0x09U,
-    Note_F3 = 0x0AU, Note_FS3 =	0x0BU,
-    Note_G3 = 0x0CU, Note_GS3 =	0x0DU,
-    Note_A3 = 0x0EU, Note_AS3 = 0x0FU,
-    Note_B3 = 0x10U,
-    Note_C4 = 0x11U, Note_CS4 = 0x12U,
-    Note_D4 = 0x13U, Note_DS4 =	0x14U,
-    Note_E4 = 0x15U,
-    Note_F4 = 0x16U, Note_FS4 = 0x17U,
-    Note_G4 = 0x18U, Note_GS4 = 0x19U,
-    Note_A4 = 0x1AU, Note_AS4 =	0x1BU,
-    Note_B4 = 0x1CU,
-    Note_C5 = 0x1DU, Note_CS5 =	0x1EU,
-    Note_D5 = 0x1FU, Note_DS5 = 0x20U,
-    Note_E5 = 0x21U,
-    Note_F5 = 0x22U, Note_FS5 =	0x23U,
-    Note_G5 = 0x24U, Note_GS5 = 0x25U,
-    Note_A5 = 0x26U, Note_AS5 = 0x27U,
-    Note_B5 = 0x28U,
-    Note_C6 = 0x29U, Note_CS6 = 0x2AU,
-    Note_D6 = 0x2BU, Note_DS6 = 0x2CU,
-    Note_E6 = 0x2DU,
-    Note_F6 = 0x2EU, Note_FS6 =0x2FU,
-    Note_G6 = 0x30U, Note_GS6 =0x31U,
-    Note_A6 = 0x32U, Note_AS6 =0x33U,
-    Note_B6 = 0x34U,
-    Note_C7 = 0x35U, Note_CS7 =0x36U,
-    Note_D7 = 0x37U, Note_DS7 =0x38U,
-    Note_E7 = 0x39U,
-    Note_F7 = 0x3AU, Note_FS7 = 0x3BU,
-    Note_G7 = 0x3CU, Note_GS7 = 0x3DU,
-    Note_A7 = 0x3EU, Note_AS7 = 0x3FU,
-    Note_End = 0x80,
+    G2 = 0x00U, GS2 = 0x01U, AB2 = 0x01U,
+    A2 = 0x02U, AS2 = 0x03U, BB2 = 0x03U,
+    B2 = 0x04U,
+    C3 = 0x05U, CS3 = 0x06U, DB3 = 0x06U,
+    D3 = 0x07U, DS3 = 0x08U, EB3 = 0x08U,
+    E3 = 0x09U,
+    F3 = 0x0AU, FS3 = 0x0BU, GB3 = 0x0BU,
+    G3 = 0x0CU, GS3 = 0x0DU, AB3 = 0x0DU,
+    A3 = 0x0EU, AS3 = 0x0FU, BB3 = 0x0FU,
+    B3 = 0x10U,
+    C4 = 0x11U, CS4 = 0x12U, DB4 = 0x12U,
+    D4 = 0x13U, DS4 = 0x14U, EB4 = 0x14U,
+    E4 = 0x15U,
+    F4 = 0x16U, FS4 = 0x17U, GB4 = 0x17U,
+    G4 = 0x18U, GS4 = 0x19U, AB4 = 0x19U,
+    A4 = 0x1AU, AS4 = 0x1BU, BB4 = 0x1BU,
+    B4 = 0x1CU,
+    C5 = 0x1DU, CS5 = 0x1EU, DB5 = 0x1EU,
+    D5 = 0x1FU, DS5 = 0x20U, EB5 = 0x20U,
+    E5 = 0x21U,
+    F5 = 0x22U, FS5 = 0x23U, GB5 = 0x23U,
+    G5 = 0x24U, GS5 = 0x25U, AB5 = 0x25U,
+    A5 = 0x26U, AS5 = 0x27U, BB5 = 0x27U,
+    B5 = 0x28U,
+    C6 = 0x29U, CS6 = 0x2AU, DB6 = 0x2AU,
+    D6 = 0x2BU, DS6 = 0x2CU, EB6 = 0x2CU,
+    E6 = 0x2DU,
+    F6 = 0x2EU, FS6 = 0x2FU, GB6 = 0x2FU,
+    G6 = 0x30U, GS6 = 0x31U, AB6 = 0x31U,
+    A6 = 0x32U, AS6 = 0x33U, BB6 = 0x33U,
+    B6 = 0x34U,
+    C7 = 0x35U, CS7 = 0x36U, DB7 = 0x36U,
+    D7 = 0x37U, DS7 = 0x38U, EB7 = 0x38U,
+    E7 = 0x39U,
+    F7 = 0x3AU, FS7 = 0x3BU, GB7 = 0x3BU,
+    G7 = 0x3CU, GS7 = 0x3DU, AB7 = 0x3DU,
+    A7 = 0x3EU, AS7 = 0x3FU, BB7 = 0x3FU,
+    Note_End = 0x80U, CH0 = 0x80U, CH1 = 0x80U
 };
 typedef u8 Note;
-
-enum Track_
-{
-    Track_Level0,
-};
-typedef u8 Track;
 
 typedef struct nibble_ampoff_table_t
 {
@@ -95,10 +88,15 @@ typedef struct track_t
     Note notes[];
 } track_t, *track;
 
+extern const track_t g_yellow;
 extern const track_t g_level0;
+extern const track_t g_corneria;
+extern const track_t g_jibjib;
+extern const track_t* g_tracks[];
 
-force_inline const track_t* track_get(Track const track);
-
-
+inline const track_t* track_get(Track const track)
+{
+    return g_tracks[track];
+}
 
 #endif /* TRACK_H */

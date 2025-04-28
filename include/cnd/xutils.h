@@ -22,26 +22,49 @@
  * SOFTWARE.
  */
 
+#ifndef XUTILS_H
+#define XUTILS_H
+
+/////////////////////////////////////////////////////////////////////////
+//	Defines
+//
+#define MEMZERO(ref) memset(&ref, 0, sizeof(ref));
+
 /////////////////////////////////////////////////////////////////////////
 //	Includes
 //
-#include <xutility.h>
+#include <cnd/types.h>
 #include <vectrex.h>
 
 /////////////////////////////////////////////////////////////////////////
 //	Utility Functions
 //
-
-void memzero(u16 const bytes, void __out* data)
+void* memset(void* dest, int val, long unsigned int len);
+void beam_set_position(const i8 y, const i8 x);
+force_inline bool is_local(v2l const x)
 {
-    i8* d = (i8*)data;
-    for (u16 i = 0; i < bytes; ++i) 
-		d[i] = 0;
+    return x.x < 128 && x.y < 128 && x.x > -129 && x.y > -129;
+}
+force_inline bool is_global(v2l const x)
+{
+    return !is_local(x);
+}
+force_inline u8 manhattan(i8 const a, i8 const b)
+{
+    union temp_t { u16 x; struct { u8 x_lsb; u8 x_msb; }; };
+    union temp_t abs;
+    abs.x = Abs_a_b(a, b);
+    return abs.x_lsb + abs.x_msb;
 }
 
-void beam_set_position(const i8 y, const i8 x)
+force_inline i8 max(i8 const x, i8 const y)
 {
-	dp_VIA_cntl      = 0xCC;
-	dp_VIA_t1_cnt_lo = 0x7F;
-	Moveto_d(y, x);
+    return x - ((x - y) & ((x - y) >> 7));
 }
+
+force_inline i8 min(i8 const x, i8 const y)
+{
+    return y + ((x - y) & ((x - y) >> 7));
+}
+
+#endif /* XUTILS */

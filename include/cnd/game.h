@@ -22,49 +22,57 @@
  * SOFTWARE.
  */
 
-#ifndef DEFINES_H
-#define DEFINES_H
+#ifndef GAME_H
+#define GAME_H
 
 /////////////////////////////////////////////////////////////////////////
-//	Attributes
+//	Includes
 //
-#define force_inline __attribute__((always_inline)) // GCC-specific
-#define __out			// Indicates that its state does not matter - it is merely written to.
-#define __in           // Indicates that it is merely used.
-#define __inout        // Indicates that both is used and written to.
-#define HAS_SIZE(size) // Indicates the size in bytes.
-#define CONST          // Indicates that it is expected that this value is never changed.
+#include <cnd/defines.h>
+#include <cnd/types.h>
+#include <cnd/world.h>
 
 /////////////////////////////////////////////////////////////////////////
-//	Configuration
+//	Defines
 //
-#define ENGLISH
-//#define GERMAN
-#define DEVELOPMENT
+#define GAME   g_game
+#define PLAYER GAME.player
+#define BTNS   PLAYER.buttons
+#define JOYS   PLAYER.joystick
 
 /////////////////////////////////////////////////////////////////////////
-//	Macro Helper Values
+//	Globals
 //
-#define EOS "\x80" // End of String
+extern game_t g_game;
+extern const procedure_t g_render_table[];
+extern const procedure_t g_update_table[];
 
 /////////////////////////////////////////////////////////////////////////
-//	Macro Helper Functions
+//	Game Functions
 //
-#define VSTR(literal)       literal EOS  // Vectrex string
-// Define function pointer with return value
-#define DEFINE_RET_PFN(func, addr, ret, ...) \
-	typedef ret (*func##_t)(__VA_ARGS__);\
-	static const func##_t func = (func##_t)addr
-// Define function pointer without return value
-#define DEFINE_PFN(func, addr, ...) \
-	DEFINE_RET_PFN(func, addr, void, __VA_ARGS__)
+void game_init(void);
+void game_soft_reset(void);
+void game_start_frame(void);
 
-#define SWAP(x, y) x ^= y;\
-				   y ^= x;\
-				   x ^= y
+force_inline void game_update(void);
+void game_update_play(void);
+void game_update_plot(void);
 
-#define LENGTH(n) n-1 
-#define MIN8(x, y) y + ((x - y) & ((x - y) >> 7))
-#define MAX8(x, y) x - ((x - y) & ((x - y) >> 7))
+void game_render(void);
+void game_render_play(void);
+void game_render_plot(void);
+void game_render_pause(void);
+void game_render_gameover(void);
 
-#endif /* DEFINES_H */
+/////////////////////////////////////////////////////////////////////////
+//	Action Functions
+//
+void action_update(void);
+
+/////////////////////////////////////////////////////////////////////////
+//	Rest Functions
+//
+void __stub(void);
+
+
+#endif /* GAME_H */

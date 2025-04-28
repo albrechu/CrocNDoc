@@ -25,67 +25,67 @@
 /////////////////////////////////////////////////////////////////////////
 //	Includes
 //
-#include <mesh.h>
+#include <cnd/mesh.h>
 
 /////////////////////////////////////////////////////////////////////////
 //	Global Data
 //
-CONST i8 croc_idle_right[] = 
+const i8 croc_idle_right[] = 
 {
 	LENGTH(17),
-	-3, 0,
-	0, 7,
-	3, -3,
-	3,  3,
-	5, 0,
-	3, -2,
-	3,  9,
-	2,  0,
-	1, -7,
-	3,  -1,
-	0,  -4,
-	-3, -1,
-	-12, -5,
-	-2, -4,
-	3, -4,
-	-7, 5,
-	1, 6,
+	-2,  0,
+	 0,  5,
+	 2, -2,
+	 2,  2,
+	 3,  0,
+	 2, -1,
+	 2,  6,
+	 1,  0,
+	 0, -5,
+	 2,  0,
+	 0, -3,
+	-2,  0,
+	-9, -3,
+	-1, -3,
+	 2, -3,
+	-5,  3,
+	 0,  4,
 };
 
-CONST i8 croc_idle_left[] = 
+const i8 croc_idle_left[] = 
 {
 	LENGTH(17),
-	-3, 0,
-	0, -7,
-	3, 3,
-	3, -3,
-	5,-0,
-	3,  2,
-	3, -9,
-	2,  0,
-	1,  7,
-	3,   1,
-	0,   4,
-	-3,  1,
-	-12,  5,
-	-2, 4,
-	3, 4,
-	-7, -5,
-	1, -6,
+	-2,  0,
+	 0, -5,
+	 2,  2,
+	 2, -2,
+	 3,  0,
+	 2,  1,
+	 2, -6,
+	 1,  0,
+	 0,  5,
+	 2,  0,
+	 0,  3,
+	-2,  0,
+	-9,  3,
+	-1,  3,
+	 2,  3,
+	-5, -3,
+	 0, -4,
 };
 
-CONST i8 croc_arm[] = 
+const i8 croc_arm[] = 
 {
 	LENGTH(6),
-	-10, 0,
-	3, 1,
-	-3, 1,
-	3, 1,
-	-3, 1,
-	10, 0,
+	-3, 0,
+	1, 1,
+	-1, 1,
+	1, 1,
+	-1, 1,
+	3, 0,
 };
 
-CONST i8 croc_arm_forward[] = 
+const i8 croc_arm_forward[] = 
 {
 	LENGTH(6),
 	5, 10,
@@ -96,12 +96,7 @@ CONST i8 croc_arm_forward[] =
 	 -5, -10,
 };
 
-CONST i8 croc_tail[] = 
-{
-
-};
-
-CONST i8 doc_body_right[] = 
+const i8 doc_body_right[] = 
 {
 	LENGTH(12),
 	1, -3,
@@ -118,7 +113,7 @@ CONST i8 doc_body_right[] =
 	0, 3,
 };
 
-CONST i8 doc_body_left[] = 
+const i8 doc_body_left[] = 
 {
 	LENGTH(12),
 	1, 3,
@@ -135,7 +130,7 @@ CONST i8 doc_body_left[] =
 	0, -3,
 };
 
-CONST i8 barrel[] = 
+const i8 barrel[] = 
 {
 	LENGTH(4),
 	20, 0,
@@ -144,7 +139,7 @@ CONST i8 barrel[] =
 	0, -15,
 };
 
-CONST i8 barrel_right[] = 
+const i8 barrel_right[] = 
 {
 	LENGTH(4),
 	20, -10,
@@ -153,7 +148,7 @@ CONST i8 barrel_right[] =
 	-5, -15,
 };
 
-CONST i8 barrel_left[] = 
+const i8 barrel_left[] = 
 {
 	LENGTH(4),
 	20, 10,
@@ -162,7 +157,7 @@ CONST i8 barrel_left[] =
 	-5, 15,
 };
 
-CONST i8 crate[] = 
+const i8 crate[] = 
 {
 	LENGTH(5),
 	10, 0,
@@ -172,7 +167,7 @@ CONST i8 crate[] =
 	10, 10,
 };
 
-CONST i8 crate_right[] = 
+const i8 crate_right[] = 
 {
 	LENGTH(5),
 	7, 7,
@@ -182,7 +177,7 @@ CONST i8 crate_right[] =
 	0, 14,
 };
 
-CONST i8 mantis_right[] = 
+const i8 mantis_right[] = 
 {
 	LENGTH(9),
     -8,   1, // Body
@@ -196,7 +191,7 @@ CONST i8 mantis_right[] =
      2, -10, // Head
 };
 
-CONST i8 mantis_left[] = 
+const i8 mantis_left[] = 
 {
 	LENGTH(9),
     -8,  -1, // Body
@@ -210,7 +205,7 @@ CONST i8 mantis_left[] =
      2,  10, // Head
 };
 
-CONST i8 jumper[] = 
+const i8 jumper[] = 
 {
 	LENGTH(5),
 	0, -10,
@@ -220,13 +215,49 @@ CONST i8 jumper[] =
 	0, -10,
 };
 
-CONST i8* g_meshes[] = 
+const i8 ground [] = 
 {
+	LENGTH(0),
+	0, 64,
+};
+
+const i8 wall [] = 
+{
+	LENGTH(0),
+	-64, 0,
+};
+
+const i8 ceiling [] = 
+{
+	LENGTH(0),
+	0, 64,
+};
+
+const i8 platform [] = 
+{
+	LENGTH(0),
+	0, 32,
+};
+
+const i8 breakable [] = 
+{
+	LENGTH(2),
+	0, 32,
+	-5, -32,
+	0, 32,
+};
+
+const i8* const g_meshes[] = 
+{
+	ground,
+    wall,
+    ceiling,
+    platform,
+    breakable,
 	croc_idle_right,
 	croc_idle_left,
 	croc_arm,
 	croc_arm_forward,
-	croc_tail,
 	doc_body_right,
 	doc_body_left,
 	mantis_right,
@@ -245,12 +276,12 @@ CONST i8* g_meshes[] =
 //
 i8 CONST* mesh_get(Mesh const mesh)
 {
-    return g_meshes[mesh];
+    return (i8 CONST*) g_meshes[mesh];
 }
 
 void mesh_load(Mesh const mesh, bool const mirror, i8 __out* destination)
 {
-    i8* const m = mesh_get(mesh);
+    const i8* const m = mesh_get(mesh);
 	const i8 length = *m;
 	*destination = length;
 	i8 v = 0, i = 1;
