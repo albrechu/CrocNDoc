@@ -32,9 +32,9 @@
 #include <cnd/track.h>
 // [[Lib]]
 #include <vectrex.h>
-#include <lib/assert/assert.h>
-#include <lib/print/print.h>
-#include <lib/debug/monitor.h>
+#include <lib/assert.h>
+#include <lib/print.h>
+#include <lib/monitor.h>
 
 /////////////////////////////////////////////////////////////////////////
 //	Globals
@@ -88,6 +88,8 @@ void game_soft_reset(void)
     mesh_load(Mesh_CrocArm, 0, PLAYER.arm);
     PLAYER.armY       = 15;
     CAMERA.mesh       = Mesh_CrocIdleRight;
+    CAMERA.isLocal   = true;
+    CAMERA.state     = CharacterState_Idle;
     CAMERA.transform  = 1;
     // plot_set_plot(Plot_WakeUp);
 }
@@ -110,11 +112,6 @@ void game_update_play(void)
 {
     // Process player input
 	action_update();
-
-    assert(WORLD.props == 0);
-    /// Camera Scroll and physics
-	// CAMERA.velocity.x += Velocity_Friction * (CAMERA.velocity.x != 0 && CAMERA.velocity.y == 0) * CAMERA.transform;
-	// CAMERA.velocity.y += Velocity_Gravity;
     
     for (idx_t e = 0; e < WORLD.enemies; ++e)
     {
@@ -159,7 +156,7 @@ void game_update_play(void)
     }
 
     world_progress();
-
+    // print_signed_int(-90, -50, WORLD.drawList.lines);
     switch (CAMERA.state)
     {
     case CharacterState_Idle:    
@@ -169,9 +166,6 @@ void game_update_play(void)
     default:
         break;
     }
-
-    
-    
 
     ++GAME.ticks;
     // GAME.ticks = (GAME.ticks + 1) & 0x3F;
@@ -209,7 +203,6 @@ void game_render_play(void)
         Draw_VLc(mesh_get(CAMERA.mesh));
         if (CAMERA.state == CharacterState_Glide)
         {
-            assert(WORLD.props == 0);
             beam_set_position(12, -3 * CAMERA.transform);
             Draw_Line_d(10, -CAMERA.transform * ((((i8)GAME.ticks & 1) * -15) | 15)); 
         }
@@ -233,9 +226,9 @@ void game_render_play(void)
             {
                 v2l delta;
                 delta.x = prop->position.x - CAMERA.position.x;
-                delta.y = prop->position.y - CAMERA.position.y;
-                beam_set_position(delta.y_lsb, delta.x_lsb);
-                Draw_VLc(mesh_get(prop->mesh + CAMERA.transform));
+                delta.y = CAMERA.position.y - prop->position.y;
+                beam_set_position((i8)delta.y, (i8)delta.x);
+                Draw_VLc(mesh_get(prop->mesh));
             }
             break;
         }
@@ -284,7 +277,7 @@ void action_update(void)
     {
     case CharacterState_Glide:
         if (Vec_Btn_State & Input_Button1)
-            CAMERA.velocity.y = Velocity_Gravity;
+            CAMERA.velocity.y = 0;
         else
             CAMERA.state = CharacterState_Idle;
         break;
@@ -315,22 +308,22 @@ void action_update(void)
         {
             for (idx_t pi = 0; pi < WORLD.props; ++pi)
             {
-                v2l delta;
-                delta.x = WORLD.prop[pi].position.x - CAMERA.position.x;
-                delta.y = WORLD.prop[pi].position.y - CAMERA.position.y;
-                if (is_local(delta))
+                entity p = &WORLD.prop[pi];
+                if (p->isLocal && p->state == PropState_Idle)
                 {
-                    if (manhattan(delta.x_lsb, delta.y_lsb) < 0x15) // Manhattan
+                    v2i delta;
+                    delta.y = I8(p->position.y - CAMERA.position.y);
+                    delta.x = I8(p->position.x - CAMERA.position.x);
+                    if (manhattan(delta.x, delta.y) < 0x15) // Manhattan
                     {
                         CAMERA.state = CharacterState_HoldsProp;
                         WORLD.prop[pi].state = PropState_Held;
-                        if (pi != 0) // Game needs to insure that a hold prop is always at idx 0
+                        if (pi != 0) // Game needs to ensure that a hold prop is always at idx 0
                         {
-                            entity_t tmp  = WORLD.prop[0];
+                            entity_t tmp   = WORLD.prop[0];
                             WORLD.prop[0]  = WORLD.prop[pi];
-                            WORLD.prop[pi] = tmp;
+                            WORLD.prop[pi] = tmp;    
                         }
-
                         PLAYER.armY  = 9;
                         mesh_load(Mesh_CrocArmForward, CAMERA.transform ^ 1, PLAYER.arm);
                         goto bite_skip;
@@ -345,7 +338,8 @@ void action_update(void)
             mesh_load(Mesh_CrocArm, 0, PLAYER.arm);
             PLAYER.armY = 15;
 
-            WORLD.prop[0].state  = PropState_Thrown;
+            WORLD.prop[0].state     = PropState_Thrown;
+            WORLD.prop[0].transform = CAMERA.transform;
             if (JOYS == Input_JoyDown)
             {
                 WORLD.prop[0].velocity.y = -Velocity_ThrowY;
@@ -366,7 +360,6 @@ void action_update(void)
     case Input_Button4: // Swap
         if (CAMERA.velocity.y == 0)
         {
-            assert(WORLD.props == 0);
             switch (CAMERA.type)
             {
             case Character_Croc:
@@ -380,7 +373,6 @@ void action_update(void)
             default:
                 break;
             }
-            assert(WORLD.props == 0);
         }
         break;
     default:
@@ -440,17 +432,19 @@ bite_skip:
             CAMERA.velocity.x = Velocity_Run;
         }
         break;
-    case Input_JoyUp: // Action
-        CAMERA.velocity.y = -Velocity_Run;
-        break;
-    case Input_JoyDown:
-        CAMERA.velocity.y = Velocity_Run;
-        break;
     default:
         break;
     }
-}
 
+    if (JOYS & Input_JoyUp)
+    {
+        CAMERA.velocity.y = -Velocity_Run;
+    }
+    if (JOYS & Input_JoyDown)
+    {
+        CAMERA.velocity.y = Velocity_Run;
+    }
+}
 /////////////////////////////////////////////////////////////////////////
 //	Rest Functions
 //

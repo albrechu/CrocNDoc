@@ -217,25 +217,25 @@ const i8 jumper[] =
 
 const i8 ground [] = 
 {
-	LENGTH(0),
+	LENGTH(1),
 	0, 64,
 };
 
 const i8 wall [] = 
 {
-	LENGTH(0),
+	LENGTH(1),
 	-64, 0,
 };
 
 const i8 ceiling [] = 
 {
-	LENGTH(0),
+	LENGTH(1),
 	0, 64,
 };
 
 const i8 platform [] = 
 {
-	LENGTH(0),
+	LENGTH(1),
 	0, 32,
 };
 
@@ -247,6 +247,15 @@ const i8 breakable [] =
 	0, 32,
 };
 
+const i8 spikes[] = 
+{
+	LENGTH(4),
+	8, 8,
+	-8, 8,
+	8, 8,
+	-8, 8,
+};
+
 const i8* const g_meshes[] = 
 {
 	ground,
@@ -254,6 +263,7 @@ const i8* const g_meshes[] =
     ceiling,
     platform,
     breakable,
+	spikes,
 	croc_idle_right,
 	croc_idle_left,
 	croc_arm,

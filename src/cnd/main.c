@@ -28,7 +28,7 @@
 #include <cnd/game.h>
 #include <cnd/track.h>
 #include <vectrex.h>
-#include <lib/assert/assert.h>
+#include <lib/assert.h>
 
 /////////////////////////////////////////////////////////////////////////
 //	>> Entry <<

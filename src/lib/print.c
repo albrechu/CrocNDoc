@@ -3,7 +3,7 @@
 // ***************************************************************************
 
 #include <vectrex.h>
-#include <lib/print/print.h>
+#include <lib/print.h>
 
 static inline __attribute__((always_inline)) 
 void reset_print_position(void)

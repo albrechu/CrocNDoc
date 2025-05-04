@@ -1,20 +1,28 @@
 // ***************************************************************************
-// assert - runtime assertion checking
+// debug
 // ***************************************************************************
 
 #pragma once
 
 // ---------------------------------------------------------------------------
-// assert(expr);
+
+enum debug_type_t
+{
+	DEBUG_TYPE_UNSIGNED_INT,
+	DEBUG_TYPE_SIGNED_INT,
+	DEBUG_TYPE_LONG_UNSIGNED_INT,
+	DEBUG_TYPE_LONG_SIGNED_INT,
+	DEBUG_TYPE_CHAR,
+	DEBUG_TYPE_POINTER,
+	DEBUG_TYPE_HEX,
+	DEBUG_TYPE_LONG_HEX,
+	DEBUG_TYPE_BINARY,
+	DEBUG_TYPE_LONG_BINARY,
+};
+
 // ---------------------------------------------------------------------------
 
-#ifndef NDEBUG
-void _f_assert_failed(char* file, unsigned int length, unsigned long int line, char* func, char* expr, unsigned int l_expr);
-#define assert(expr) \
-	(void)((expr) || (_f_assert_failed(__FILE__, sizeof(__FILE__), __LINE__, (char*) &__func__[0], #expr, sizeof(#expr)), 0))
-#else
-#define assert(expr)
-#endif
+void _f_debug(char* text, enum debug_type_t type, void* p_value, char* file, unsigned long int length, unsigned long int line);
 
 // ***************************************************************************
 // end of file

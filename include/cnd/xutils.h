@@ -40,11 +40,20 @@
 //	Utility Functions
 //
 void* memset(void* dest, int val, long unsigned int len);
-void beam_set_position(const i8 y, const i8 x);
+
+force_inline void beam_set_position(const i8 y, const i8 x)
+{
+	Reset0Ref();
+	// dp_VIA_cntl      = 0xCC;
+	dp_VIA_t1_cnt_lo = 0x90;
+	Moveto_d(y, x);
+}
+
 force_inline bool is_local(v2l const x)
 {
     return x.x < 128 && x.y < 128 && x.x > -129 && x.y > -129;
 }
+
 force_inline bool is_global(v2l const x)
 {
     return !is_local(x);

@@ -31,9 +31,4 @@
 //	Utility Functions
 //
 
-void beam_set_position(const i8 y, const i8 x)
-{
-	dp_VIA_cntl      = 0xCC;
-	dp_VIA_t1_cnt_lo = 0x90;
-	Moveto_d(y, x);
-}
+

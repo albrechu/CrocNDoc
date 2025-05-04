@@ -3,8 +3,8 @@
 // ***************************************************************************
 
 #include <vectrex.h>
-#include <lib/print/print.h>
-#include <lib/debug/debug.h>
+#include <lib/print.h>
+#include <lib/debug.h>
 // ---------------------------------------------------------------------------
 
 void _f_debug(char* text, enum debug_type_t	type, void* p_value, char* file, unsigned long int length, unsigned long int line)
