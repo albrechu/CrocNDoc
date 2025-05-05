@@ -86,34 +86,66 @@
 
 enum Tile_
 {
-    // Type
-    Tile_Empty,
-    Tile_Ground,
-    Tile_LeftWall,
-    Tile_RightWall,
-    Tile_Ceiling,
-    Tile_Platform,
-    Tile_Enemy,
-    Tile_Prop,
+    Tile_Top,
+    Tile_Bottom,
+    Tile_Left,
+    Tile_Right,
+    Tile_MiddleLeft,
+    Tile_MiddleRight,
+    Tile_Middle,
     Tile_Spikes,
-    Tile_TypeMax = 0x0F,
-    
-    // Tile_Crate = Tile_Prop | 0x10,
-    // Tile_Jumper,
-    // Tile_Barrel,
-    // Tile_Halunke,
-    // Tile_Gauner,
-    // Tile_Schuft,
-    // Tile_Strolch,
-    // Tile_Boesewicht,
+    // Enemies
+    Tile_E0,
+    Tile_E1,
+    Tile_E2,
+    Tile_E3,
+    Tile_E4,
+    Tile_E5,
+    Tile_E6,
+    Tile_E7,
+    // Props
+    Tile_P0,
+    Tile_P1,
+    Tile_P2,
+    Tile_P3,
+    Tile_P4,
+    Tile_P5,
+    Tile_P6,
+    Tile_P7,
+
+    Tile_Empty,
 
     E = Tile_Empty,
-    P = Tile_Platform,
-    TG = Tile_Ground,
-    TL = Tile_LeftWall,
-    TR = Tile_RightWall,
-    TC = Tile_Ceiling,
-    TS = Tile_Spikes,
+
+
+    // // Type
+    // Tile_Empty,
+    // Tile_Ground,
+    // Tile_LeftWall,
+    // Tile_RightWall,
+    // Tile_Ceiling,
+    // Tile_Platform,
+    // Tile_Enemy,
+    // Tile_Prop,
+    // Tile_Spikes,
+    // Tile_TypeMax = 0x0F,
+    
+    // // Tile_Crate = Tile_Prop | 0x10,
+    // // Tile_Jumper,
+    // // Tile_Barrel,
+    // // Tile_Halunke,
+    // // Tile_Gauner,
+    // // Tile_Schuft,
+    // // Tile_Strolch,
+    // // Tile_Boesewicht,
+
+    // E = Tile_Empty,
+    // P = Tile_Platform,
+    // TG = Tile_Ground,
+    // TL = Tile_LeftWall,
+    // TR = Tile_RightWall,
+    // TC = Tile_Ceiling,
+    // TS = Tile_Spikes,
     
 };
 typedef i8 Tile;

@@ -139,7 +139,7 @@ typedef i8 GameState;
 enum Velocity_
 {
     Velocity_Run      =  3,
-    Velocity_Bite     =  6,
+    Velocity_Bite     = 9,
 	Velocity_Friction = 1,
     Velocity_Jump     = 10,
     Velocity_JumpX    = 1,
@@ -241,10 +241,6 @@ typedef u8 EntityType;
  */
 enum Mesh_
 {
-    Mesh_Ground,
-    Mesh_Wall,
-    Mesh_Ceiling,
-    Mesh_Platform,
     Mesh_Spikes,
     Mesh_Breakable,
 	Mesh_CrocIdleRight,

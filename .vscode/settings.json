@@ -10,6 +10,8 @@
         "world.h": "c",
         "mesh.h": "c",
         "monitor.h": "c",
-        "static_assert.h": "c"
+        "static_assert.h": "c",
+        "vec_rum.h": "c",
+        "vec_rum_top.h": "c"
     }
 }

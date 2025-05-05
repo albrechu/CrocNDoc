@@ -330,7 +330,8 @@ void action_update(void)
                     }
                 }
             }
-            CAMERA.velocity.x = CAMERA.transform * Velocity_Bite;
+            if (CAMERA.velocity.y == 0)
+                CAMERA.velocity.x = CAMERA.transform * Velocity_Bite;
         }
             break;
         case CharacterState_HoldsProp: // Throw
@@ -402,7 +403,7 @@ bite_skip:
                 break;
             }
         }
-        else
+        else if (CAMERA.velocity.x > -Velocity_Run)
         {
             CAMERA.velocity.x = -Velocity_Run;
         }
@@ -427,7 +428,7 @@ bite_skip:
                 break;
             }
         }
-        else
+        else if (CAMERA.velocity.x < Velocity_Run)
         {
             CAMERA.velocity.x = Velocity_Run;
         }

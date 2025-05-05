@@ -250,20 +250,16 @@ const i8 breakable [] =
 const i8 spikes[] = 
 {
 	LENGTH(4),
-	8, 8,
-	-8, 8,
-	8, 8,
-	-8, 8,
+	64, 16,
+	-64, 16,
+	64, 16,
+	-64, 16,
 };
 
 const i8* const g_meshes[] = 
 {
-	ground,
-    wall,
-    ceiling,
-    platform,
-    breakable,
 	spikes,
+    breakable,
 	croc_idle_right,
 	croc_idle_left,
 	croc_arm,
