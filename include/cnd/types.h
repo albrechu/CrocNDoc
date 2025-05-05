@@ -138,13 +138,14 @@ typedef i8 GameState;
 
 enum Velocity_
 {
-    Velocity_Run      =  3,
+    Velocity_Run      = 3,
     Velocity_Bite     = 9,
 	Velocity_Friction = 1,
     Velocity_Jump     = 10,
     Velocity_JumpX    = 1,
     Velocity_ThrowX   = 5,
     Velocity_ThrowY   = 8,
+    Velocity_Jumper   = 16,
 
 };
 typedef i8 Velocity;
@@ -206,21 +207,17 @@ enum Character_
     Character_Croc,
     Character_Doc,
 };
-enum Prop_
-{
-    Prop_Box,
-    Prop_Barrel,
-};
 enum Enemy_
 {
-    Enemy_Wegelagerer,
+    Prop_Crate,
+    Prop_Barrel,
+    Prop_Max = Prop_Barrel,
     Enemy_Tunichtgut,
     Enemy_Halunke,
     Enemy_Gauner,
     Enemy_Schuft,
     Enemy_Strolch,
     Enemy_Boesewicht,
-    Enemy_Jumper, // Actually a prop
     // Enemy_Ganove,
     // Enemy_Spitzbube
     // Enemy_Schurke
@@ -242,7 +239,8 @@ typedef u8 EntityType;
 enum Mesh_
 {
     Mesh_Spikes,
-    Mesh_Breakable,
+    Mesh_BarrierVertical,
+    Mesh_BarrierHorizontal,
 	Mesh_CrocIdleRight,
 	Mesh_CrocIdleLeft,
 	Mesh_CrocArm,
@@ -292,6 +290,7 @@ typedef struct entity_t
     EntityType  type;  
     EntityState state;
     bool        isLocal;
+    bool        isEnemy;
     idx_t       id;
 } entity_t, *entity;
 
@@ -299,8 +298,6 @@ typedef struct player_t
 {
     Input    buttons, joystick;
     Action   action;
-    i8       armY;
-    i8       arm[13];
 } player_t, *player;
 
 typedef struct game_t

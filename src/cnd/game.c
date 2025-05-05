@@ -85,8 +85,6 @@ void game_soft_reset(void)
     // Assign the initial player state 
     // Assign Game State
     GAME.state = GameState_Play;
-    mesh_load(Mesh_CrocArm, 0, PLAYER.arm);
-    PLAYER.armY       = 15;
     CAMERA.mesh       = Mesh_CrocIdleRight;
     CAMERA.isLocal   = true;
     CAMERA.state     = CharacterState_Idle;
@@ -113,17 +111,24 @@ void game_update_play(void)
     // Process player input
 	action_update();
     
-    for (idx_t e = 0; e < WORLD.enemies; ++e)
+    for (idx_t idx = 1; idx < WORLD.entityCount; ++idx)
     {
-        switch (ENEMY(e).type)
+        entity e = &WORLD.entities[WORLD.entityIdxs[idx]];
+        switch(e->type)
         {
+        case Prop_Crate:
+            break;
+        case Prop_Barrel:
+            break;
+        case Enemy_Tunichtgut:
+            break;
         case Enemy_Halunke: // Walk towards player
-            ENEMY(e).velocity.x += I8(U8(CAMERA.position.x - ENEMY(e).position.x) & 0x80) >> 7;
+            e->velocity.x += I8(U8(CAMERA.position.x - e->position.x) & 0x80) >> 7;
             break;
         case Enemy_Gauner: // Jump and shoot
-            if (ENEMY(e).velocity.y == 0 && (GAME.ticks & 0x3F) == 0)
+            if (e->velocity.y == 0 && (GAME.ticks & 0x3F) == 0)
             {
-                ENEMY(e).velocity.y += Velocity_Jump;
+                e->velocity.y += Velocity_Jump;
             }
             if ((GAME.ticks & 0x3F) == 0)
             {
@@ -132,9 +137,9 @@ void game_update_play(void)
             break;
         case Enemy_Schuft: // Fliegeviech
         {
-            const i16 dx = CAMERA.position.x - ENEMY(e).position.x;
-            const i16 dy = CAMERA.position.y - ENEMY(e).position.y;
-            if (is_local(ENEMY(e).position))
+            const i16 dx = CAMERA.position.x - e->position.x;
+            const i16 dy = CAMERA.position.y - e->position.y;
+            if (e->isLocal)
             {
 
             }
@@ -142,8 +147,8 @@ void game_update_play(void)
             {
 
             }
-            ENEMY(e).velocity.x += ((dx > 0) - (dx < 0)) * 1;
-            ENEMY(e).velocity.y += ((dy > 0) - (dy < 0)) * 1;
+            e->velocity.x += ((dx > 0) - (dx < 0)) * 1;
+            e->velocity.y += ((dy > 0) - (dy < 0)) * 1;
         }
             break;
         case Enemy_Strolch:
@@ -153,20 +158,29 @@ void game_update_play(void)
         default:
             break;
         }
-    }
 
+        // Check if entity is local.
+        u8 distX = Abs_b(e->tile.x - CAMERA.tile.x);
+        u8 distY = Abs_b(e->tile.y - CAMERA.tile.y);
+        e->isLocal = distX <= 4 && distY <= 4;
+        if (!e->isLocal)
+        {
+            if (distX >= 10 || distY >= 10) // Perhaps remove entity if too far away
+            {
+                const idx_t last = WORLD.entityCount - 1;
+                if (idx != last) // Swap with last
+                {
+                    idx_t tmp = WORLD.entityIdxs[idx];
+                    WORLD.entityIdxs[idx]  = WORLD.entityIdxs[last];
+                    WORLD.entityIdxs[last] = tmp;
+                }
+                WORLD.entityCount = last;
+            }
+        }
+    }
+    
     world_progress();
     // print_signed_int(-90, -50, WORLD.drawList.lines);
-    switch (CAMERA.state)
-    {
-    case CharacterState_Idle:    
-        PLAYER.arm[1]  = -10 + CAMERA.velocity.y + CAMERA.transform * (CAMERA.velocity.x >> 2);
-        PLAYER.arm[12] = -(PLAYER.arm[2] = CAMERA.velocity.x);
-        break;
-    default:
-        break;
-    }
-
     ++GAME.ticks;
     // GAME.ticks = (GAME.ticks + 1) & 0x3F;
 }
@@ -195,8 +209,8 @@ void game_render_play(void)
         beam_set_position(4, CAMERA.transform * -4);
         Draw_VLc(mesh_get(CAMERA.mesh)); // Draw body
         // Moveto_d(PLAYER.armY - 10, (PLAYER.transform == 1) * 7 - 5);
-        Moveto_d(PLAYER.armY - 5, (CAMERA.transform) * 7 - 4);
-        Draw_VLc(PLAYER.arm);
+        Moveto_d(5, (CAMERA.transform) * 7 - 4);
+        Draw_VLc(mesh_get(Mesh_CrocArm)); 
         break;
     case Character_Doc:
         beam_set_position(4, CAMERA.transform * -4);
@@ -211,45 +225,55 @@ void game_render_play(void)
         break;
     }
 
-    // Draw Props
-    for (idx_t p = 0; p < WORLD.props; ++p)
+    // Draw Entities
+    for (i8 i = 1; i < WORLD.entityCount; ++i)
     {
-        const entity prop = &WORLD.prop[p];
-        switch (PROP(p).state)
+        entity e = &WORLD.entities[WORLD.entityIdxs[i]];
+        if (e->isLocal)
         {
-        case PropState_Held:
-            beam_set_position(-3, 0);
-            Draw_VLc(mesh_get(prop->mesh + CAMERA.transform));
-            break;
-        default:
-            if (prop->isLocal)
-            {
-                v2l delta;
-                delta.x = prop->position.x - CAMERA.position.x;
-                delta.y = CAMERA.position.y - prop->position.y;
-                beam_set_position((i8)delta.y, (i8)delta.x);
-                Draw_VLc(mesh_get(prop->mesh));
-            }
-            break;
+            beam_set_position(I8(CAMERA.position.y - e->position.y), I8(e->position.x - CAMERA.position.x));
+            Draw_VLc(mesh_get(e->mesh + CAMERA.transform));
         }
     }
     
-    // Draw Enemies
-    for (idx_t e = 0; e < WORLD.enemies; ++e)
-    {
-        const entity enemy = &WORLD.enemy[e];
-        if (enemy->isLocal)
-        {
-            v2l delta;
-            delta.x = enemy->position.x - CAMERA.position.x;
-            delta.y = enemy->position.y - CAMERA.position.y;
-            beam_set_position(delta.y_lsb, delta.x_lsb);
-            Draw_VLc(mesh_get(enemy->mesh + CAMERA.transform));
-        }
-    }
 
-    beam_set_position(0, 0);
-    Draw_Line_d(CAMERA.velocity.y, CAMERA.velocity.x);
+    // // Draw Props
+    // for (idx_t p = 0; p < WORLD.props; ++p)
+    // {
+    //     const entity prop = &WORLD.prop[p];
+    //     switch (PROP(p).state)
+    //     {
+    //     case PropState_Held:
+    //         beam_set_position(-3, 0);
+    //         Draw_VLc(mesh_get(prop->mesh + CAMERA.transform));
+    //         break;
+    //     default:
+    //         if (prop->isLocal)
+    //         {
+    //             v2l delta;
+    //             delta.x = prop->position.x - CAMERA.position.x;
+    //             delta.y = CAMERA.position.y - prop->position.y;
+    //             beam_set_position((i8)delta.y, (i8)delta.x);
+    //             Draw_VLc(mesh_get(prop->mesh));
+    //         }
+    //         break;
+    //     }
+    // }
+    
+    // // Draw Enemies
+    // for (idx_t e = 0; e < WORLD.enemies; ++e)
+    // {
+    //     const entity enemy = &WORLD.enemy[e];
+    //     if (enemy->isLocal)
+    //     {
+    //         v2l delta;
+    //         delta.x = enemy->position.x - CAMERA.position.x;
+    //         delta.y = enemy->position.y - CAMERA.position.y;
+    //         beam_set_position(delta.y_lsb, delta.x_lsb);
+    //         Draw_VLc(mesh_get(enemy->mesh + CAMERA.transform));
+    //     }
+    // }
+
     // Draw Background
     world_draw();
 }
@@ -306,27 +330,28 @@ void action_update(void)
         {
         case CharacterState_Idle: // Grab if one is close enough
         {
-            for (idx_t pi = 0; pi < WORLD.props; ++pi)
+            for (idx_t pi = 1; pi < WORLD.entityCount; ++pi)
             {
-                entity p = &WORLD.prop[pi];
-                if (p->isLocal && p->state == PropState_Idle)
+                entity e = &WORLD.entities[WORLD.entityIdxs[pi]];
+                if (!e->isEnemy)
                 {
-                    v2i delta;
-                    delta.y = I8(p->position.y - CAMERA.position.y);
-                    delta.x = I8(p->position.x - CAMERA.position.x);
-                    if (manhattan(delta.x, delta.y) < 0x15) // Manhattan
+                    if (e->isLocal && e->state == PropState_Idle)
                     {
-                        CAMERA.state = CharacterState_HoldsProp;
-                        WORLD.prop[pi].state = PropState_Held;
-                        if (pi != 0) // Game needs to ensure that a hold prop is always at idx 0
+                        v2i delta;
+                        delta.y = I8(e->position.y - CAMERA.position.y);
+                        delta.x = I8(e->position.x - CAMERA.position.x);
+                        if (manhattan(delta.x, delta.y) < 0x15) // Manhattan
                         {
-                            entity_t tmp   = WORLD.prop[0];
-                            WORLD.prop[0]  = WORLD.prop[pi];
-                            WORLD.prop[pi] = tmp;    
+                            CAMERA.state = CharacterState_HoldsProp;
+                            e->state = PropState_Held;
+                            if (pi != 0) // Game needs to ensure that a hold prop is always at idx 0
+                            {
+                                idx_t tmpIdx = WORLD.entityIdxs[0];
+                                WORLD.entityIdxs[0] = WORLD.entityIdxs[pi];
+                                WORLD.entityIdxs[pi] = tmpIdx;    
+                            }
+                            goto bite_skip;
                         }
-                        PLAYER.armY  = 9;
-                        mesh_load(Mesh_CrocArmForward, CAMERA.transform ^ 1, PLAYER.arm);
-                        goto bite_skip;
                     }
                 }
             }
@@ -335,21 +360,21 @@ void action_update(void)
         }
             break;
         case CharacterState_HoldsProp: // Throw
+        {
             CAMERA.state = CharacterState_Idle;
-            mesh_load(Mesh_CrocArm, 0, PLAYER.arm);
-            PLAYER.armY = 15;
-
-            WORLD.prop[0].state     = PropState_Thrown;
-            WORLD.prop[0].transform = CAMERA.transform;
+            entity e = &WORLD.entities[WORLD.entityIdxs[0]];
+            e->state     = PropState_Thrown;
+            e->transform = CAMERA.transform;
             if (JOYS == Input_JoyDown)
             {
-                WORLD.prop[0].velocity.y = -Velocity_ThrowY;
+                e->velocity.y = -Velocity_ThrowY;
             }
             else
             {
-                WORLD.prop[0].velocity.x = CAMERA.transform * Velocity_ThrowX;
-                WORLD.prop[0].velocity.y = Velocity_ThrowY;
+                e->velocity.x = CAMERA.transform * Velocity_ThrowX;
+                e->velocity.y = Velocity_ThrowY;
             }
+        }
             break;
         default:
             break;
@@ -389,19 +414,7 @@ bite_skip:
         if (CAMERA.transform == 1)
         {
             CAMERA.transform = -1;
-            switch (CAMERA.type)
-            {
-            case Character_Croc:
-                CAMERA.mesh = Mesh_CrocIdleLeft;
-                if (CAMERA.state == CharacterState_HoldsProp)
-                    mesh_load(Mesh_CrocArmForward, CAMERA.transform ^ 1, PLAYER.arm);
-                break;
-            case Character_Doc:
-                CAMERA.mesh = Mesh_DocIdleLeft;
-                break;
-            default:
-                break;
-            }
+            CAMERA.mesh = CAMERA.type == Character_Croc ? Mesh_CrocIdleLeft : Mesh_DocIdleLeft;
         }
         else if (CAMERA.velocity.x > -Velocity_Run)
         {
@@ -414,19 +427,7 @@ bite_skip:
         if (CAMERA.transform == -1)
         {
             CAMERA.transform = 1;
-            switch (CAMERA.type)
-            {
-            case Character_Croc:
-                CAMERA.mesh = Mesh_CrocIdleRight;
-                if (CAMERA.state == CharacterState_HoldsProp)
-                    mesh_load(Mesh_CrocArmForward, CAMERA.transform ^ 1, PLAYER.arm);
-                break;
-            case Character_Doc:
-                CAMERA.mesh = Mesh_DocIdleRight;
-                break;
-            default:
-                break;
-            }
+            CAMERA.mesh = CAMERA.type == Character_Croc ? Mesh_CrocIdleRight : Mesh_DocIdleRight;
         }
         else if (CAMERA.velocity.x < Velocity_Run)
         {

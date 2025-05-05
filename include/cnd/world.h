@@ -33,10 +33,7 @@
 
 #define WORLD             g_world
 #define LIST              WORLD.drawList
-#define CAMERA            WORLD.player
-#define ENTITY(idx)       (&WORLD.player)[idx]
-#define ENEMY(idx)        WORLD.enemy[idx]
-#define PROP(idx)         WORLD.prop[idx]
+#define CAMERA            WORLD.entities[0]
 #define TILE_SCALE_BITS   6
 #define TILES_VIEW_WIDTH  I8(256u >> TILE_SCALE_BITS)
 #define TILES_VIEW_HEIGHT I8(256u >> TILE_SCALE_BITS)
@@ -49,8 +46,9 @@
 // #define DRAW_STRIPS_MAX 8
 #define DRAW_STRIPS_MAX 20
 #define DRAW_LINES_MAX  40
-#define ENEMIES_MAX     3
-#define PROPS_MAX       3
+// #define ENEMIES_MAX     3
+#define ENTITIES_MAX    8
+// #define PROPS_MAX       3
 
 /////////////////////////////////////////////////////////////////////////
 //	Types
@@ -87,14 +85,21 @@
 enum Tile_
 {
     Tile_Top,
+    Tile_TopLeft,
+    Tile_TopRight,
     Tile_Bottom,
+    Tile_BottomLeft,
+    Tile_BottomRight,
     Tile_Left,
     Tile_Right,
     Tile_MiddleLeft,
     Tile_MiddleRight,
     Tile_Middle,
     Tile_Spikes,
-    // Enemies
+    Tile_Jumper,
+    Tile_BarrierVertical,
+    Tile_BarrierHorizontal,
+    // Entities
     Tile_E0,
     Tile_E1,
     Tile_E2,
@@ -103,50 +108,16 @@ enum Tile_
     Tile_E5,
     Tile_E6,
     Tile_E7,
-    // Props
-    Tile_P0,
-    Tile_P1,
-    Tile_P2,
-    Tile_P3,
-    Tile_P4,
-    Tile_P5,
-    Tile_P6,
-    Tile_P7,
+    Tile_E8,
+    Tile_E9,
+    Tile_E10,
+    Tile_E11,
+    Tile_E12,
+    Tile_E13,
+    Tile_E14,
+    Tile_E15,
 
     Tile_Empty,
-
-    E = Tile_Empty,
-
-
-    // // Type
-    // Tile_Empty,
-    // Tile_Ground,
-    // Tile_LeftWall,
-    // Tile_RightWall,
-    // Tile_Ceiling,
-    // Tile_Platform,
-    // Tile_Enemy,
-    // Tile_Prop,
-    // Tile_Spikes,
-    // Tile_TypeMax = 0x0F,
-    
-    // // Tile_Crate = Tile_Prop | 0x10,
-    // // Tile_Jumper,
-    // // Tile_Barrel,
-    // // Tile_Halunke,
-    // // Tile_Gauner,
-    // // Tile_Schuft,
-    // // Tile_Strolch,
-    // // Tile_Boesewicht,
-
-    // E = Tile_Empty,
-    // P = Tile_Platform,
-    // TG = Tile_Ground,
-    // TL = Tile_LeftWall,
-    // TR = Tile_RightWall,
-    // TC = Tile_Ceiling,
-    // TS = Tile_Spikes,
-    
 };
 typedef i8 Tile;
 
@@ -182,16 +153,17 @@ typedef struct world_t
     // tile_t      tiles[WORLD_HEIGHT * WORLD_WIDTH];
     draw_list_t  drawList;
     // i16         hazard; // Hazard Height 
-    entity_t     player;
-    entity_t     enemy[ENEMIES_MAX];
-    entity_t     prop[PROPS_MAX];
-    i8           enemies, props;
-    EntityStatus enemyStatus[16];
-    EntityStatus propStatus[16];
+    entity_t     entities[1 + ENTITIES_MAX];
+    idx_t        entityIdxs[1 + ENTITIES_MAX];
+    i8           entityCount;
+    // i8           enemies, props;
+    // entity_t     enemy[ENEMIES_MAX];
+    // entity_t     prop[PROPS_MAX];
+    EntityStatus entityStatus[16];
     v2i          selectedTile;
     idx_t        selectedEntity;
-    // Stage       stage;
     const Tile* tileset;
+    const EntityType* pentities;
     i8 ticks;
     i8 drag;
 } world_t;

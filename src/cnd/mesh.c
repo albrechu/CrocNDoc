@@ -74,6 +74,50 @@ const i8 croc_idle_left[] =
 	 0, -4,
 };
 
+const i8 croc_lunge_right[] = 
+{
+	LENGTH(17),
+	 0, -2, 
+	 5,  0, 
+	 -2, 2, 
+	 2,  2, 
+	 0,  3, 
+	 -1, 2, 
+	 6,  2, 
+	 0,  1, 
+	 -5, 0, 
+	 0,  2, 
+	 -3, 0, 
+	 0, -2, 
+	-3, -9, 
+	-3, -1, 
+	-3,  2, 
+	 3, -5, 
+	  4, 0, 
+};
+
+const i8 croc_lunge_left[] = 
+{
+	LENGTH(17),
+	  0, -2,
+	  -5, 0,
+	   2, -2,
+	  -2, -2,
+	   0, -3,
+	   1, -2,
+	  -6, -2,
+	   0, -1,
+	   5, 0,
+	   0, -2,
+	   3, 0,
+	  0, 2,
+	  3, 9,
+	  3, 1,
+	   3,-2,
+	 -3, 5,
+	  -4, 0,
+};
+
 const i8 croc_arm[] = 
 {
 	LENGTH(6),
@@ -208,43 +252,29 @@ const i8 mantis_left[] =
 const i8 jumper[] = 
 {
 	LENGTH(5),
-	0, -10,
-	5, 10,
-	0, -10,
-	5, 10,
-	0, -10,
-};
-
-const i8 ground [] = 
-{
-	LENGTH(1),
-	0, 64,
-};
-
-const i8 wall [] = 
-{
-	LENGTH(1),
-	-64, 0,
-};
-
-const i8 ceiling [] = 
-{
-	LENGTH(1),
-	0, 64,
-};
-
-const i8 platform [] = 
-{
-	LENGTH(1),
+	0, 32,
+	5, -32,
+	0, 32,
+	5, -32,
 	0, 32,
 };
 
-const i8 breakable [] = 
+const i8 barrierVertical [] = 
 {
-	LENGTH(2),
-	0, 32,
-	-5, -32,
-	0, 32,
+	LENGTH(4),
+	-16, -10,
+	-16,  10,
+	-16, -10,
+	-16,  10,
+};
+
+const i8 barrierHorizontal[] = 
+{
+	LENGTH(4),
+	 10, -16,
+	-10, -16,
+	 10, -16,
+	-10, -16,
 };
 
 const i8 spikes[] = 
@@ -259,9 +289,10 @@ const i8 spikes[] =
 const i8* const g_meshes[] = 
 {
 	spikes,
-    breakable,
-	croc_idle_right,
-	croc_idle_left,
+    barrierVertical,
+	barrierHorizontal,
+	croc_idle_right,  // croc_lunge_right, //croc_idle_right,
+	croc_idle_left, // croc_lunge_left, //croc_idle_left,
 	croc_arm,
 	croc_arm_forward,
 	doc_body_right,

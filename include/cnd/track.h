@@ -91,7 +91,7 @@ typedef struct track_t
 extern const track_t g_yellow;
 extern const track_t g_level0;
 extern const track_t g_corneria;
-extern const track_t g_jibjib;
+extern const track_t g_jibjig;
 extern const track_t* g_tracks[];
 
 inline const track_t* track_get(Track const track)
