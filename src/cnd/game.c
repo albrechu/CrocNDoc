@@ -79,17 +79,30 @@ void game_init(void)
 void game_soft_reset(void) 
 {
 	MEMZERO(GAME);
-    world_create(Stage_Sewers);
+    game_enter_stage(Stage_Sewers);
     // world_load_stage(Stage_Sewers);
     plot_init();
     // Assign the initial player state 
     // Assign Game State
-    GAME.state = GameState_Play;
-    CAMERA.mesh       = Mesh_CrocIdleRight;
+    
+    // plot_set_plot(Plot_WakeUp);
+}
+
+void game_enter_stage(Stage stage)
+{
+    world_create(Stage_Sewers);
+    GAME.state       = GameState_Play;
+    CAMERA.mesh      = Mesh_CrocIdleRight;
     CAMERA.isLocal   = true;
     CAMERA.state     = CharacterState_Idle;
-    CAMERA.transform  = 1;
-    // plot_set_plot(Plot_WakeUp);
+    CAMERA.transform = 1;
+}
+
+void game_set_gameover(void)
+{
+    GAME.state = GameState_GameOver;
+    // Check if score is larger and perhaps add to highscore
+    //PLAYER.score
 }
 
 void game_start_frame(void)
@@ -97,13 +110,65 @@ void game_start_frame(void)
     DP_to_C8();
     dp_VIA_t1_cnt_lo = 1;
     if (Vec_Music_Flag == 0)
-    {
         Vec_Music_Flag = 1;
-    }
     
     Init_Music_chk((const void* const)g_tracks[GAME.track]);
+    Explosion_Snd(GAME.explosion);
     Wait_Recal(); // Synchronize to frame
     Do_Sound();
+}
+
+void routine_barrel_break(entity e)
+{
+    if (--e->ticks != 0)
+    {
+        e->velocity.y = 0;    
+        e->velocity.x = 0;
+    }
+    else // Kill it
+    {
+
+    }
+}
+
+void routine_barrel_thrown(entity e)
+{
+    if (e->velocity.x == 0)
+    {
+        WORLD.entityStatus[e->id] = EntityStatus_Dead;
+        e->ticks   = 10;
+        e->routine = routine_barrel_break;
+    }
+}
+
+void routine_halunke_follow(entity e)
+{
+    e->velocity.x += I8(U8(CAMERA.position.x - e->position.x) & 0x80) >> 7;
+    if (e->isLocal)
+    {
+        i8 dy = I8(e->position.y - e->position.y);
+        i8 dx = I8(e->position.x - e->position.x);
+        if (manhattan(dy, dx) < 0x15)
+        {
+            dy = Abs_b(dy);
+            dx = Abs_b(dx);
+            if (dy > dx)
+            {
+            }
+            else
+            {
+                if (PLAYER.isOtherCharacterDead)
+                {
+                    game_set_gameover();
+                }
+                else
+                {
+                    CAMERA.type ^= Character_Doc;
+                    PLAYER.isOtherCharacterDead = true;
+                }
+            }
+        }
+    }
 }
 
 void game_update_play(void)
@@ -111,20 +176,35 @@ void game_update_play(void)
     // Process player input
 	action_update();
     
-    for (idx_t idx = 1; idx < WORLD.entityCount; ++idx)
+    for (idx_t i = 1; i < WORLD.entityCount; ++i)
     {
-        entity e = &WORLD.entities[WORLD.entityIdxs[idx]];
+        const idx_t idx = WORLD.entityIdxs[i];
+        entity e = &WORLD.entities[idx];
+
+        // Check if entity is local.
+        i8 distX = e->tile.x - CAMERA.tile.x;
+        i8 distY = e->tile.y - CAMERA.tile.y;
+        e->isLocal = distX <= 4 && distY <= 4;
+        if (!e->isLocal)
+        {
+            if (distX >= 10 || distY >= 10) // Possibly remove entity if too far away
+            {
+                // assert(false);
+                const idx_t last = WORLD.entityCount - 1;
+                if (i != last) // Swap with last
+                {
+                    WORLD.entityStatus[e->id] = EntityStatus_Alive;
+                    WORLD.entityIdxs[i]  = WORLD.entityIdxs[last];
+                    WORLD.entityIdxs[last] = idx;
+                }
+                --WORLD.entityCount;
+            }
+        }
+     
+        e->routine(e);
+
         switch(e->type)
         {
-        case Prop_Crate:
-            break;
-        case Prop_Barrel:
-            break;
-        case Enemy_Tunichtgut:
-            break;
-        case Enemy_Halunke: // Walk towards player
-            e->velocity.x += I8(U8(CAMERA.position.x - e->position.x) & 0x80) >> 7;
-            break;
         case Enemy_Gauner: // Jump and shoot
             if (e->velocity.y == 0 && (GAME.ticks & 0x3F) == 0)
             {
@@ -159,30 +239,10 @@ void game_update_play(void)
             break;
         }
 
-        // Check if entity is local.
-        u8 distX = Abs_b(e->tile.x - CAMERA.tile.x);
-        u8 distY = Abs_b(e->tile.y - CAMERA.tile.y);
-        e->isLocal = distX <= 4 && distY <= 4;
-        if (!e->isLocal)
-        {
-            if (distX >= 10 || distY >= 10) // Perhaps remove entity if too far away
-            {
-                const idx_t last = WORLD.entityCount - 1;
-                if (idx != last) // Swap with last
-                {
-                    idx_t tmp = WORLD.entityIdxs[idx];
-                    WORLD.entityIdxs[idx]  = WORLD.entityIdxs[last];
-                    WORLD.entityIdxs[last] = tmp;
-                }
-                WORLD.entityCount = last;
-            }
-        }
     }
     
     world_progress();
-    // print_signed_int(-90, -50, WORLD.drawList.lines);
     ++GAME.ticks;
-    // GAME.ticks = (GAME.ticks + 1) & 0x3F;
 }
 
 void game_update_plot(void)
@@ -201,6 +261,7 @@ void game_update_plot(void)
 void game_render_play(void)
 {
     // Draw Parallax
+
 
     // Draw Player
     switch (CAMERA.type)
@@ -236,44 +297,6 @@ void game_render_play(void)
         }
     }
     
-
-    // // Draw Props
-    // for (idx_t p = 0; p < WORLD.props; ++p)
-    // {
-    //     const entity prop = &WORLD.prop[p];
-    //     switch (PROP(p).state)
-    //     {
-    //     case PropState_Held:
-    //         beam_set_position(-3, 0);
-    //         Draw_VLc(mesh_get(prop->mesh + CAMERA.transform));
-    //         break;
-    //     default:
-    //         if (prop->isLocal)
-    //         {
-    //             v2l delta;
-    //             delta.x = prop->position.x - CAMERA.position.x;
-    //             delta.y = CAMERA.position.y - prop->position.y;
-    //             beam_set_position((i8)delta.y, (i8)delta.x);
-    //             Draw_VLc(mesh_get(prop->mesh));
-    //         }
-    //         break;
-    //     }
-    // }
-    
-    // // Draw Enemies
-    // for (idx_t e = 0; e < WORLD.enemies; ++e)
-    // {
-    //     const entity enemy = &WORLD.enemy[e];
-    //     if (enemy->isLocal)
-    //     {
-    //         v2l delta;
-    //         delta.x = enemy->position.x - CAMERA.position.x;
-    //         delta.y = enemy->position.y - CAMERA.position.y;
-    //         beam_set_position(delta.y_lsb, delta.x_lsb);
-    //         Draw_VLc(mesh_get(enemy->mesh + CAMERA.transform));
-    //     }
-    // }
-
     // Draw Background
     world_draw();
 }

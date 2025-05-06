@@ -261,7 +261,7 @@ typedef i8 Mesh;
 
 enum Stage_
 {
-    Stage_Sewers,
+    Stage_Sewers,   
     Stage_Waterways,
     Stage_Moltenlands,
     Stage_Bonus,
@@ -280,8 +280,11 @@ typedef i8 Track;
 /////////////////////////////////////////////////////////////////////////
 //	Types
 //
-typedef struct entity_t
+typedef struct entity_t entity_t, *entity;
+typedef void (*routine_t)(entity);
+struct entity_t
 {
+    routine_t   routine;
     v2l         position;
     v2i         velocity;
 	v2i         tile;
@@ -292,12 +295,15 @@ typedef struct entity_t
     bool        isLocal;
     bool        isEnemy;
     idx_t       id;
-} entity_t, *entity;
+    i8          ticks:
+};
 
 typedef struct player_t
 {
     Input    buttons, joystick;
     Action   action;
+    u16      score;
+    bool     isOtherCharacterDead;
 } player_t, *player;
 
 typedef struct game_t
@@ -305,10 +311,10 @@ typedef struct game_t
     // Entities
     player_t player;
     // Game State
-    GameState state;
-    u8        ticks;
-
-    Track     track;
+    GameState   state;
+    u8          ticks;
+    Track       track;
+    void const* explosion;
 } game_t, *game;
 
 #endif /* TYPES_H */

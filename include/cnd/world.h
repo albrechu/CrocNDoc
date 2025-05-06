@@ -84,13 +84,17 @@
 
 enum Tile_
 {
+    Tile_Top2,
     Tile_Top,
     Tile_TopLeft,
     Tile_TopRight,
+    Tile_Bottom2, 
     Tile_Bottom,
     Tile_BottomLeft,
     Tile_BottomRight,
+    Tile_Left2,
     Tile_Left,
+    Tile_Right2,
     Tile_Right,
     Tile_MiddleLeft,
     Tile_MiddleRight,
@@ -116,6 +120,9 @@ enum Tile_
     Tile_E13,
     Tile_E14,
     Tile_E15,
+    // Portal
+    Tile_Portal0,
+    Tile_Portal1,
 
     Tile_Empty,
 };
@@ -173,6 +180,7 @@ extern world_t g_world;
 void world_create(Stage const stage);
 void world_draw(void);
 void world_progress(void);
+void game_enter_stage(Stage stage);
 
 // void world_load_stage(Stage const stage);
 void tile_write_list();

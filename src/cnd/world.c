@@ -15,19 +15,23 @@
 enum TileAlias
 {
     E   = Tile_Empty,
+    T2  = Tile_Top2,
     T   = Tile_Top,
     TL  = Tile_TopLeft,
     TR  = Tile_TopRight,
+    B2   = Tile_Bottom2,
     B   = Tile_Bottom,
     BL  = Tile_BottomLeft,
     BR  = Tile_BottomRight,
+    L2   = Tile_Left2,
     L   = Tile_Left,
+    R2   = Tile_Right2,
     R   = Tile_Right,
     M   = Tile_Middle,
     S   = Tile_Spikes,
     J   = Tile_Jumper,
-    B1  = Tile_BarrierVertical,
-    B2  = Tile_BarrierHorizontal,
+    BV  = Tile_BarrierVertical,
+    BH  = Tile_BarrierHorizontal,
     // Entities
     E0  = Tile_E0,
     E1  = Tile_E1,
@@ -45,6 +49,9 @@ enum TileAlias
     E13 = Tile_E13,
     E14 = Tile_E14,
     E15 = Tile_E15,
+    // Portals
+    P0  = Tile_Portal0,
+    P1  = Tile_Portal1,
 };
 
 /** 
@@ -55,7 +62,7 @@ enum TileAlias
  * Stage_Sewers:
  *                  ________
  *  _____           |   __ -|
- * |____ |    ______|  |__|-|           
+ * |___| |    ______|  |__|-|           
  *     | |___| ______ _____-|
  *     |_____ -|    |=|
  *          |__|    | |_______________
@@ -63,57 +70,29 @@ enum TileAlias
  *                        |       _   _____=>
  *                        |wwwwwwwwww|
  */
-// static const Tile g_stageSewers[] = 
-// {
-//     TW, TC, TC, TC, TC, TC, TC, TW,  E,  E,  E,  E, TW, TC, TC, TC, TC, TC,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,
-//     TW,  E,  E,  E, TW,  E,  E, TW,  E,  E,  E,  E, TW,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,
-//     TW,  E,  E,  E, TW,  E,  E, TW,  E,  E,  E,  E, TW,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,
-//     TW,  E,  E,  E, TE,  E,  E, TW,  E,  E,  E,  E, TW,  E, TG, TG, TG,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,
-//     TW, TG, TG, TG, TG,  E,  E, TW,  E,  E,  E,  E, TW,  E, TW,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,
-//      E,  E,  E,  E, TW,  E,  E, TW,  E,  E,  E,  E, TW,  E, TW,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,
-//      E,  E,  E,  E, TW,  P,  E, TW,  E,  E,  E,  E, TW,  E, TW,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,
-//      E,  E,  E,  E, TW,  E,  E, TW,  E,  E,  E,  E, TW,  E, TW,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,
-//      E,  E,  E,  E, TW,  E,  P, TW, TC, TC, TC, TC, TW,  E, TW, TC, TC,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,
-//      E,  E,  E,  E, TW,  E,  E, TW,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,
-//      E,  E,  E,  E, TW,  P,  E, TW,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,
-//      E,  E,  E,  E, TW,  E,  E,  E,  E,  E,  E, TW, TG, TE, TG, TG, TG, TG, TG, TG,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,
-//      E,  E,  E,  E, TW,  E,  E,  E,  E,  E,  P, TW, TW,  E, TW,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,
-//      E,  E,  E,  E, TW,  E, TP,  E,  E,  E,  E, TW, TW,  E, TW,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,
-//      E,  E,  E,  E, TW, TG, TG, TG,  E,  E,  E, TW, TW,  E, TW,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,
-//      E,  E,  E,  E,  E,  E,  E, TW,  E,  E,  E, TW, TW,  E, TW,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,
-//      E,  E,  E,  E,  E,  E,  E, TW, TG, TG, TG, TW, TW,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,
-//      E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E, TW,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,
-//      E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E, TW,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,
-//      E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E, TW, TG, TG,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,
-//      E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E, TW,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,
-//      E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E, TW,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,
-//      E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E, TW, TS, TS, TS, TS, TS,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,
-//      E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,  E,
-// };
-
 static const Tile g_stageSewers[] = 
 {
-      E,   B,   B,   B,   E,   E,   E,   E,   E,   B,   B,   B,   B,   B,   B,   B,   B,   B,   E,   E,   E,   E,   E,   E,
-      R,   E,   R,   E,  TR,   E,   E,   E,   R,   E,   E,   E,   E,   E,   E,   E,   E,   E,   L,   E,   E,   E,   E,   E,
-      R,   E,  B1,   E,   R,   E,   E,   E,   R,   E,   B,   B,   B,   B,   B,   E,   E,   E,   L,   E,   E,   E,   E,   E,
-      R,   T,  TR,   E,   R,   E,   E,   E,   R,   E,   L,   E,   E,   E,   R,   E,   E,   E,   L,   E,   E,   E,   E,   E,
-      R,   E,   R,   M,   R,   E,   E,   E,   R,   E,   L,   E,   E,   E,   R,   E,   E,   E,   L,   E,   E,   E,   E,   E,
-      R,   E,   R,   E,   R,   E,   E,   E,   R,   E,   L,   E,   E,   E,   R,   E,   E,   E,   L,   E,   E,   E,   E,   E,
-      R,   E,   R,   E,   R,   E,   E,   E,   R,   E,   T,   T,   T,   T,   T,   T,   E,   B,   L,   E,   E,   E,   E,   E,
-      R,   E,   R,   E,   R,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   T,   E,   L,   E,   E,   E,   E,   E,
-      R,   E,   R,   M,   E,   E,   E,   E,   E,   E,   E,   E,  E2,   E,  E3,   E,  E8,   B,   L,   E,   E,   E,   E,   E,
-      R,   E,   R,   E,   E,   E,   E,   E,   E,   E,   B,   B,   B,   B,   B,   B,   B,   B,   L,   B,   B,   B,   B,   B,
-      R,   E,   R,   E,   E,   E,   M,  TL,  TR,  B2,   L,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   R,   E,
-      R,   E,   E,  BL,   E,   E,   E,   L,   R,   E,   L,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   R,   E,
-      R,   E,   E,   E,   T,   L,  E6,   L,   R,   E,   L,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,  E9,   R,   E, 
-      R,   E,   E,   E,   E,   L,   M,   L,   R,   E,   L,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   R,   E,
-      R,   E,   E,   E,   E,   T,   T,   E,   R,   E,   E,   E,   E,   E,   M,   E,   E,   E,   E,   E,   E,   E,   R,   E,
-      R,   E,   E,   E,   E,   E,   E,   E,   R,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   R,   E,
-      R,   E,   E,   E,   E,   E,   E,   E,   R,   E,   E,   E,  E7,   E,   E,   E,   E,   E,   E,   E,   E,   E,   R,   E,
+      E,   B,   B,   B,   B,   E,   E,   E,   E,   B,   B,   B,   B,   B,   B,   B,   B,   B,   B,   E,   E,   E,   E,   E,
+      R,   E,   R,   E,   R,   E,   E,   E,   R,   E,   E,   E,   E,   E,   E,   E,   E,   E,   R,   E,   E,   E,   E,   E,
+      R,   E,  BV,   E,   R,   E,   E,   E,   R,   E,  TL,   T,   T,   T,   L,   E,   E,   E,   R,   E,   E,   E,   E,   E,
+      R,  T2,  TR,   E,   R,   E,   E,   E,   R,   E,  L2,   E,   E,   E,   L,   E,   E,   E,   R,   E,   E,   E,   E,   E,
+      R,  P0,  R2,   M,   R,   E,   E,   E,   R,   E,  L2,   E,   E,   E,   L,   E,   E,   E,   R,   E,   E,   E,   E,   E,
+      R,   E,  R2,   E,   R,   E,   E,   E,   R,   E,  L2,   E,   E,   E,   L,   E,   E,   E,   R,   E,   E,   E,   E,   E,
+      R,   E,  R2,   E,   R,   E,   E,   E,   R,   E,   T,   T,   T,   T,   T,   E,   E,   E,   R,   E,   E,   E,   E,   E,
+      R,   J,  R2,   E,   R,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   R,   E,   E,   E,   E,   E,
+      R,   E,  R2,   M,   E,   E,   E,   E,   E,   E,   E,   E,  E2,   E,  E3,   E,  E8,   E,   R,   E,   E,   E,   E,   E,
+      R,   J,  R2,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   R,   B,   B,   B,   B,   B,
+      R,   E,  R2,   E,   E,   E,   M,  TL,  TR,  BH,  TL,   T,   T,   T,   T,   T,   T,   T,   T,   E,   E,   E,   R,   E,
+      R,   E,   E,  BL,   E,   E,   E,  L2,  R2,   E,  L2,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   R,   E,
+      R,   E,   J,   E,   T,   L,  E0,  L2,  R2,   E,  L2,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,  P1,   R,   E, 
+      R,   E,   E,   E,   E,   L,   M,  L2,  R2,   E,  L2,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   R,   E,
+      R,   E,   E,   E,   E,   T,   T,   E,  R2,   E,   E,   E,   E,   E,   M,   E,   E,   E,   E,   E,   E,   E,   R,   E,
+      R,   E,   E,   E,   E,   E,   E,   E,  R2,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   R,   E,
+      R,   E,   J,   E,   E,   E,   E,   E,  R2,   E,   E,   E,  E7,   E,   E,   E,   E,   E,   E,   E,   E,   E,   R,   E,
       R,   E,   E,   E,   E,   E,   E,   E,   E,   T,   T,   E,   M,   E,   E,   E,   E,   E,   E,   E,   E,   J,  BR,   E,
       R,   E,   E,   M,   E,   M,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   M,   E,  TL,   T,   T,   T,   E,   E,
       R,   E,   E,   E,   E,   E,   M,   E,   M,   E,   M,   E,   S,   S,   S,   S,   S,   S,   L,   E,   E,   E,   E,   E,
-      R,   E,   E,   E,   S,   S,   S,   S,   S,   S,   S,   S,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,
+      R,   J,   E,   E,   S,   S,   S,   S,   S,   S,   S,   S,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,
       E,   T,   T,   T,   L,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,
       E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,
       E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,
@@ -122,7 +101,7 @@ static_assert(sizeof(g_stageSewers) == (I16(WORLD_EXTENT) * I16(WORLD_STRIDE)));
 
 const EntityType g_sewersEntities[16] = 
 {
-    Enemy_Tunichtgut,
+    Prop_Barrel,
     Enemy_Tunichtgut,
     Enemy_Halunke,
     Enemy_Halunke,
@@ -138,7 +117,7 @@ const EntityType g_sewersEntities[16] =
 
 const v2i g_stageStartPts[] = 
 {
-    { 22,10 }, // Stage_Sewers
+    { 2, 1 }, // Stage_Sewers
     { 0, 0 }, // Stage_WaErways
     { 0, 0 }, // Stage_MolEnlands
     { 0, 0 }, // Stage_Bonus
@@ -180,6 +159,7 @@ void check_collision()
     tiles[2].y = e->tile.y;
     tiles[2].x = I8((e->position.x + e->velocity.x) >> TILE_SCALE_BITS);
 
+    if ((Vec_Btn_State & Input_Button3) != Input_Button3)
     for (i8 i = 0; i < 3; ++i)
     {
         v2i* tile = &tiles[i];
@@ -187,61 +167,60 @@ void check_collision()
         {
             switch (WORLD.tileset[I16(tile->y) * WORLD_STRIDE + tile->x])
             {
-            case Tile_Top:
-            {
-                if (I8(e->position.y - (tile->y << TILE_SCALE_BITS)) + e->velocity.y <= 0)
-                    e->velocity.y = 0;
-            }
-            break;
-            case Tile_TopLeft:
-            {
-                if (I8(e->position.y - (tile->y << TILE_SCALE_BITS)) + e->velocity.y <= 0)
-                    e->velocity.y = 0;
-                if (I8(e->position.x - (tile->x << TILE_SCALE_BITS)) + e->velocity.x <= 0)
-                    e->velocity.x = 0;
-            }
-                break;
-            case Tile_TopRight:
-            {
+            case Tile_Top2:
                 if (I8(e->position.y - (tile->y << TILE_SCALE_BITS)) - e->velocity.y <= 0)
                     e->velocity.y = 0;
-                if (I8(e->position.x - (tile->x << TILE_SCALE_BITS)) + e->velocity.x >= TILE_WIDTH)
-                    e->velocity.x = 0;
-            }
-                break;
-            case Tile_Bottom:
-            {
-                if (I8(e->position.y - (tile->y << TILE_SCALE_BITS)) + e->velocity.y >= TILE_HEIGHT)
+                /* fallthrough */
+            case Tile_Top:
+                if (I8(e->position.y - (tile->y << TILE_SCALE_BITS)) + e->velocity.y <= 0)
                     e->velocity.y = 0;
-            }
+            break;
+            case Tile_TopLeft:
+                if (I8(e->position.y - (tile->y << TILE_SCALE_BITS)) + e->velocity.y <= 0)
+                    e->velocity.y = 0;
+                if (I8(e->position.x - (tile->x << TILE_SCALE_BITS)) - e->velocity.x <= 0)
+                    e->velocity.x = 0;
+                break;
+            case Tile_TopRight:
+                if (I8(e->position.y - (tile->y << TILE_SCALE_BITS)) + e->velocity.y <= 0)
+                    e->velocity.y = 0;
+                if (I8(e->position.x - (tile->x << TILE_SCALE_BITS)) - e->velocity.x >= TILE_WIDTH - 1)
+                    e->velocity.x = 0;
+                break;
+            case Tile_Bottom2:
+                if (I8(e->position.y - (tile->y << TILE_SCALE_BITS)) - e->velocity.y >= TILE_HEIGHT - 1)
+                    e->velocity.y = 0;
+                /* fallthrough */
+            case Tile_Bottom:
+                if (I8(e->position.y - (tile->y << TILE_SCALE_BITS)) + e->velocity.y >= TILE_HEIGHT - 1)
+                    e->velocity.y = 0;
                 break;
             case Tile_BottomLeft:
-            {
-                if (I8(e->position.y - (tile->y << TILE_SCALE_BITS)) + e->velocity.y >= TILE_HEIGHT)
+                if (I8(e->position.y - (tile->y << TILE_SCALE_BITS)) - e->velocity.y >= TILE_HEIGHT - 1)
                     e->velocity.y = 0;
                 if (I8(e->position.x - (tile->x << TILE_SCALE_BITS)) + e->velocity.x <= 0)
                     e->velocity.x = 0;
-            }
                 break;
             case Tile_BottomRight:
-            {
-                i8 relY = I8(e->position.y - (tile->y << TILE_SCALE_BITS));
-                if (relY - e->velocity.y >= TILE_HEIGHT - 1)
+                if (I8(e->position.y - (tile->y << TILE_SCALE_BITS)) - e->velocity.y >= TILE_HEIGHT - 1)
                     e->velocity.y = 0;
-                i8 relX = I8(e->position.x - (tile->x << TILE_SCALE_BITS));
-                if (relX + e->velocity.x >= TILE_WIDTH - 2)
+                if (I8(e->position.x - (tile->x << TILE_SCALE_BITS)) + e->velocity.x >= TILE_WIDTH - 1)
                     e->velocity.x = 0;
-            }
-            
                 break;
+            case Tile_Left2:
+                if (I8(e->position.x - (tile->x << TILE_SCALE_BITS)) - e->velocity.x <= 0)
+                    e->velocity.x = 0;
+                /* fallthrough */
             case Tile_Left:
-            {
                 if (I8(e->position.x - (tile->x << TILE_SCALE_BITS)) + e->velocity.x <= 0)
                     e->velocity.x = 0;
-            }
                 break;
+            case Tile_Right2:
+                if (I8(e->position.x - (tile->x << TILE_SCALE_BITS)) - e->velocity.x >= TILE_WIDTH - 1)
+                    e->velocity.x = 0;
+                /* fallthrough */
             case Tile_Right:
-            if (I8(e->position.x - (tile->x << TILE_SCALE_BITS)) + (i8)Abs_b(e->velocity.x) >= TILE_WIDTH)
+                if (I8(e->position.x - (tile->x << TILE_SCALE_BITS)) + e->velocity.x >= TILE_WIDTH - 1)
                     e->velocity.x = 0;
                 break;
             case Tile_MiddleLeft:
@@ -252,9 +231,8 @@ void check_collision()
                 break;
             case Tile_Middle:
             {
-                const i8 relativeY = I8(e->position.y - (tile->y << TILE_SCALE_BITS));
                 const i8 relativeX = I8(e->position.x - (tile->x << TILE_SCALE_BITS));
-                if (relativeY + e->velocity.y >= TILE_HEIGHT >> 1 && relativeX + e->velocity.x <= TILE_WIDTH >> 1 && relativeX + e->velocity.x >= 0)
+                if (I8(e->position.y - (tile->y << TILE_SCALE_BITS)) - e->velocity.y >= (TILE_HEIGHT >> 1) - 1 && relativeX >= TILE_WIDTH >> 2 && relativeX <= (TILE_WIDTH- (TILE_WIDTH >> 2)))
                     e->velocity.y = 0;
             }
                 break;
@@ -297,7 +275,7 @@ void check_collision()
                 {
                     if (I8(e->position.y - (tile->y << TILE_SCALE_BITS)) - e->velocity.y >= TILE_WIDTH)
                     {                   
-                        if (e->velocity.y > 9) // Broke the barrier
+                        if (e->velocity.y < -14) // Broke the barrier
                             TILE_FLAG(1) = true;
                         else
                             e->velocity.y = 0;
@@ -320,29 +298,18 @@ void check_collision()
             case Tile_E13:
             case Tile_E14:
             case Tile_E15:
+            case Tile_Portal0:
+            case Tile_Portal1:
                 break;
             default:
                 break;
             }
         }
     }
-    
-    // tiles[1].x = I8((e->position.x + e->velocity.x) >> TILE_SCALE_BITS);
-    // tiles[1].y = I8((e->position.y - e->velocity.y) >> TILE_SCALE_BITS);
-    
-    // if (WORLD.selectedEntity == 0)
-    // {
-    //     print_signed_int(-50, -40, e->velocity.y);
-    //     print_signed_int(-50, 0, e->velocity.x);
-    // }
     e->position.x += e->velocity.x;
     e->position.y -= e->velocity.y;
     e->tile.x = I8(e->position.x >> TILE_SCALE_BITS);
     e->tile.y = I8(e->position.y >> TILE_SCALE_BITS);
-
-    // print_signed_int(-50, -40, e->isLocal);
-    // print_signed_int(-50, -40, e->tile.y);
-    // print_signed_int(-50, 0, e->tile.x);
 }
 
 void world_progress(void)
@@ -353,7 +320,6 @@ void world_progress(void)
     for (idx_t i = 0; i < WORLD.entityCount; ++i)
     {
         WORLD.selectedEntity = WORLD.entityIdxs[WORLD.entityIdxs[i]];
-        print_signed_int(-50, -40, WORLD.selectedEntity);
         check_collision();
     }
         
@@ -406,6 +372,7 @@ void world_progress(void)
 
             switch (tile)
             {
+            case Tile_Top2:
             case Tile_Top:
             if (tileTop <= 127 && tileTop >= -128)
             {
@@ -502,6 +469,7 @@ void world_progress(void)
                 }
             }
                 break;
+            case Tile_Bottom2:
             case Tile_Bottom:
             if (tileBottom <= 127 && tileBottom >= -128)
             {
@@ -588,6 +556,7 @@ void world_progress(void)
                 }
             }
                 break;
+            case Tile_Left2:
             case Tile_Left:
             if (tileLeft <= 127 && tileLeft >= -128)
             {
@@ -606,6 +575,7 @@ void world_progress(void)
                 }
             }
             break;
+            case Tile_Right2:
             case Tile_Right:
             if (tileRight <= 127 && tileRight >= -128)
             {
@@ -687,6 +657,7 @@ void world_progress(void)
             }
             break; 
             case Tile_Jumper:
+            if (tileBottom >= -128 && tileBottom < 127)
             {
                 line_strip_t* s = &LIST.strip[LIST.strips++];
                 s->start.y = I8(tileBottom);
@@ -733,11 +704,11 @@ void world_progress(void)
                 if (WORLD.entityStatus[idx] == EntityStatus_Alive)
                 {
                     WORLD.entityStatus[idx] = EntityStatus_Active;
-                    entity e      = &WORLD.entities[WORLD.entityIdxs[WORLD.entityCount]];
-                    e->id         = WORLD.entityCount++;
+                    entity e      = &WORLD.entities[WORLD.entityIdxs[WORLD.entityCount++]];
+                    e->id         = idx;
                     e->tile.y     = WORLD.selectedTile.y;
                     e->tile.x     = WORLD.selectedTile.x;
-                    e->position.y = I16(tileTop)  + (TILE_HEIGHT >> 1);
+                    e->position.y = -(I16(tileTop)  - (TILE_HEIGHT >> 1));
                     e->position.x = I16(tileLeft) + (TILE_WIDTH >> 1);
                     e->velocity.x = 0;
                     e->velocity.y = 0;
@@ -745,7 +716,7 @@ void world_progress(void)
                     e->isLocal    = true;
                     e->isEnemy    = e->type > Prop_Max;
                     e->state      = e->isEnemy ? EnemyState_Follow : PropState_Idle;
-                    e->transform  = 1;
+                    e->transform  = 0;
                     switch (e->type)
                     {
                     case Prop_Crate:
@@ -769,6 +740,13 @@ void world_progress(void)
                     default:
                         break;
                     }
+            }
+                break;
+            case Tile_Portal0:
+            case Tile_Portal1:
+            {
+                Stage stage = tile - Tile_Portal0;
+                game_enter_stage(Stage_Sewers);
             }
                 break;
             default:
@@ -797,15 +775,22 @@ void world_progress(void)
 
 }
 
+void __routine_stub(entity e) { (void)e; }
+
 void world_create(Stage const stage)
 {
     MEMZERO(WORLD);
     WORLD.tileset     = g_tilesets[stage];
     WORLD.entityCount = 1; // 1 for the player
     WORLD.pentities   = g_stageEntities[stage];
-    for (i8 i = 0; i < ENTITIES_MAX; i++)
-        WORLD.entityIdxs[i] = i;
+    for (idx_t idx = 0; idx < ENTITIES_MAX; ++idx)
+    {
+        WORLD.entities[idx].id = idx;
+        WORLD.entities[idx].routine = __routine_stub;
+        WORLD.entityIdxs[idx] = idx;
+    }
 
+    CAMERA.id         = -1;
     CAMERA.tile.y     = g_stageStartPts[stage].y;
     CAMERA.tile.x     = g_stageStartPts[stage].x;
     CAMERA.position.y = (I16(CAMERA.tile.y) << TILE_SCALE_BITS)  - (TILE_HEIGHT >> 1);
