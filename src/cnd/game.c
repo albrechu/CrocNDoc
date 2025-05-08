@@ -90,12 +90,51 @@ void game_soft_reset(void)
 
 void game_enter_stage(Stage stage)
 {
-    world_create(Stage_Sewers);
+    world_create(stage);
+    // Install callbacks
+    WORLD.entityAdded  = game_entity_added;
+    WORLD.stageEntered = game_enter_stage;
+
     GAME.state       = GameState_Play;
     CAMERA.mesh      = Mesh_CrocIdleRight;
     CAMERA.isLocal   = true;
     CAMERA.state     = CharacterState_Idle;
     CAMERA.transform = 1;
+}
+
+void game_entity_added(entity e)
+{
+    switch (e->type)
+    {
+    case Prop_Crate:
+        e->mesh = Mesh_Crate;
+        goto basic_prop;
+    case Prop_Barrel:
+        e->mesh = Mesh_Barrel;
+        goto basic_prop;
+    case Enemy_Tunichtgut:
+        goto basic_enemy;
+    case Enemy_Halunke:
+        e->mesh = Mesh_Halunke;
+        goto basic_enemy;
+    case Enemy_Gauner:
+        goto basic_enemy;
+    case Enemy_Schuft:
+        goto basic_enemy;
+    case Enemy_Strolch:
+        goto basic_enemy;
+    case Enemy_Boesewicht:
+        goto basic_enemy;
+    default:
+        assert(false); // ???
+        return;
+    }
+basic_prop:
+    e->state = PropState_Idle;
+    return;
+basic_enemy:
+    e->state = EnemyState_Follow;
+    return;
 }
 
 void game_set_gameover(void)
@@ -113,14 +152,14 @@ void game_start_frame(void)
         Vec_Music_Flag = 1;
     
     Init_Music_chk((const void* const)g_tracks[GAME.track]);
-    Explosion_Snd(GAME.explosion);
+    // Explosion_Snd(GAME.explosion);
     Wait_Recal(); // Synchronize to frame
     Do_Sound();
 }
 
 void routine_barrel_break(entity e)
 {
-    if (--e->ticks != 0)
+    if (--e->stopwatch != 0)
     {
         e->velocity.y = 0;    
         e->velocity.x = 0;
@@ -135,9 +174,9 @@ void routine_barrel_thrown(entity e)
 {
     if (e->velocity.x == 0)
     {
-        WORLD.entityStatus[e->id] = EntityStatus_Dead;
-        e->ticks   = 10;
-        e->routine = routine_barrel_break;
+        world_entity_set_status(e, -1, EntityStatus_Dead);
+        e->stopwatch = 10;
+        e->routine   = routine_barrel_break;
     }
 }
 
@@ -150,8 +189,8 @@ void routine_halunke_follow(entity e)
         i8 dx = I8(e->position.x - e->position.x);
         if (manhattan(dy, dx) < 0x15)
         {
-            dy = Abs_b(dy);
-            dx = Abs_b(dx);
+            dy = (i8)Abs_b(dy);
+            dx = (i8)Abs_b(dx);
             if (dy > dx)
             {
             }
@@ -189,15 +228,7 @@ void game_update_play(void)
         {
             if (distX >= 10 || distY >= 10) // Possibly remove entity if too far away
             {
-                // assert(false);
-                const idx_t last = WORLD.entityCount - 1;
-                if (i != last) // Swap with last
-                {
-                    WORLD.entityStatus[e->id] = EntityStatus_Alive;
-                    WORLD.entityIdxs[i]  = WORLD.entityIdxs[last];
-                    WORLD.entityIdxs[last] = idx;
-                }
-                --WORLD.entityCount;
+                world_entity_set_status(e, i, EntityStatus_Inactive);
             }
         }
      
@@ -296,9 +327,6 @@ void game_render_play(void)
             Draw_VLc(mesh_get(e->mesh + CAMERA.transform));
         }
     }
-    
-    // Draw Background
-    world_draw();
 }
 
 void game_render_plot(void)
@@ -438,10 +466,11 @@ bite_skip:
         {
             CAMERA.transform = -1;
             CAMERA.mesh = CAMERA.type == Character_Croc ? Mesh_CrocIdleLeft : Mesh_DocIdleLeft;
+            CAMERA.velocity.x = (-Velocity_Run) << (CAMERA.velocity.y == 0);
         }
         else if (CAMERA.velocity.x > -Velocity_Run)
         {
-            CAMERA.velocity.x = -Velocity_Run;
+            CAMERA.velocity.x = (-Velocity_Run) << (CAMERA.velocity.y == 0);
         }
         break;
     case Input_JoyRightUp:
@@ -451,10 +480,11 @@ bite_skip:
         {
             CAMERA.transform = 1;
             CAMERA.mesh = CAMERA.type == Character_Croc ? Mesh_CrocIdleRight : Mesh_DocIdleRight;
+            CAMERA.velocity.x = Velocity_Run << (CAMERA.velocity.y == 0);
         }
         else if (CAMERA.velocity.x < Velocity_Run)
         {
-            CAMERA.velocity.x = Velocity_Run;
+            CAMERA.velocity.x = Velocity_Run << (CAMERA.velocity.y == 0);
         }
         break;
     default:
@@ -469,6 +499,8 @@ bite_skip:
     {
         CAMERA.velocity.y = Velocity_Run;
     }
+
+    assert(WORLD.entityCount <= ENTITIES_ACTIVE_MAX);
 }
 /////////////////////////////////////////////////////////////////////////
 //	Rest Functions

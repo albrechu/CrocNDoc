@@ -279,11 +279,25 @@ const i8 barrierHorizontal[] =
 
 const i8 spikes[] = 
 {
-	LENGTH(4),
-	64, 16,
+	LENGTH(3),
 	-64, 16,
 	64, 16,
 	-64, 16,
+};
+
+const i8 const halunke[] = 
+{
+	LENGTH(10),
+	0, -4,
+	2, 1,
+	2, -4,
+	2, 4,
+	2, 1,
+	-2, 3,
+	3, 4,
+	-2, 4,
+	-7, 3,
+	0, -12,
 };
 
 const i8* const g_meshes[] = 
@@ -306,6 +320,7 @@ const i8* const g_meshes[] =
 	crate,
 	crate_right,
 	jumper,
+	halunke,
 };
 
 /////////////////////////////////////////////////////////////////////////

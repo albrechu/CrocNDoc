@@ -64,6 +64,9 @@ void game_render_plot(void);
 void game_render_pause(void);
 void game_render_gameover(void);
 
+void game_enter_stage(Stage stage);
+void game_entity_added(entity e);
+
 /////////////////////////////////////////////////////////////////////////
 //	Action Functions
 //

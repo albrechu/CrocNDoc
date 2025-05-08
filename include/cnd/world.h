@@ -47,7 +47,8 @@
 #define DRAW_STRIPS_MAX 20
 #define DRAW_LINES_MAX  40
 // #define ENEMIES_MAX     3
-#define ENTITIES_MAX    8
+#define ENTITIES_ACTIVE_MAX 8  // Maximum of entities that can be active.
+#define ENTITIES_MAX        16 // Maximum of entities that can be in a level.
 // #define PROPS_MAX       3
 
 /////////////////////////////////////////////////////////////////////////
@@ -99,6 +100,8 @@ enum Tile_
     Tile_MiddleLeft,
     Tile_MiddleRight,
     Tile_Middle,
+    Tile_MiddleBottom,
+    Tile_MiddleTop,
     Tile_Spikes,
     Tile_Jumper,
     Tile_BarrierVertical,
@@ -123,64 +126,63 @@ enum Tile_
     // Portal
     Tile_Portal0,
     Tile_Portal1,
-
+    // Wormhole
+    // Tile_Wormhole0,
+    // Tile_Wormhole1,
+    // Tile_Wormhole2,
+    // Tile_Wormhole3,
+    // Nothing, nothing at all.
     Tile_Empty,
 };
 typedef i8 Tile;
 
 enum EntityStatus_
 {
-    EntityStatus_Alive,
-    EntityStatus_Active,
-    EntityStatus_Dead,
+    EntityStatus_Inactive, // The entity is alive and well but takes not part in any calculations.
+    EntityStatus_Active,   // The entity is currently active, takes part in the physics calculation and is possibly rendered.
+    EntityStatus_Dead,     // May it rest in peace.
 };
 typedef i8 EntityStatus;
 
-typedef struct line_t
+typedef struct last_sighting_t
 {
-    v2i start;
-    v2i delta;
-} line_t, *line;
+    // v2l          position; // Last known position. Initially is I16_MIN.
+    EntityStatus status;   // Last known state. Initially is EntityStatus_Alive.
+} last_sighting_t, *last_sighting;
 
-typedef struct line_strip_t
+typedef struct stage_metadata_t
 {
-    v2i start;
-    i8 const* data; // First is the vector
-} line_strip_t, *line_strip;
-
-typedef struct draw_list_t
-{
-    line_t       line[DRAW_LINES_MAX];
-    line_strip_t strip[DRAW_STRIPS_MAX];
-    i8 lines, strips;
-} draw_list_t, *draw_list;
+    v2i   const       startingTile;
+    Stage const       adjacentStages[2];
+    EntityType const* pentities;
+} stage_metadata_t, *stage_metadata;
 
 typedef struct world_t
 {
-    // tile_t      tiles[WORLD_HEIGHT * WORLD_WIDTH];
-    draw_list_t  drawList;
-    // i16         hazard; // Hazard Height 
-    entity_t     entities[1 + ENTITIES_MAX];
-    idx_t        entityIdxs[1 + ENTITIES_MAX];
-    i8           entityCount;
-    // i8           enemies, props;
-    // entity_t     enemy[ENEMIES_MAX];
-    // entity_t     prop[PROPS_MAX];
-    EntityStatus entityStatus[16];
-    v2i          selectedTile;
-    idx_t        selectedEntity;
-    const Tile* tileset;
-    const EntityType* pentities;
+    // Callbacks
+    routine_t       entityAdded;
+    stage_routine_t stageEntered;
+    // Entities
+    entity_t  entities[ENTITIES_ACTIVE_MAX];
+    idx_t     entityIdxs[ENTITIES_ACTIVE_MAX];
+    i8        entityCount;
+
+    last_sighting_t lastSeen[ENTITIES_MAX];
+    v2i   selectedTile;
+    idx_t selectedEntity;
+    // Stage information
+    const Tile*             tileset;
+    const stage_metadata_t* metadata;
     i8 ticks;
-    i8 drag;
+    // Physics
+    i8 gravity; // For 
 } world_t;
 
 extern world_t g_world;
 
 void world_create(Stage const stage);
-void world_draw(void);
 void world_progress(void);
-void game_enter_stage(Stage stage);
+void world_entity_set_status(entity e, idx_t idxInIdxs, EntityStatus status);
 
 // void world_load_stage(Stage const stage);
 void tile_write_list();

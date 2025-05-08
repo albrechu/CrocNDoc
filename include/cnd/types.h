@@ -138,11 +138,11 @@ typedef i8 GameState;
 
 enum Velocity_
 {
-    Velocity_Run      = 3,
-    Velocity_Bite     = 9,
+    Velocity_Run      = 2,
+    Velocity_Bite     = 6,
 	Velocity_Friction = 1,
     Velocity_Jump     = 10,
-    Velocity_JumpX    = 1,
+    Velocity_JumpX    = 0,
     Velocity_ThrowX   = 5,
     Velocity_ThrowY   = 8,
     Velocity_Jumper   = 16,
@@ -256,6 +256,7 @@ enum Mesh_
 	Mesh_Crate,
 	Mesh_CrateRight,
 	Mesh_Jumper,
+    Mesh_Halunke,
 };
 typedef i8 Mesh;
 
@@ -282,6 +283,7 @@ typedef i8 Track;
 //
 typedef struct entity_t entity_t, *entity;
 typedef void (*routine_t)(entity);
+typedef void (*stage_routine_t)(Stage);
 struct entity_t
 {
     routine_t   routine;
@@ -295,7 +297,7 @@ struct entity_t
     bool        isLocal;
     bool        isEnemy;
     idx_t       id;
-    i8          ticks:
+    i8          stopwatch;
 };
 
 typedef struct player_t

@@ -28,6 +28,10 @@ enum TileAlias
     R2   = Tile_Right2,
     R   = Tile_Right,
     M   = Tile_Middle,
+    MB  = Tile_MiddleBottom,
+    MT  = Tile_MiddleTop,
+    ML  = Tile_MiddleLeft,
+    MR  = Tile_MiddleRight,
     S   = Tile_Spikes,
     J   = Tile_Jumper,
     BV  = Tile_BarrierVertical,
@@ -82,10 +86,10 @@ static const Tile g_stageSewers[] =
       R,   J,  R2,   E,   R,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   R,   E,   E,   E,   E,   E,
       R,   E,  R2,   M,   E,   E,   E,   E,   E,   E,   E,   E,  E2,   E,  E3,   E,  E8,   E,   R,   E,   E,   E,   E,   E,
       R,   J,  R2,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   R,   B,   B,   B,   B,   B,
-      R,   E,  R2,   E,   E,   E,   M,  TL,  TR,  BH,  TL,   T,   T,   T,   T,   T,   T,   T,   T,   E,   E,   E,   R,   E,
-      R,   E,   E,  BL,   E,   E,   E,  L2,  R2,   E,  L2,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   R,   E,
-      R,   E,   J,   E,   T,   L,  E0,  L2,  R2,   E,  L2,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,  P1,   R,   E, 
-      R,   E,   E,   E,   E,   L,   M,  L2,  R2,   E,  L2,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   R,   E,
+      R,   E,  R2,  MB,   E,   E,  MT,  TL,  TR,  BH,  TL,   T,   T,   T,   T,   T,   T,   T,   T,   E,   E,   E,   R,   E,
+      R,   E,  R2,   E,   E,   E,  MB,  L2,  R2,   E,  L2,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   R,   E,
+      R,   E,   J,   T,   T,   L,  E0,  L2,  R2,   E,  L2,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,  P1,   R,   E, 
+      R,   E,   E,   E,   E,   L,  MT,  L2,  R2,   E,  L2,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   R,   E,
       R,   E,   E,   E,   E,   T,   T,   E,  R2,   E,   E,   E,   E,   E,   M,   E,   E,   E,   E,   E,   E,   E,   R,   E,
       R,   E,   E,   E,   E,   E,   E,   E,  R2,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   R,   E,
       R,   E,   J,   E,   E,   E,   E,   E,  R2,   E,   E,   E,  E7,   E,   E,   E,   E,   E,   E,   E,   E,   E,   R,   E,
@@ -99,7 +103,7 @@ static const Tile g_stageSewers[] =
 };
 static_assert(sizeof(g_stageSewers) == (I16(WORLD_EXTENT) * I16(WORLD_STRIDE)));
 
-const EntityType g_sewersEntities[16] = 
+const EntityType g_sewersEntities[] = 
 {
     Prop_Barrel,
     Enemy_Tunichtgut,
@@ -114,13 +118,16 @@ const EntityType g_sewersEntities[16] =
     Prop_Barrel,
     Prop_Barrel,
 };
+static_assert(sizeof(g_sewersEntities) <= ENTITIES_MAX);
 
-const v2i g_stageStartPts[] = 
+const stage_metadata_t g_stagesMetadata[] = 
 {
-    { 2, 1 }, // Stage_Sewers
-    { 0, 0 }, // Stage_WaErways
-    { 0, 0 }, // Stage_MolEnlands
-    { 0, 0 }, // Stage_Bonus
+    // Stage_Sewers
+    {
+        .startingTile   = { 2, 1 },
+        .adjacentStages = { Stage_Sewers, Stage_Sewers },
+        .pentities      = g_sewersEntities,
+    },
 };
 
 const Tile* const g_tilesets[] = 
@@ -144,8 +151,8 @@ world_t g_world;
 void check_collision()
 {
     entity e = &WORLD.entities[WORLD.selectedEntity];
-    e->velocity.x -= WORLD.drag * (e->velocity.x != 0 && e->velocity.y == 0) * e->transform;
-	e->velocity.y -= WORLD.drag;
+    e->velocity.x -= WORLD.gravity * (e->velocity.x != 0 && e->velocity.y == 0) * e->transform;
+	e->velocity.y -= WORLD.gravity;
     // e->velocity.y  = MAX8(-8, e->velocity.y);
     // print_signed_int(-100, -50, e->tile.y);
     // print_signed_int(-100, -20, e->tile.x);
@@ -165,7 +172,8 @@ void check_collision()
         v2i* tile = &tiles[i];
         // if (tile->y != tile->y || tile->x != tile->x)
         {
-            switch (WORLD.tileset[I16(tile->y) * WORLD_STRIDE + tile->x])
+            const Tile type = WORLD.tileset[I16(tile->y) * WORLD_STRIDE + tile->x];
+            switch (type)
             {
             case Tile_Top2:
                 if (I8(e->position.y - (tile->y << TILE_SCALE_BITS)) - e->velocity.y <= 0)
@@ -224,18 +232,45 @@ void check_collision()
                     e->velocity.x = 0;
                 break;
             case Tile_MiddleLeft:
-            
+            {
+                const i8 relativeX = I8(e->position.x - (tile->x << TILE_SCALE_BITS));
+                const i8 relativeY = I8(e->position.y - (tile->y << TILE_SCALE_BITS));
+                if (relativeY - e->velocity.y >= (TILE_HEIGHT >> 1) - 1 && relativeY < (TILE_HEIGHT >> 1) && relativeX <= TILE_WIDTH >> 1)
+                    e->velocity.y = 0;
+            }
                 break;
             case Tile_MiddleRight:
-            
+            {
+                const i8 relativeX = I8(e->position.x - (tile->x << TILE_SCALE_BITS));
+                const i8 relativeY = I8(e->position.y - (tile->y << TILE_SCALE_BITS));
+                if (relativeY - e->velocity.y >= (TILE_HEIGHT >> 1) - 1 && relativeY < (TILE_HEIGHT >> 1) && relativeX >= TILE_WIDTH >> 1)
+                    e->velocity.y = 0;
+            }
                 break;
             case Tile_Middle:
             {
                 const i8 relativeX = I8(e->position.x - (tile->x << TILE_SCALE_BITS));
-                if (I8(e->position.y - (tile->y << TILE_SCALE_BITS)) - e->velocity.y >= (TILE_HEIGHT >> 1) - 1 && relativeX >= TILE_WIDTH >> 2 && relativeX <= (TILE_WIDTH- (TILE_WIDTH >> 2)))
+                const i8 relativeY = I8(e->position.y - (tile->y << TILE_SCALE_BITS));
+                if (relativeY - e->velocity.y >= (TILE_HEIGHT >> 1) - 1 && relativeY < (TILE_HEIGHT >> 1) && relativeX >= TILE_WIDTH >> 2 && relativeX <= (TILE_WIDTH- (TILE_WIDTH >> 2)))
                     e->velocity.y = 0;
             }
                 break;
+            case Tile_MiddleBottom:
+            {
+                const i8 relativeX = I8(e->position.x - (tile->x << TILE_SCALE_BITS));
+                const i8 relativeY = I8(e->position.y - (tile->y << TILE_SCALE_BITS));
+                if (relativeY - e->velocity.y >= TILE_HEIGHT - 1 && relativeY < TILE_HEIGHT && relativeX >= TILE_WIDTH >> 2 && relativeX <= (TILE_WIDTH- (TILE_WIDTH >> 2)))
+                    e->velocity.y = 0;
+            }
+                break;
+            case Tile_MiddleTop:
+                {
+                    const i8 relativeX = I8(e->position.x - (tile->x << TILE_SCALE_BITS));
+                    const i8 relativeY = I8(e->position.y - (tile->y << TILE_SCALE_BITS));
+                    if (relativeY - e->velocity.y >= 0 && relativeY < 0 && relativeX >= TILE_WIDTH >> 2 && relativeX <= (TILE_WIDTH- (TILE_WIDTH >> 2)))
+                        e->velocity.y = 0;
+                }
+                    break;
             case Tile_Spikes:
             {
                 const i8 relative = I8(e->position.y - (tile->y << TILE_SCALE_BITS));
@@ -263,7 +298,7 @@ void check_collision()
                 i8 velocity = (i8)Abs_b(e->velocity.x);
                 if (relative + velocity >= TILE_WIDTH)
                 {                   
-                    if (velocity > 6) // Broke the barrier
+                    if (velocity > 4) // Broke the barrier
                         TILE_FLAG(0) = true;
                     else
                         e->velocity.x = 0;
@@ -298,8 +333,16 @@ void check_collision()
             case Tile_E13:
             case Tile_E14:
             case Tile_E15:
+                break;
             case Tile_Portal0:
             case Tile_Portal1:
+            {
+                i8 relativeX = I8(e->position.x - (tile->x << TILE_SCALE_BITS));
+                i8 relativeY = I8(e->position.y - (tile->y << TILE_SCALE_BITS));
+                if ((relativeX + e->velocity.x >= (TILE_WIDTH >> 2) && relativeX + e->velocity.x <= TILE_WIDTH - (TILE_WIDTH >> 2)) || 
+                    (relativeY + e->velocity.y >= (TILE_WIDTH >> 2) && relativeY + e->velocity.y <= TILE_WIDTH - (TILE_WIDTH >> 2)))
+                    WORLD.stageEntered(WORLD.metadata->adjacentStages[type - Tile_Portal0]);
+            }
                 break;
             default:
                 break;
@@ -315,7 +358,7 @@ void check_collision()
 void world_progress(void)
 {
     ++WORLD.ticks;
-    WORLD.drag = WORLD.ticks & 1;
+    WORLD.gravity = WORLD.ticks & 1;
 
     for (idx_t i = 0; i < WORLD.entityCount; ++i)
     {
@@ -325,9 +368,6 @@ void world_progress(void)
         
     //if ((CAMERA.velocity.x | CAMERA.velocity.y) == 0) // camera is static
     //    return;
-
-    LIST.lines  = 0;
-    LIST.strips = 0;
 
     // i8 y = I8(CAMERA.position.y >> TILE_SCALE_BITS);
     // i8 x = I8(CAMERA.position.x >> TILE_SCALE_BITS);
@@ -353,6 +393,7 @@ void world_progress(void)
     i8 idxDelta  = WORLD_STRIDE - idxStride + 1;
     i16 tileIdx    = WORLD.selectedTile.y * I16(WORLD_STRIDE) + WORLD.selectedTile.x;    
     // i16 tileIdxMax = yMax * WORLD_WIDTH + xMax;
+    Intensity_5F();
     while (true)
     {
         i16 tileLeft   = (I16(WORLD.selectedTile.x) << TILE_SCALE_BITS) - CAMERA.position.x;
@@ -369,318 +410,368 @@ void world_progress(void)
             // i16 offsetX = tileLeft - left;
             // i16 offsetY = tileTop  - top;
             const Tile tile = WORLD.tileset[tileIdx];
-
             switch (tile)
             {
             case Tile_Top2:
             case Tile_Top:
             if (tileTop <= 127 && tileTop >= -128)
             {
-                line_t* l = &LIST.line[LIST.lines++];
-                l->start.y = I8(tileTop);
-                l->delta.y = 0;
+                i8 startX, deltaX;
                 if (tileLeft < -128) // clip
                 {
-                    l->start.x = -128;
-                    l->delta.x = TILE_WIDTH + I8(tileLeft + 128);
+                    startX = -128;
+                    deltaX = TILE_WIDTH + I8(tileLeft + 128);
                 }
-                else if (tileLeft <= 127)
+                else
                 {
-                    l->start.x = I8(tileLeft);
-                    l->delta.x = TILE_WIDTH;
+                    startX = I8(tileLeft);
+                    deltaX = TILE_WIDTH;
                 }
-                if (WORLD.selectedTile.x == 9 && WORLD.selectedTile.y == 17)
-                {
-                    // print_long_signed_int(-50, -40, tileTop);
-                    // print_long_signed_int(-50, -20, tileTop.x);
-                    // monitor("TILE IDX", tileIdx);
-                    // monitor("TILE LEFT", tileLeft);
-                    // monitor("TILE RIGHT", tileRight);
-                    // monitor("TILE TOP", tileTop);
-                    // monitor("TILE BOTTOM", tileBottom);
-                }
+                beam_set_position(I8(tileTop), startX);
+                Draw_Line_d(0, deltaX);
             }
             break;
             case Tile_TopLeft:
             if (tileTop <= 127 && tileTop >= -128)
             {
-                line_t* l = &LIST.line[LIST.lines++];
-                l->start.y = I8(tileTop);
-                l->delta.y = 0;
+                i8 startX, deltaX;
                 if (tileLeft < -128) // clip
                 {
-                    l->start.x = -128;
-                    l->delta.x = TILE_WIDTH + I8(tileLeft + 128);
-                }
-                else if (tileLeft <= 127)
-                {
-                    l->start.x = I8(tileLeft);
-                    l->delta.x = TILE_WIDTH;
-                }
-            }
-            if (tileLeft <= 127 && tileLeft >= -128)
-            {
-                line_t* l = &LIST.line[LIST.lines++];
-                l->start.x = I8(tileLeft);
-                l->delta.x = 0;
-                if (tileTop > 127) // clip
-                {
-                    l->start.y = 127;
-                    l->delta.y = -TILE_HEIGHT + I8(tileTop - 127);
+                    startX = -128;
+                    deltaX = TILE_WIDTH + I8(tileLeft + 128);
                 }
                 else
                 {
-                    l->start.y = I8(tileTop);
-                    l->delta.y = -TILE_HEIGHT;
+                    startX = I8(tileLeft);
+                    deltaX = TILE_WIDTH;
                 }
+                beam_set_position(I8(tileTop), startX);
+                Draw_Line_d(0, deltaX);
+            }
+            if (tileLeft <= 127 && tileLeft >= -128)
+            {
+                i8 startY, deltaY;
+                if (tileBottom > 127) // clip
+                {
+                    startY = 127;
+                    deltaY = -TILE_HEIGHT + I8(tileTop - 127);
+                }
+                else
+                {
+                    startY = I8(tileTop);
+                    deltaY = -TILE_HEIGHT;
+                }
+                beam_set_position(startY, I8(tileLeft));
+                Draw_Line_d(deltaY, 0);
             }
             break;
             case Tile_TopRight:
             if (tileTop <= 127 && tileTop >= -128)
             {
-                line_t* l = &LIST.line[LIST.lines++];
-                l->start.y = I8(tileTop);
-                l->delta.y = 0;
+                i8 startX, deltaX;
                 if (tileLeft < -128) // clip
                 {
-                    l->start.x = -128;
-                    l->delta.x = TILE_WIDTH + I8(tileLeft + 128);
-                }
-                else if (tileLeft <= 127)
-                {
-                    l->start.x = I8(tileLeft);
-                    l->delta.x = TILE_WIDTH;
-                }
-            }
-            if (tileRight <= 127 && tileRight >= -128)
-            {
-                line_t* l = &LIST.line[LIST.lines++];
-                l->start.x = I8(tileRight);
-                l->delta.x = 0;
-                if (tileTop > 127) // clip
-                {
-                    l->start.y = 127;
-                    l->delta.y = -TILE_HEIGHT + I8(tileTop - 127);
+                    startX = -128;
+                    deltaX = TILE_WIDTH + I8(tileLeft + 128);
                 }
                 else
                 {
-                    l->start.y = I8(tileTop);
-                    l->delta.y = -TILE_HEIGHT;
+                    startX = I8(tileLeft);
+                    deltaX = TILE_WIDTH;
                 }
+                beam_set_position(I8(tileTop), startX);
+                Draw_Line_d(0, deltaX);
+            }
+            if (tileRight <= 127 && tileRight >= -128)
+            {
+                i8 startY, deltaY;
+                if (tileTop > 127) // clip
+                {
+                    startY = 127;
+                    deltaY = -TILE_HEIGHT + I8(tileTop - 127);
+                }
+                else
+                {
+                    startY = I8(tileTop);
+                    deltaY = -TILE_HEIGHT;
+                }
+                beam_set_position(startY, I8(tileRight));
+                Draw_Line_d(deltaY, 0);
             }
                 break;
             case Tile_Bottom2:
             case Tile_Bottom:
             if (tileBottom <= 127 && tileBottom >= -128)
             {
-                line_t* l = &LIST.line[LIST.lines++];
-                l->start.y = I8(tileBottom);
-                l->delta.y = 0;
+                i8 startX, deltaX;
                 if (tileLeft < -128) // clip
                 {
-                    l->start.x = -128;
-                    l->delta.x = TILE_WIDTH + I8(tileLeft + 128);
+                    startX = -128;
+                    deltaX = TILE_WIDTH + I8(tileLeft + 128);
                 }
-                else if (tileLeft <= 127)
+                else 
                 {
-                    l->start.x = I8(tileLeft);
-                    l->delta.x = TILE_WIDTH;
+                    startX = I8(tileLeft);
+                    deltaX = TILE_WIDTH;
                 }
+                beam_set_position(I8(tileBottom), startX);
+                Draw_Line_d(0, deltaX);
             }
                 break;
             case Tile_BottomLeft:
             if (tileBottom <= 127 && tileBottom >= -128)
             {
-                line_t* l = &LIST.line[LIST.lines++];
-                l->start.y = I8(tileBottom);
-                l->delta.y = 0;
+                i8 startX, deltaX;
                 if (tileLeft < -128) // clip
                 {
-                    l->start.x = -128;
-                    l->delta.x = TILE_WIDTH + I8(tileLeft + 128);
+                    startX = -128;
+                    deltaX = TILE_WIDTH + I8(tileLeft + 128);
                 }
-                else if (tileLeft <= 127)
+                else 
                 {
-                    l->start.x = I8(tileLeft);
-                    l->delta.x = TILE_WIDTH;
+                    startX = I8(tileLeft);
+                    deltaX = TILE_WIDTH;
                 }
+                beam_set_position(I8(tileBottom), startX);
+                Draw_Line_d(0, deltaX);
             }
             if (tileLeft <= 127 && tileLeft >= -128)
             {
-                line_t* l = &LIST.line[LIST.lines++];
-                l->start.x = I8(tileLeft);
-                l->delta.x = 0;
+                i8 startY, deltaY;
                 if (tileBottom > 127) // clip
                 {
-                    l->start.y = 127;
-                    l->delta.y = -TILE_HEIGHT + I8(tileTop - 127);
+                    startY = 127;
+                    deltaY = -TILE_HEIGHT + I8(tileTop - 127);
                 }
                 else
                 {
-                    l->start.y = I8(tileTop);
-                    l->delta.y = -TILE_HEIGHT;
+                    startY = I8(tileTop);
+                    deltaY = -TILE_HEIGHT;
                 }
+                beam_set_position(startY, I8(tileLeft));
+                Draw_Line_d(deltaY, 0);
             }
                 break;
             case Tile_BottomRight:
             if (tileBottom <= 127 && tileBottom >= -128)
             {
-                line_t* l = &LIST.line[LIST.lines++];
-                l->start.y = I8(tileBottom);
-                l->delta.y = 0;
+                i8 startX, deltaX;
                 if (tileLeft < -128) // clip
                 {
-                    l->start.x = -128;
-                    l->delta.x = TILE_WIDTH + I8(tileLeft + 128);
+                    startX = -128;
+                    deltaX = TILE_WIDTH + I8(tileLeft + 128);
                 }
-                else if (tileLeft <= 127)
+                else 
                 {
-                    l->start.x = I8(tileLeft);
-                    l->delta.x = TILE_WIDTH;
+                    startX = I8(tileLeft);
+                    deltaX = TILE_WIDTH;
                 }
+                beam_set_position(I8(tileBottom), startX);
+                Draw_Line_d(0, deltaX);
             }
             if (tileRight <= 127 && tileRight >= -128)
             {
-                line_t* l = &LIST.line[LIST.lines++];
-                l->start.x = I8(tileRight);
-                l->delta.x = 0;
-                if (tileBottom > 127) // clip
+                i8 startY, deltaY;
+                if (tileTop > 127) // clip
                 {
-                    l->start.y = 127;
-                    l->delta.y = -TILE_HEIGHT + I8(tileTop - 127);
+                    startY = 127;
+                    deltaY = -TILE_HEIGHT + I8(tileTop - 127);
                 }
                 else
                 {
-                    l->start.y = I8(tileTop);
-                    l->delta.y = -TILE_HEIGHT;
+                    startY = I8(tileTop);
+                    deltaY = -TILE_HEIGHT;
                 }
+                beam_set_position(startY, I8(tileRight));
+                Draw_Line_d(deltaY, 0);
             }
                 break;
             case Tile_Left2:
             case Tile_Left:
             if (tileLeft <= 127 && tileLeft >= -128)
             {
-                line_t* l = &LIST.line[LIST.lines++];
-                l->start.x = I8(tileLeft);
-                l->delta.x = 0;
-                if (tileTop > 127) // clip
+                i8 startY, deltaY;
+                if (tileBottom > 127) // clip
                 {
-                    l->start.y = 127;
-                    l->delta.y = -TILE_HEIGHT + I8(tileTop - 127);
+                    startY = 127;
+                    deltaY = -TILE_HEIGHT + I8(tileTop - 127);
                 }
                 else
                 {
-                    l->start.y = I8(tileTop);
-                    l->delta.y = -TILE_HEIGHT;
+                    startY = I8(tileTop);
+                    deltaY = -TILE_HEIGHT;
                 }
+                beam_set_position(startY, I8(tileLeft));
+                Draw_Line_d(deltaY, 0);
             }
-            break;
+                break;
             case Tile_Right2:
             case Tile_Right:
             if (tileRight <= 127 && tileRight >= -128)
             {
-                line_t* l = &LIST.line[LIST.lines++];
-                l->start.x = I8(tileRight);
-                l->delta.x = 0;
+                i8 startY, deltaY;
                 if (tileTop > 127) // clip
                 {
-                    l->start.y = 127;
-                    l->delta.y = -TILE_HEIGHT + I8(tileTop - 127);
+                    startY = 127;
+                    deltaY = -TILE_HEIGHT + I8(tileTop - 127);
                 }
                 else
                 {
-                    l->start.y = I8(tileTop);
-                    l->delta.y = -TILE_HEIGHT;
+                    startY = I8(tileTop);
+                    deltaY = -TILE_HEIGHT;
                 }
+                beam_set_position(startY, I8(tileRight));
+                Draw_Line_d(deltaY, 0);
             }
             break;
             case Tile_MiddleLeft:
             if (tileTop <= (I16(127) + (TILE_HEIGHT >> 1)) && tileTop >= (-128 + (TILE_HEIGHT >> 1)))
             {
-                line_t* l = &LIST.line[LIST.lines++];
-                l->start.y = I8(tileTop - (TILE_HEIGHT >> 1));
-                l->delta.y = 0;
+                i8 startX, deltaX;
                 if (tileLeft < -128) // clip
                 {
-                    l->start.x = -128;
-                    l->delta.x = (TILE_WIDTH >> 1) + I8(tileLeft + 128);
+                    startX = -128;
+                    deltaX = (TILE_WIDTH >> 1) + I8(tileLeft + 128);
                 }
-                else if (tileLeft <= 127)
+                else 
                 {
-                    l->start.x = I8(tileLeft);
-                    l->delta.x = (TILE_WIDTH >> 1);
+                    startX = I8(tileLeft);
+                    deltaX = (TILE_WIDTH >> 1);
                 }
+                beam_set_position(I8(tileTop - (TILE_HEIGHT >> 1)), startX);
+                Draw_Line_d(0, deltaX);
             }
             break;
             case Tile_MiddleRight:
             if (tileTop <= (I16(127) + (TILE_HEIGHT >> 1)) && tileTop >= (-128 + (TILE_HEIGHT >> 1)))
             {
-                line_t* l = &LIST.line[LIST.lines++];
-                l->start.y = I8(tileTop - (TILE_HEIGHT >> 1));
-                l->delta.y = 0;
+                i8 startX, deltaX;
                 if (tileLeft < -128) // clip
                 {
-                    l->start.x = -128;
-                    l->delta.x = (TILE_WIDTH >> 1) + I8(tileLeft + 128);
+                    startX = -128;
+                    deltaX = (TILE_WIDTH >> 1) + I8(tileLeft + 128);
                 }
-                else if (tileLeft <= 127)
+                else 
                 {
-                    l->start.x = I8(tileLeft + (TILE_WIDTH >> 1));
-                    l->delta.x = (TILE_WIDTH >> 1);
+                    startX = I8(tileLeft + (TILE_WIDTH >> 1));
+                    deltaX = (TILE_WIDTH >> 1);
                 }
+                beam_set_position(I8(tileTop - (TILE_HEIGHT >> 1)), startX);
+                Draw_Line_d(0, deltaX);
             }
             break;
             case Tile_Middle:
             if (tileTop <= (I16(127) + (TILE_HEIGHT >> 1)) && tileTop >= (-128 + (TILE_HEIGHT >> 1)))
             {
-                line_t* l = &LIST.line[LIST.lines++];
-                l->start.y = I8(tileTop - (TILE_HEIGHT >> 1));
-                l->delta.y = 0;
+                i8 startX, deltaX;
                 if (tileLeft < -128) // clip
                 {
-                    l->start.x = -128;
-                    l->delta.x = (TILE_WIDTH >> 1) + I8(tileLeft + 128);
+                    startX = -128;
+                    deltaX = (TILE_WIDTH >> 1) + I8(tileLeft + 128);
                 }
-                else if (tileLeft <= 127)
+                else 
                 {
-                    l->start.x = I8(tileLeft + (TILE_WIDTH >> 2));
-                    l->delta.x = (TILE_WIDTH >> 1);
+                    startX = I8(tileLeft + (TILE_WIDTH >> 2));
+                    deltaX = (TILE_WIDTH >> 1);
                 }
+                beam_set_position(I8(tileTop - (TILE_HEIGHT >> 1)), startX);
+                Draw_Line_d(0, deltaX);
+            }
+                break;
+        case Tile_MiddleBottom:
+            if (tileBottom <= 127 && tileBottom >= -128)
+            {
+                i8 startX, deltaX;
+                if (tileLeft < -128) // clip
+                {
+                    startX = -128;
+                    deltaX = (TILE_WIDTH >> 1) + I8(tileLeft + 128);
+                }
+                else 
+                {
+                    startX = I8(tileLeft + (TILE_WIDTH >> 2));
+                    deltaX = (TILE_WIDTH >> 1);
+                }
+                beam_set_position((i8)tileBottom, startX);
+                Draw_Line_d(0, deltaX);
+            }
+                break;
+            case Tile_MiddleTop:
+            if (tileTop <= 127 && tileTop >= -128)
+            {
+                i8 startX, deltaX;
+                if (tileLeft < -128) // clip
+                {
+                    startX = -128;
+                    deltaX = (TILE_WIDTH >> 1) + I8(tileLeft + 128);
+                }
+                else 
+                {
+                    startX = I8(tileLeft + (TILE_WIDTH >> 2));
+                    deltaX = (TILE_WIDTH >> 1);
+                }
+                beam_set_position((i8)tileTop, startX);
+                Draw_Line_d(0, deltaX);
+                
             }
                 break;
             case Tile_Spikes:
+            if (tileBottom <= 127 && tileBottom >= -128)
             {
-                line_strip_t* s = &LIST.strip[LIST.strips++];
-                s->start.y = I8(tileBottom);
-                s->start.x = I8(tileLeft);
-                s->data = mesh_get(Mesh_Spikes);
+                i8 startX, deltaX;
+                if (tileLeft < -128) // clip horizontally
+                {
+                    startX = -128;
+                    deltaX = (TILE_WIDTH >> 2) + I8(tileLeft + 128);
+                }
+                else 
+                {
+                    startX = I8(tileLeft);
+                    deltaX = (TILE_WIDTH >> 2);
+                }
+                beam_set_position(I8(tileBottom), startX);
+                Draw_Line_d(TILE_HEIGHT, deltaX);
+                Draw_VLc(mesh_get(Mesh_Spikes));
+            }
+            else // clip vertically
+            {
+                i8 startX, deltaX;
+                i8 dy  = I8(tileBottom + 128);
+                i8 dy4 = dy >> 2; // dy / 4 as the slope m = 64 / 16. The starting position and change in X is affected by m.
+                if (tileLeft < -128) // clip horizontally
+                {
+                    startX = I8(-128) - dy4;
+                    deltaX = (TILE_WIDTH >> 2) + I8(tileLeft + 128) + dy4;
+                }
+                else 
+                {
+                    startX = I8(tileLeft) - dy4;
+                    deltaX = (TILE_WIDTH >> 2) + dy4;
+                }
+                beam_set_position(-128, startX);
+                Draw_Line_d(TILE_HEIGHT + dy, deltaX);
+                Draw_VLc(mesh_get(Mesh_Spikes));
             }
             break; 
             case Tile_Jumper:
             if (tileBottom >= -128 && tileBottom < 127)
             {
-                line_strip_t* s = &LIST.strip[LIST.strips++];
-                s->start.y = I8(tileBottom);
-                s->start.x = I8(tileLeft + (TILE_WIDTH >> 2));
-                s->data = mesh_get(Mesh_Jumper);
+                beam_set_position(I8(tileBottom), I8(tileLeft + (TILE_WIDTH >> 2)));
+                Draw_VLc(mesh_get(Mesh_Jumper));
             }
                 break;
             case Tile_BarrierVertical:
             if (!TILE_FLAG(0))
             {
-                line_strip_t* s = &LIST.strip[LIST.strips++];
-                s->start.y = I8(tileTop);
-                s->start.x = I8(tileRight);
-                s->data    = mesh_get(Mesh_BarrierVertical);
+                beam_set_position(I8(tileTop), I8(tileRight));
+                Draw_VLc(mesh_get(Mesh_BarrierVertical));
             }
                 break;
             case Tile_BarrierHorizontal:
             if (!TILE_FLAG(1))
             {
-                line_strip_t* s = &LIST.strip[LIST.strips++];
-                s->start.y = I8(tileBottom);
-                s->start.x = I8(tileRight);
-                s->data    = mesh_get(Mesh_BarrierHorizontal);
+                beam_set_position(I8(tileBottom), I8(tileRight));
+                Draw_VLc(mesh_get(Mesh_BarrierHorizontal));
             }
                 break;
             case Tile_E0:
@@ -701,89 +792,106 @@ void world_progress(void)
             case Tile_E15:
             {
                 idx_t idx = tile - Tile_E0;
-                if (WORLD.entityStatus[idx] == EntityStatus_Alive)
+                last_sighting last = &WORLD.lastSeen[idx];
+                if (last->status == EntityStatus_Inactive)
                 {
-                    WORLD.entityStatus[idx] = EntityStatus_Active;
+                    last->status = EntityStatus_Active;
                     entity e      = &WORLD.entities[WORLD.entityIdxs[WORLD.entityCount++]];
                     e->id         = idx;
                     e->tile.y     = WORLD.selectedTile.y;
                     e->tile.x     = WORLD.selectedTile.x;
                     e->position.y = -(I16(tileTop)  - (TILE_HEIGHT >> 1));
                     e->position.x = I16(tileLeft) + (TILE_WIDTH >> 1);
-                    e->velocity.x = 0;
-                    e->velocity.y = 0;
-                    e->type       = WORLD.pentities[idx];
+                    e->velocity.x = 0, e->velocity.y = 0;
+                    e->type       = WORLD.metadata->pentities[idx];
                     e->isLocal    = true;
                     e->isEnemy    = e->type > Prop_Max;
-                    e->state      = e->isEnemy ? EnemyState_Follow : PropState_Idle;
                     e->transform  = 0;
-                    switch (e->type)
+                    WORLD.entityAdded(e);
+                }
+                break;
+                case Tile_Portal0:
+                case Tile_Portal1:
+                {
+                    i16 tileCenterY = tileTop + (TILE_WIDTH >> 1);
+                    if (tileCenterY <= 127 && tileCenterY >= -128)
                     {
-                    case Prop_Crate:
-                        e->mesh = Mesh_Crate;
-                        break;
-                    case Prop_Barrel:
-                        e->mesh = Mesh_Barrel;
-                        break;
-                    case Enemy_Tunichtgut:
-                        break;
-                    case Enemy_Halunke:
-                        break;
-                    case Enemy_Gauner:
-                        break;
-                    case Enemy_Schuft:
-                        break;
-                    case Enemy_Strolch:
-                        break;
-                    case Enemy_Boesewicht:
-                        break;
-                    default:
-                        break;
-                    }
-            }
-                break;
-            case Tile_Portal0:
-            case Tile_Portal1:
-            {
-                Stage stage = tile - Tile_Portal0;
-                game_enter_stage(Stage_Sewers);
-            }
-                break;
-            default:
-                break;
-            }
-        }
+                        beam_set_position(I8(tileCenterY), I8(tileLeft));
 
-        if (++WORLD.selectedTile.x < xMax)
-        {
-            ++tileIdx;
-        }
-        else
-        {
-            if (++WORLD.selectedTile.y < yMax) 
-            {
-                tileIdx              += idxDelta;
-                WORLD.selectedTile.x -= idxStride; // Reset to start of row
+                    }
+
+                }
+                    break;
+                default:
+                    break;
+                }
             }
-            else // End of row
+
+            if (++WORLD.selectedTile.x < xMax)
             {
-                return;
+                ++tileIdx;
+            }
+            else
+            {
+                if (++WORLD.selectedTile.y < yMax) 
+                {
+                    tileIdx              += idxDelta;
+                    WORLD.selectedTile.x -= idxStride; // Reset to start of row
+                }
+                else // End of row
+                {
+                    return;
+                }
             }
         }
     }
 }
 
+void __routine_stub(entity e) { (void)e; }
+
+void world_entity_set_status(entity e, idx_t idxInIdxs, EntityStatus status)
+{
+    switch (status)
+    {
+    case EntityStatus_Inactive:
+    deactivate:
+    {
+        const idx_t last = WORLD.entityCount - 1;
+        if (last != idxInIdxs) // Swap with last
+        {
+            WORLD.lastSeen[e->id].status = status;
+            i8 tmp = WORLD.entityIdxs[idxInIdxs];
+            WORLD.entityIdxs[idxInIdxs] = WORLD.entityIdxs[last];
+            WORLD.entityIdxs[last]      = tmp;
+        }
+        --WORLD.entityCount;
+        e->routine = __routine_stub;
+    }
+        break;
+    case EntityStatus_Dead:
+        if (idxInIdxs < 0) // Find idx
+        {
+            idx_t* idx = &WORLD.entityIdxs[0];
+            for (idxInIdxs = 1; idxInIdxs < WORLD.entityCount; ++idxInIdxs, ++idx)
+            {
+                if (e == (WORLD.entities + WORLD.entityIdxs[*idx]))
+                    break;
+            }
+        }
+        goto deactivate;
+    default: // not responsible for: EntityStatus_Active
+        break;
+    }
 }
 
-void __routine_stub(entity e) { (void)e; }
 
 void world_create(Stage const stage)
 {
     MEMZERO(WORLD);
     WORLD.tileset     = g_tilesets[stage];
+    WORLD.metadata    = g_stagesMetadata + stage;
     WORLD.entityCount = 1; // 1 for the player
-    WORLD.pentities   = g_stageEntities[stage];
-    for (idx_t idx = 0; idx < ENTITIES_MAX; ++idx)
+    for (idx_t idx = 0; idx < ENTITIES_ACTIVE_MAX; ++idx)
     {
         WORLD.entities[idx].id = idx;
         WORLD.entities[idx].routine = __routine_stub;
@@ -791,26 +899,9 @@ void world_create(Stage const stage)
     }
 
     CAMERA.id         = -1;
-    CAMERA.tile.y     = g_stageStartPts[stage].y;
-    CAMERA.tile.x     = g_stageStartPts[stage].x;
+    CAMERA.tile.y     = WORLD.metadata->startingTile.y;
+    CAMERA.tile.x     = WORLD.metadata->startingTile.x;
     CAMERA.position.y = (I16(CAMERA.tile.y) << TILE_SCALE_BITS)  - (TILE_HEIGHT >> 1);
     CAMERA.position.x = (I16(CAMERA.tile.x) << TILE_SCALE_BITS)  + (TILE_WIDTH >> 1);
     MEMZERO(g_tileFlags);
 }
-
-void world_draw(void) 
-{
-    Intensity_5F();
-    for (i8 li = 0; li < LIST.lines; ++li)
-    {
-        beam_set_position(LIST.line[li].start.y, LIST.line[li].start.x);
-        Draw_Line_d(LIST.line[li].delta.y, LIST.line[li].delta.x);
-    }
-    
-    for (i8 si = 0; si < LIST.strips; ++si)
-    {    
-        beam_set_position(LIST.strip[si].start.y, LIST.strip[si].start.x);
-        Draw_VLc((void* const)LIST.strip[si].data);
-    }
-}
-
