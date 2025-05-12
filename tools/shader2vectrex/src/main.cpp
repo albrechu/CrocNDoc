@@ -41,6 +41,12 @@ struct frame_t
 enum Edge_ { Edge_Top, Edge_Right, Edge_Bottom, Edge_Left };
 typedef int Edge;
 
+struct v2i
+{
+    int x;
+    int y;
+};
+
 struct v2f
 {
     float x;
@@ -50,6 +56,15 @@ struct v2f
         return std::abs(x - other.x) < 1e-1f && std::abs(y - other.y) < 1e-1f;
     }
 };
+
+
+typedef struct vertex_list_t
+{
+    int y, x;
+    int vector;
+    v2i data[];
+} vertex_list_t, *vertex_list;
+
 struct line_t
 {
     v2f start;
@@ -83,7 +98,8 @@ void   texture_create(int width, int height, GLuint& colorTexture);
 void   target_texture_create(int width, int height, frame_t& frame);
 void   marching_squares(std::vector<rgb_t> const& pixels, int width, int height, float threshold, std::vector<v2f>& out);
 void   rdp(const std::vector<v2f>& points, float epsilon, std::vector<v2f>& out);
-void simplify(std::vector<v2f> const& lines, float epsilon, std::vector<v2f>& out);
+void   simplify(std::vector<v2f> const& lines, float epsilon, std::vector<v2f>& out);
+void   simplify_pixel_grid(std::vector<v2f> const& points, int width, int height, float downscale,  std::vector<v2f>& out);
 static GLFWwindow* window_create(const char* title, int w, int h);
 
 int main(int argc, const char* argv[]) 
@@ -95,7 +111,7 @@ int main(int argc, const char* argv[])
         return 0;
     }
     
-    const char* file = "portal.frag"; // argv[1];
+    const char* file = "spark.frag"; // argv[1];
     int viewportX = 0, viewportY = 0, viewportW = 64, viewportH = 64;
 
     std::string content;
@@ -148,7 +164,7 @@ int main(int argc, const char* argv[])
         lineVert.c_str(),
     };
 
-    int w = 640, h = 640;
+    int w = 640 << 1, h = 640;
     GLFWwindow* win = window_create("Shader2Vectrex", w, h);
     if (!win)
     {
@@ -247,6 +263,9 @@ int main(int argc, const char* argv[])
     double start = glfwGetTime();
     double last  = start;
     float sobleThreshold = 3.0, skeletonizeThreshold = 0.05;
+    int marchingThreshold = 1, marchingBinaryThreshold = 255;
+    float sampleTime = 1.0f / 50.f;
+    bool points = false;
     
     std::vector<rgb_t> pixels(viewportW * viewportH);
     std::vector<v2f> lines;
@@ -270,8 +289,12 @@ int main(int argc, const char* argv[])
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
+        if (ImGui::IsKeyPressed(ImGuiKey_Q))
+            glfwSetWindowShouldClose(win, true);
+
         if (ImGui::Begin("Settings"))
         {
+
             ImGui::InputTextMultiline("Shader", (char*)buf.data(), buf.size());
             if (ImGui::Button("Compile"))
             {
@@ -296,14 +319,30 @@ int main(int argc, const char* argv[])
                 glUniform1f(sobleThresholdLocation, sobleThreshold);
                 glUseProgram(0);
             }
-            if (ImGui::SliderFloat("Soble Threshold", &skeletonizeThreshold, 0.f, 2.5f))
+            if (ImGui::SliderFloat("Soble Threshold", &skeletonizeThreshold, 0.f, 5.0f))
             {
                 glUseProgram(skeletonizeProgram);
                 glUniform1f(skeletonizeThresholdLocation, skeletonizeThreshold);
                 glUseProgram(0);
             }
+            if (ImGui::SliderInt("Marching Squares Threshold", &marchingThreshold, 0, 255))
+            {
+
+            }
+            if (ImGui::SliderInt("Marching Squares Binary Threshold", &marchingBinaryThreshold, 1, 255))
+            {
+            }
+            if (ImGui::SliderFloat("Sample Time (s)", &sampleTime, 1.f / 50.f, 0.5f))
+            {
+
+            }
+
+            if (ImGui::Checkbox("Points", &points))
+            {
+
+            }
             
-            ImGui::SliderFloat("Simplify Epsilon", &simplifyEps, 0.01, 200.0);
+            ImGui::SliderFloat("Simplify Epsilon", &simplifyEps, 0.01, 1000);
             ImGui::Text("%llu", lines.size());
         }
         ImGui::End();
@@ -317,74 +356,90 @@ int main(int argc, const char* argv[])
         uniforms.iTimeDelta     = now - last;
         uniforms.iFrameRate     = 1.0f / uniforms.iTimeDelta;
         uniforms.iFrame++;
-        last = now;
-        glBindBuffer(GL_UNIFORM_BUFFER, ubo);
-        glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(uniforms), &uniforms);
-
-        // Do inserted fragment shader
+        static bool firstRun = true;
+        if (firstRun || uniforms.iTimeDelta >= sampleTime)
         {
-            glBindFramebuffer(GL_FRAMEBUFFER, ping.fbo);
-            glViewport(0, 0, viewportW, viewportH);
-            glClear(GL_COLOR_BUFFER_BIT);
-            glClearColor(0.0, 0.0, 0.0, 1.0);
-            glUseProgram(program);
-            glBindVertexArray(quad.vao);
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quad.ebo);
-            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-        }
-        // Do filtering
-        {
-            glBindFramebuffer(GL_FRAMEBUFFER, pong.fbo);
-            glViewport(0, 0, viewportW, viewportH);
-            glClear(GL_COLOR_BUFFER_BIT);
-            glClearColor(0.0, 0.0, 0.0, 1.0);
-            glUseProgram(filterProgram);
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, ping.tex);
-            glUniform1i(filterImageLocation, 0);
-            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-        }
-        // Do skeletonize
-        {
-            glBindFramebuffer(GL_FRAMEBUFFER, ping.fbo);
-            glViewport(0, 0, viewportW, viewportH);
-            glClear(GL_COLOR_BUFFER_BIT);
-            glClearColor(0.0, 0.0, 0.0, 1.0);
-            glUseProgram(skeletonizeProgram);
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, pong.tex);
-            glUniform1i(skeletonizeImageLocation, 0);
-            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-        }
-        // Do marching squares and simplify
-        {
-            glReadPixels(0, 0, viewportW, viewportH, GL_RGB, GL_UNSIGNED_BYTE, pixels.data());
-            marching_squares(pixels, viewportW, viewportH, 200, lines);
-            
-            std::vector<v2f> simplified;
-            simplified.reserve(lines.capacity());
-            simplify(lines, simplifyEps, simplified);
-            lines = std::move(simplified);
+            firstRun = false;
+            last = now;
+            glBindBuffer(GL_UNIFORM_BUFFER, ubo);
+            glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(uniforms), &uniforms);
 
-            //rdp(lines, 1, lines);
+            // Do inserted fragment shader
+            {
+                glBindFramebuffer(GL_FRAMEBUFFER, ping.fbo);
+                glViewport(0, 0, viewportW, viewportH);
+                glClear(GL_COLOR_BUFFER_BIT);
+                glClearColor(0.0, 0.0, 0.0, 1.0);
+                glUseProgram(program);
+                glBindVertexArray(quad.vao);
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quad.ebo);
+                glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+            }
+            // Do filtering
+            {
+                glBindFramebuffer(GL_FRAMEBUFFER, pong.fbo);
+                glViewport(0, 0, viewportW, viewportH);
+                glClear(GL_COLOR_BUFFER_BIT);
+                glClearColor(0.0, 0.0, 0.0, 1.0);
+                glUseProgram(filterProgram);
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, ping.tex);
+                glUniform1i(filterImageLocation, 0);
+                glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+            }
+            // Do skeletonize
+            {
+                glBindFramebuffer(GL_FRAMEBUFFER, ping.fbo);
+                glViewport(0, 0, viewportW, viewportH);
+                glClear(GL_COLOR_BUFFER_BIT);
+                glClearColor(0.0, 0.0, 0.0, 1.0);
+                glUseProgram(skeletonizeProgram);
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, pong.tex);
+                glUniform1i(skeletonizeImageLocation, 0);
+                glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+            }
+            // Do marching squares and simplify
+            {
+                glReadPixels(0, 0, viewportW, viewportH, GL_RGB, GL_UNSIGNED_BYTE, pixels.data());
+                for (rgb_t& rgb : pixels)
+                {
+                    if (rgb.r >= marchingBinaryThreshold)
+                        rgb.r = 255;
+                }
 
-            glDeleteBuffers(1, &linesMesh.vbo);
-            glDeleteVertexArrays(1, &linesMesh.vao);
+                marching_squares(pixels, viewportW, viewportH, marchingThreshold, lines);
 
-            glGenBuffers(1, &linesMesh.vbo);
-            glBindBuffer(GL_ARRAY_BUFFER, linesMesh.vbo);
-            glBufferData(GL_ARRAY_BUFFER, lines.size() * sizeof(v2f), lines.data(), GL_DYNAMIC_DRAW);
-            
-            glGenVertexArrays(1, &linesMesh.vao);
-            glBindVertexArray(linesMesh.vao);
-            glEnableVertexAttribArray(0);
-            glVertexAttribPointer(0, 2, GL_FLOAT, false, 2 * sizeof(float), nullptr);
+                std::vector<v2f> simplified;
+                simplified.reserve(lines.capacity());
+                simplify(lines, simplifyEps, simplified);
+                lines = std::move(simplified);
+
+                //rdp(lines, 1, lines);
+
+                vertex_list list = (vertex_list)malloc(sizeof(vertex_list_t) + simplified.size() * sizeof(v2i));
+
+                free(list);
+
+                glDeleteBuffers(1, &linesMesh.vbo);
+                glDeleteVertexArrays(1, &linesMesh.vao);
+
+                glGenBuffers(1, &linesMesh.vbo);
+                glBindBuffer(GL_ARRAY_BUFFER, linesMesh.vbo);
+                glBufferData(GL_ARRAY_BUFFER, lines.size() * sizeof(v2f), lines.data(), GL_DYNAMIC_DRAW);
+
+                glGenVertexArrays(1, &linesMesh.vao);
+                glBindVertexArray(linesMesh.vao);
+                glEnableVertexAttribArray(0);
+                glVertexAttribPointer(0, 2, GL_FLOAT, false, 2 * sizeof(float), nullptr);
+            }
         }
-
+        
         // Draw final Image
         {
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            glViewport(0, 0, w, h);
+            glClear(GL_COLOR_BUFFER_BIT);
+            glViewport(0, 0, w / 2, h);
             glUseProgram(displayProgram);
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, ping.tex);
@@ -396,14 +451,13 @@ int main(int argc, const char* argv[])
             glBindVertexArray(0);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
         }
-        
+
         // Draw final Mesh
         {
-            glViewport(0, 0, w, h);
+            glViewport(w / 2, 0, w / 2, h);
             glUseProgram(linesProgram);
             glBindVertexArray(linesMesh.vao);
-            //glDrawArrays(GL_POINTS, 0, lines.size() * 2);
-            glDrawArrays(GL_LINES, 0, lines.size() * 2);
+            glDrawArrays(points ? GL_POINTS : GL_LINES, 0, lines.size() * 2);
         }
 
         // ImGui
@@ -805,4 +859,15 @@ static GLFWwindow* window_create(const char* title, int w, int h)
     imguiStyle.ItemSpacing.x = 0.f;
     imguiStyle.ItemSpacing.y = 20.f;
     return window;
+}
+
+std::vector<bool> g_pixelGrid;
+void simplify_pixel_grid(std::vector<v2f> const& points, int width, int height, float downscale, std::vector<v2f>& out)
+{
+    g_pixelGrid.resize(width * height);
+    std::fill(g_pixelGrid.begin(), g_pixelGrid.end(), false);
+    for (v2f const& p : points)
+    {
+
+    }
 }

@@ -44,7 +44,7 @@ soft_reset:
 	/**
 	* Game Loop
 	*/
-	while(GAME.state)
+	while(!GAME.isFinished)
 	{
 		game_start_frame();
 		
@@ -61,14 +61,9 @@ soft_reset:
 		       U8(Vec_Joy_1_Y > 0) << Input_JoyDownBit;
 
 		/**	
-		 * Update (e.g. kinematics, collision detection, ...)
+		 * Update (entity updates, kinematics, collision detection, draw, ...)
 		 */
-		g_update_table[GAME.state]();
-
-		/**	
-		 * Render
-		 */
-		g_render_table[GAME.state]();
+		GAME.progress();
 	}
 	// Reset game
 	goto soft_reset;

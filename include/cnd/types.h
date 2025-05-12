@@ -126,20 +126,10 @@ enum Player_
 	Player_YMin     = 0,
 };
 
-enum GameState_
-{
-    GameState_Finished,
-    GameState_Play,
-    GameState_Plot,
-    GameState_Pause,
-    GameState_GameOver,
-};
-typedef i8 GameState;
-
 enum Velocity_
 {
     Velocity_Run      = 2,
-    Velocity_Bite     = 6,
+    Velocity_Bite     = 8,
 	Velocity_Friction = 1,
     Velocity_Jump     = 10,
     Velocity_JumpX    = 0,
@@ -236,29 +226,30 @@ typedef u8 EntityType;
 /**
  * @brief Mesh_ is a look up enumeration
  */
-enum Mesh_
+// enum Mesh_
+// {
+// 	Mesh_CrocIdleRight,
+// 	Mesh_CrocIdleLeft,
+// 	Mesh_DocIdleRight,
+// 	Mesh_DocIdleLeft,
+// 	Mesh_MantisRight,
+// 	Mesh_MantisLeft,
+// 	Mesh_BarrelLeft,
+// 	Mesh_Barrel,
+// 	Mesh_BarrelRight,
+// 	Mesh_CrateLeft,
+// 	Mesh_Crate,
+// 	Mesh_CrateRight,
+//     Mesh_Halunke,
+// };
+// typedef i8 Mesh;
+
+enum Material_
 {
-    Mesh_Spikes,
-    Mesh_BarrierVertical,
-    Mesh_BarrierHorizontal,
-	Mesh_CrocIdleRight,
-	Mesh_CrocIdleLeft,
-	Mesh_CrocArm,
-	Mesh_CrocArmForward,
-	Mesh_DocIdleRight,
-	Mesh_DocIdleLeft,
-	Mesh_MantisRight,
-	Mesh_MantisLeft,
-	Mesh_BarrelLeft,
-	Mesh_Barrel,
-	Mesh_BarellRight,
-	Mesh_CrateLeft,
-	Mesh_Crate,
-	Mesh_CrateRight,
-	Mesh_Jumper,
-    Mesh_Halunke,
+    Substance_Air,
+    Substance_Water,
 };
-typedef i8 Mesh;
+typedef i8 Material;
 
 enum Stage_
 {
@@ -283,19 +274,24 @@ typedef i8 Track;
 //
 typedef struct entity_t entity_t, *entity;
 typedef void (*routine_t)(entity);
+typedef void (*normal_routine_t)(void);
 typedef void (*stage_routine_t)(Stage);
 struct entity_t
 {
+    const void*       mesh;
     routine_t   routine;
     v2l         position;
     v2i         velocity;
 	v2i         tile;
+    v2i         tileCandidate;
     i8          transform;  
-    Mesh        mesh;
     EntityType  type;  
     EntityState state;
     bool        isLocal;
+    bool        isSameTile;
+    bool        isGrounded;
     bool        isEnemy;
+    Material    substance;
     idx_t       id;
     i8          stopwatch;
 };
@@ -310,13 +306,15 @@ typedef struct player_t
 
 typedef struct game_t
 {
+    procedure_t progress;
+    void const* explosion;
     // Entities
     player_t player;
     // Game State
-    GameState   state;
-    u8          ticks;
-    Track       track;
-    void const* explosion;
+    u8    ticks;
+    Track track;
+    bool  isFinished;
+    i8    data[4];
 } game_t, *game;
 
 #endif /* TYPES_H */

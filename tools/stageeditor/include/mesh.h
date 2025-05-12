@@ -1,36 +1,11 @@
-/*
- * MIT License
- * 
- * Copyright (c) 2025 Julian Albrecht
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
+#pragma once
 
-/////////////////////////////////////////////////////////////////////////
-//	Includes
-//
-#include <cnd/mesh.h>
+#include <cstdint>
 
-/////////////////////////////////////////////////////////////////////////
-//	Global Data
-//
-const i8 croc_idle_right[] = 
+typedef int8_t i8;
+#define LENGTH(n) n-1
+
+const i8 croc_idle_right[] =
 {
 	LENGTH(18),
 	 4,  0,
@@ -53,7 +28,7 @@ const i8 croc_idle_right[] =
 	 0,  4,
 };
 
-const i8 croc_idle_left[] = 
+const i8 croc_idle_left[] =
 {
 	LENGTH(18),
 	 4,  0,
@@ -76,29 +51,29 @@ const i8 croc_idle_left[] =
 	 0, -4,
 };
 
-const i8 croc_lunge_right[] = 
+const i8 croc_lunge_right[] =
 {
 	LENGTH(17),
-	 0, -2, 
-	 5,  0, 
-	 -2, 2, 
-	 2,  2, 
-	 0,  3, 
-	 -1, 2, 
-	 6,  2, 
-	 0,  1, 
-	 -5, 0, 
-	 0,  2, 
-	 -3, 0, 
-	 0, -2, 
-	-3, -9, 
-	-3, -1, 
-	-3,  2, 
-	 3, -5, 
-	  4, 0, 
+	 0, -2,
+	 5,  0,
+	 -2, 2,
+	 2,  2,
+	 0,  3,
+	 -1, 2,
+	 6,  2,
+	 0,  1,
+	 -5, 0,
+	 0,  2,
+	 -3, 0,
+	 0, -2,
+	-3, -9,
+	-3, -1,
+	-3,  2,
+	 3, -5,
+	  4, 0,
 };
 
-const i8 croc_lunge_left[] = 
+const i8 croc_lunge_left[] =
 {
 	LENGTH(17),
 	  0, -2,
@@ -120,7 +95,7 @@ const i8 croc_lunge_left[] =
 	  -4, 0,
 };
 
-const i8 croc_arm[2][15] = 
+const i8 croc_arm[2][15] =
 {
 	{
 		LENGTH(7),
@@ -144,7 +119,7 @@ const i8 croc_arm[2][15] =
 	},
 };
 
-const i8 doc_body_right[] = 
+const i8 doc_body_right[] =
 {
 	LENGTH(13),
 	4, 0,
@@ -162,7 +137,7 @@ const i8 doc_body_right[] =
 	0, 3,
 };
 
-const i8 doc_body_left[] = 
+const i8 doc_body_left[] =
 {
 	LENGTH(13),
 	4, 0,
@@ -180,7 +155,7 @@ const i8 doc_body_left[] =
 	0, -3,
 };
 
-const i8 barrel[] = 
+const i8 barrel[] =
 {
 	LENGTH(4),
 	20, 0,
@@ -189,7 +164,7 @@ const i8 barrel[] =
 	0, -15,
 };
 
-const i8 barrel_right[] = 
+const i8 barrel_right[] =
 {
 	LENGTH(4),
 	20, -10,
@@ -198,7 +173,7 @@ const i8 barrel_right[] =
 	-5, -15,
 };
 
-const i8 barrel_left[] = 
+const i8 barrel_left[] =
 {
 	LENGTH(4),
 	20, 10,
@@ -207,7 +182,7 @@ const i8 barrel_left[] =
 	-5, 15,
 };
 
-const i8 crate[] = 
+const i8 crate[] =
 {
 	LENGTH(5),
 	10, 0,
@@ -217,7 +192,7 @@ const i8 crate[] =
 	10, 10,
 };
 
-const i8 crate_right[] = 
+const i8 crate_right[] =
 {
 	LENGTH(5),
 	7, 7,
@@ -227,35 +202,35 @@ const i8 crate_right[] =
 	0, 14,
 };
 
-const i8 mantis_right[] = 
+const i8 mantis_right[] =
 {
 	LENGTH(9),
-    -8,   1, // Body
-    -6,  -8, // Body
-    -10,  1, // Lower Body
-    -4, -20, // Lower Body
-    14,  19, // Upper Line - Lower Body
-    14,   8, // Upper Line - Body
-     3,   6, // Upper Line - Head
-    -5,   4, // Head
-     2, -10, // Head
+	-8,   1, // Body
+	-6,  -8, // Body
+	-10,  1, // Lower Body
+	-4, -20, // Lower Body
+	14,  19, // Upper Line - Lower Body
+	14,   8, // Upper Line - Body
+	 3,   6, // Upper Line - Head
+	-5,   4, // Head
+	 2, -10, // Head
 };
 
-const i8 mantis_left[] = 
+const i8 mantis_left[] =
 {
 	LENGTH(9),
-    -8,  -1, // Body
-    -6,   8, // Body
-    -10, -1, // Lower Body
-    -4,  20, // Lower Body
-    14, -19, // Upper Line - Lower Body
-    14,  -8, // Upper Line - Body
-     3,  -6, // Upper Line - Head
-    -5,  -4, // Head
-     2,  10, // Head
+	-8,  -1, // Body
+	-6,   8, // Body
+	-10, -1, // Lower Body
+	-4,  20, // Lower Body
+	14, -19, // Upper Line - Lower Body
+	14,  -8, // Upper Line - Body
+	 3,  -6, // Upper Line - Head
+	-5,  -4, // Head
+	 2,  10, // Head
 };
 
-const i8 jumper[] = 
+const i8 jumper[] =
 {
 	LENGTH(5),
 	0, 32,
@@ -265,7 +240,7 @@ const i8 jumper[] =
 	0, 32,
 };
 
-const i8 barrierVertical [] = 
+const i8 barrierVertical[] =
 {
 	LENGTH(4),
 	-16, -10,
@@ -274,7 +249,7 @@ const i8 barrierVertical [] =
 	-16,  10,
 };
 
-const i8 barrierHorizontal[] = 
+const i8 barrierHorizontal[] =
 {
 	LENGTH(4),
 	 10, -16,
@@ -283,7 +258,7 @@ const i8 barrierHorizontal[] =
 	-10, -16,
 };
 
-const i8 spikes[] = 
+const i8 spikes[] =
 {
 	LENGTH(3),
 	-64, 16,
@@ -291,7 +266,7 @@ const i8 spikes[] =
 	-64, 16,
 };
 
-const i8 const halunke[] = 
+const i8 const halunke[] =
 {
 	LENGTH(10),
 	0, -4,
@@ -490,7 +465,7 @@ const i8 const watertop[8][17] =
 	},
 };
 
-const i8 const cloud[8][17] = 
+const i8 const cloud[8][17] =
 {
 	{
 		LENGTH(8),
@@ -583,7 +558,7 @@ const i8 const cloud[8][17] =
 };
 
 
-const i8 const spikedBall[] = 
+const i8 const spikedBall[] =
 {
 	LENGTH(8),
 	2,   4,
@@ -593,94 +568,5 @@ const i8 const spikedBall[] =
    -2,  -4,
    -4, -2,
 	4,  -2,
-    2, -4,
+	2, -4,
 };
-
-const i8 schuft_left[] = 
-{
-	LENGTH(12),
-	7, -6,
-	-2, -2,
-	-5, 5,
-	-3, 0,
-	3, 3,
-	-5, 4,
-	8, 0,
-	2, 2,
-	2, -2,
-	-7, -7,
-	-3, 0,
-	6, 7,
-};
-
-const i8 schuft_right[] = 
-{
-	LENGTH(12),
-	7, 6,
-	-2, 2,
-	-5, -5,
-	-3, 0,
-	3, -3,
-	-5, -4,
-	8, 0,
-	2, -2,
-	2, 2,
-	-7, 7,
-	-3, 0,
-	6, -7,
-};
-
-const i8 spider_left_down[] = 
-{
-	LENGTH(13),
-	7, 2,
-	0, -5,
-	-7, 3,
-	0, 0,
-	0, 0,
-	-4, -4,
-	8, 8,
-	-4, -4,
-	5, -6,
-	-8, 10,
-	3, -4,
-	0, -8,
-	0, 13,
-};
-
-const i8 spider_left_up[] = 
-{
-	LENGTH(13),
-	-7, 2,
-	0, -5,
-	7, 3,
-	0, 0,
-	0, 0,
-	4, -4,
-	-8, 8,
-	4, -4,
-	-5, -6,
-	8, 10,
-	-3, -4,
-	0, -8,
-	0, 13,
-};
-
-const i8 spider_right_up[] = 
-{
-	LENGTH(13),
-	-7, -2,
-	0, 5,
-	7, -3,
-	0, 0,
-	0, 0,
-	4, 4,
-	-8, -8,
-	4, 4,
-	-5, 6,
-	8, -10,
-	-3, 4,
-	0, 8,
-	0, -13,
-};
-

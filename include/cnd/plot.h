@@ -71,5 +71,4 @@ extern plot_t g_plot;
 void plot_set_plot(const Plot plot);
 void plot_typewriter_next(const u8 ticks);
 bool plot_skip(void);
-void plot_print(void);
 void plot_init(void);

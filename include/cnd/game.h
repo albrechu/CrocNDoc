@@ -44,7 +44,6 @@
 //	Globals
 //
 extern game_t g_game;
-extern const procedure_t g_render_table[];
 extern const procedure_t g_update_table[];
 
 /////////////////////////////////////////////////////////////////////////
@@ -54,23 +53,22 @@ void game_init(void);
 void game_soft_reset(void);
 void game_start_frame(void);
 
-force_inline void game_update(void);
 void game_update_play(void);
 void game_update_plot(void);
-
-void game_render(void);
-void game_render_play(void);
-void game_render_plot(void);
-void game_render_pause(void);
-void game_render_gameover(void);
+void game_update_gameover(void);
 
 void game_enter_stage(Stage stage);
 void game_entity_added(entity e);
 
 /////////////////////////////////////////////////////////////////////////
-//	Action Functions
+//	Routine Functions
 //
-void action_update(void);
+void routine_doc_air(entity e);
+void routine_croc_air(entity e);
+void routine_player_air(entity e);
+void routine_player_damage(void);
+void routine_player_changed_substance(void);
+
 
 /////////////////////////////////////////////////////////////////////////
 //	Rest Functions

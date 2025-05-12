@@ -37,9 +37,10 @@
 #define TILE_SCALE_BITS   6
 #define TILES_VIEW_WIDTH  I8(256u >> TILE_SCALE_BITS)
 #define TILES_VIEW_HEIGHT I8(256u >> TILE_SCALE_BITS)
-#define WORLD_WIDTH       6
-#define WORLD_HEIGHT      6
+#define WORLD_WIDTH       8
+#define WORLD_HEIGHT      8
 #define WORLD_STRIDE      I8(TILES_VIEW_WIDTH * WORLD_WIDTH)
+#define STRIDE_BITS       5
 #define WORLD_EXTENT      I8(TILES_VIEW_HEIGHT * WORLD_HEIGHT)
 #define TILE_WIDTH        I8(1 << TILE_SCALE_BITS)
 #define TILE_HEIGHT       I8(1 << TILE_SCALE_BITS)
@@ -85,6 +86,10 @@
 
 enum Tile_
 {
+    // Materials
+    Tile_Air,
+    Tile_Water,
+
     Tile_Top2,
     Tile_Top,
     Tile_TopLeft,
@@ -97,15 +102,19 @@ enum Tile_
     Tile_Left,
     Tile_Right2,
     Tile_Right,
+    Tile_MiddleLeftTop,
     Tile_MiddleLeft,
     Tile_MiddleRight,
     Tile_Middle,
     Tile_MiddleBottom,
+    Tile_MiddleRightTop,
     Tile_MiddleTop,
     Tile_Spikes,
+    Tile_SpikedBall,
     Tile_Jumper,
     Tile_BarrierVertical,
     Tile_BarrierHorizontal,
+    Tile_WaterTop,
     // Entities
     Tile_E0,
     Tile_E1,
@@ -131,8 +140,6 @@ enum Tile_
     // Tile_Wormhole1,
     // Tile_Wormhole2,
     // Tile_Wormhole3,
-    // Nothing, nothing at all.
-    Tile_Empty,
 };
 typedef i8 Tile;
 
@@ -162,14 +169,16 @@ typedef struct world_t
     // Callbacks
     routine_t       entityAdded;
     stage_routine_t stageEntered;
+    normal_routine_t playerDamage, playerChangedSubstance;
     // Entities
     entity_t  entities[ENTITIES_ACTIVE_MAX];
     idx_t     entityIdxs[ENTITIES_ACTIVE_MAX];
     i8        entityCount;
 
     last_sighting_t lastSeen[ENTITIES_MAX];
-    v2i   selectedTile;
-    idx_t selectedEntity;
+    v2i    selectedTile;
+    entity selectedEntity;
+    idx_t selectedEntityIdxIdx;
     // Stage information
     const Tile*             tileset;
     const stage_metadata_t* metadata;

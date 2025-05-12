@@ -31,10 +31,32 @@
 #include <cnd/types.h>
 #include <cnd/defines.h>
 
-/////////////////////////////////////////////////////////////////////////
-//	Getter Functions
-//
-i8 CONST* mesh_get(Mesh const mesh);
-void      mesh_load(Mesh const mesh, bool const mirror, i8 __out* destination);
+extern const i8 croc_idle_right[];
+extern const i8 croc_idle_left[];
+extern const i8 croc_arm[2][15];
+extern const i8 const portal[8][17];
+extern const i8 const watertop[8][17];
+extern const i8 const cloud[8][17];
+extern const i8 spikes[];
+extern const i8 const spikedBall[];
+extern const i8 jumper[];
+extern const i8 barrierVertical [];
+extern const i8 barrierHorizontal[];
+extern const i8 doc_body_right[];
+extern const i8 doc_body_left[];
+extern const i8 mantis_right[];
+extern const i8 mantis_left[];
+extern const i8 barrel_left[];
+extern const i8 barrel[];
+extern const i8 barrel_right[];
+extern const i8 crate_right[];
+extern const i8 crate[];
+extern const i8 halunke[];
+extern const i8 schuft_left[];
+extern const i8 schuft_right[];
+extern const i8 spider_left_up[];
+extern const i8 spider_right_up[];
+extern const i8 spider_left_down[];
+extern const i8 spider_right_down[];
 
 #endif /* MESH_H */

@@ -165,6 +165,8 @@ void plot_typewriter_next(const u8 ticks)
         }
         PLOT.msg[PLOT.msgIdx] = '\x80';
     }
+
+    Print_Str_d(PLOT.msgPos.y, PLOT.msgPos.x, PLOT.msg); 
 }
 
 bool plot_skip(void)
@@ -183,11 +185,6 @@ bool plot_skip(void)
         } while (PLOT.pointIdx < PLOT.points);
         return false; 
     }
-}
-
-void plot_print(void)
-{
-    Print_Str_d(PLOT.msgPos.y, PLOT.msgPos.x, PLOT.msg);
 }
 
 void plot_set_plot(const Plot plot)
