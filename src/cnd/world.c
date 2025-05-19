@@ -1,505 +1,389 @@
+/**
+* DO NOT LOOK AT THIS FILE, IF AND ONLY IF YOU WANT TO KEEP YOUR EYES.
+*/
 #include <cnd/world.h>
-
+#include <cnd/globals.h>
 #include <cnd/xutils.h>
-#include <lib/print.h>
+#include <cnd/mesh.h>
 #include <vectrex.h>
+#include <lib/print.h>
 #include <lib/assert.h>
 #include <lib/static_assert.h>
 #include <lib/monitor.h>
+#include <cnd/levels.h>
+#include <cnd/entities.h>
 
 #define POS(y, x) y, x // Starting position
 #define TILE(y, x) y, x
 #define METADATA_BYTES 4
-#define TILE_FLAG(id) g_tileFlags[id]
+#define TILE_FLAG(id) WORLD.tileFlags[id]
+#define LBL(x) lbl_##x
+#define W WORLD
 
-enum TileAlias
+void __stub(void) {}
+
+#define relative_x(e) I8(e->position.x - tX)
+#define relative_y(e) I8(e->position.y - tY)
+#define set_ground(e) \
+{\
+    e->velocity.y = 0;\
+    e->isGrounded = true;\
+}
+
+void check_tiles(entity e)
 {
-    E   = Tile_Air,
-    W   = Tile_Water,
-    T2  = Tile_Top2,
-    T   = Tile_Top,
-    TL  = Tile_TopLeft,
-    TR  = Tile_TopRight,
-    B2   = Tile_Bottom2,
-    B   = Tile_Bottom,
-    BL  = Tile_BottomLeft,
-    BR  = Tile_BottomRight,
-    L2   = Tile_Left2,
-    L   = Tile_Left,
-    R2   = Tile_Right2,
-    R   = Tile_Right,
-    M   = Tile_Middle,
-    MB  = Tile_MiddleBottom,
-    MRT = Tile_MiddleRightTop,
-    MT  = Tile_MiddleTop,
-    MLT = Tile_MiddleLeftTop,
-    ML  = Tile_MiddleLeft,
-    MR  = Tile_MiddleRight,
-    S   = Tile_Spikes,
-    SB  = Tile_SpikedBall,
-    J   = Tile_Jumper,
-    BV  = Tile_BarrierVertical,
-    BH  = Tile_BarrierHorizontal,
-    WT  = Tile_WaterTop,
-    // Entities
-    E0  = Tile_E0,
-    E1  = Tile_E1,
-    E2  = Tile_E2,
-    E3  = Tile_E3,
-    E4  = Tile_E4,
-    E5  = Tile_E5,
-    E6  = Tile_E6,
-    E7  = Tile_E7,
-    E8  = Tile_E8,
-    E9  = Tile_E9,
-    E10 = Tile_E10,
-    E11 = Tile_E11,
-    E12 = Tile_E12,
-    E13 = Tile_E13,
-    E14 = Tile_E14,
-    E15 = Tile_E15,
-    // Portals
-    P0  = Tile_Portal0,
-    P1  = Tile_Portal1,
-};
-
-/** 
- * 
- * Legend: _ ground, | wall, - platform, = breakable ground, 
- *         c crate, w spikes
- *         
- * Stage_Sewers:
- *                  ________
- *  _____           |   __ -|
- * |___| |    ______|  |__|-|           
- *     | |___| ______ _____-|
- *     |_____ -|    |=|
- *          |__|    | |_______________
- *                  |___c__ _         |____
- *                        |       _   _____=>
- *                        |wwwwwwwwww|
- */
-static const Tile g_stageSewers[] = 
-{
-      B,   B,   B,   B,   B,   E,   E,   E,   E,   B,   B,   B,   B,   B,   B,   B,   B,   B,   B,   E,   E,   E,   E,   E, E, E, E, E, E, E, E, E,
-      L,   E,   R,   E,   E,  L2,   E,   E,   R,   E,   E,   E,   E,   E,   E,   E,   E,   E,   R,   E,   E,   E,   E,   E, E, E, E, E, E, E, E, E,
-      L,   E,  BV,   E,   E,  L2,   E,   E,   R,   E,  TL,   T,   T,   T,   L,   E,   E,   E,   R,   E,   E,   E,   E,   E, E, E, E, E, E, E, E, E,
-     TL,  T2,  TR,   T,   E,  L2,   E,   E,   R,   E,  L2,   E,   E,   E,   L,   E,   E,   E,   R,   E,   E,   E,   E,   E, E, E, E, E, E, E, E, E,
-      L,  P0,  R2, MRT,   T,  L2,   E,   E,   R,   E,  L2,   E,   E,   E,   L,   E,   E,   E,   R,   E,   E,   E,   E,   E, E, E, E, E, E, E, E, E,
-      L,   E,  R2,  E1,   E,  L2,   E,   E,   R,   E,  L2,   E,   E,   E,   L,   E,   E,   E,   R,   E,   E,   E,   E,   E, E, E, E, E, E, E, E, E,
-      L,   E,  R2,   T, MLT,  L2,   E,   E,   R,   E,   T,   T,   T,   T,   T,   E,   E,   E,   R,   E,   E,   E,   E,   E, E, E, E, E, E, E, E, E,
-      L,   J,  R2,   E,   E,  L2,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   R,   E,   E,   E,   E,   E, E, E, E, E, E, E, E, E,
-      L,   E,  R2,   M,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,  E3,   E,  E8,   E,   R,   E,   E,   E,   E,   E, E, E, E, E, E, E, E, E,
-      L,   J,  R2,   E,   E,   E,   E,   E,   E,   E,   E,   E,  E2,   E,   E,   E,   E,   E,   R,   B,   B,   B,   B,   B, E, E, E, E, E, E, E, E,
-      L,   E,  R2,  MB,   E,   E,  MT,  TL,  TR,  BH,  TL,   T,   T,   T,   T,   T,   T,   T,   T,   E,   E,   E,   R,   E, E, E, E, E, E, E, E, E,
-      L,   E,  R2,   E,   E,   E,  MB,  L2,  R2,   E,  L2,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   R,   E, E, E, E, E, E, E, E, E,
-      L,   E,   J,   T,   T,   L,  E0,  L2,  R2,   E,  L2,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,  P1,   R,   E, E, E, E, E, E, E, E, E,
-      L,   E,   E,   E,   E,   L,  MT,  L2,  R2,   E,  L2,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   R,   E, E, E, E, E, E, E, E, E,
-      L,   E,   E,   E,   E,   T,   T,   E,  R2,   E,   E,   E,   E,   E,   M,   E,   E,   E,   E,   E,   E,   E,   R,   E, E, E, E, E, E, E, E, E,
-      L,   E,   E,   E,   E,   E,   E,   E,  R2,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   R,   E, E, E, E, E, E, E, E, E,
-      L,   E,   J,   E,   E,   E,   E,   E,  R2,   E,   E,   E,  E7,   E,   E,   E,   E,   E,   E,   E,   E,   E,   R,   E, E, E, E, E, E, E, E, E,
-      L,   E,   E,   E,   E,   E,   E,   E,   E,   T,   T,   E,   M,   E,   E,   E,   E,   E,   E,   E,   E,   J,  BR,   E, E, E, E, E, E, E, E, E,
-      L,   E,   E,  MR,   E,   M,   E,   E,  MR,   T,   E,   E,   E,   E,   E,   E,   M,   E,  TL,   T,   T,   T,   E,   E, E, E, E, E, E, E, E, E,
-      L,   E,   E,   E,   E,   E,   MR,  E,   E,   E,   M,   E,   S,   S,   S,   S,   S,   S,   L,   E,   E,   E,   E,   E, E, E, E, E, E, E, E, E,
-      L,   J,   E,   E,   S,   S,   S,   S,   S,   S,   S,   S,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E, E, E, E, E, E, E, E, E,
-      T,   T,   T,   T,   L,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E, E, E, E, E, E, E, E, E,
-      E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E, E, E, E, E, E, E, E, E,
-      E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E, E, E, E, E, E, E, E, E,
-      E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E, E, E, E, E, E, E, E, E,
-      E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E, E, E, E, E, E, E, E, E,
-      E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E, E, E, E, E, E, E, E, E,
-      E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E, E, E, E, E, E, E, E, E,
-      E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E, E, E, E, E, E, E, E, E,
-      E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E, E, E, E, E, E, E, E, E,
-      E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E, E, E, E, E, E, E, E, E,
-      E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E,   E, E, E, E, E, E, E, E, E,
-};
-static_assert(sizeof(g_stageSewers) == (I16(WORLD_EXTENT) * I16(WORLD_STRIDE)));
-
-const EntityType g_sewersEntities[] = 
-{
-    Prop_Barrel,
-    Enemy_Schuft,
-    Enemy_Halunke,
-    Enemy_Halunke,
-    Enemy_Halunke,
-    Enemy_Halunke,
-    Enemy_Halunke,
-    Enemy_Halunke,
-    Enemy_Halunke,
-    Enemy_Halunke,
-    Enemy_Halunke,
-    Prop_Barrel,
-};
-static_assert(sizeof(g_sewersEntities) <= ENTITIES_MAX);
-
-static const Tile g_waterways[] = 
-{
-      R,   E,   E,   E,   R,   W,   W,   L,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W, W, W, W, W, W, W, W, W,  R,   E,   E,   L,
-      R,   E,   E,   E,   R,  P0,   W,   L,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W, W, W, W, W, W, W, W, W,  R,  P1,   E,   L,
-      R,   T,   T,  WT,  WT,   T,   T,  WT,  WT,  WT,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W, W, W, W, W, W, W, W, W,  R,   E,   E,   L,
-      R,   W,   W,   W,   W,   L,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W, W, W, W, W, W, W, W, W,  W,   T,  WT,   L,
-      R,   W,   S,   S,   S,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W, W, W, W, W, W, W, W, W,  W,   W,   W,   L,
-      R,   W,   L,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W, W, W, W, W, W, W, W, W,  W,   W,   W,   L,
-      R,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W, W, W, W, W, W, W, W, W,  W,   W,   W,   L,
-      R,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W, W, W, W, W, W, W, W, W,  W,   W,   W,   L,
-      R,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W, W, W, W, W, W, W, W, W,  W,   W,   W,   L,
-      R,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W, W, W, W, W, W, W, W, W,  W,   W,   W,   L,
-      R,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W, W, W, W, W, W, W, W, W,  W,   W,   W,   L,
-      R,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W, W, W, W, W, W, W, W, W,  W,   W,   W,   L,
-      R,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W, W, W, W, W, W, W, W, W,  W,   W,   W,   L,
-      R,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W, W, W, W, W, W, W, W, W,  W,   W,   W,   L,
-      R,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W, W, W, W, W, W, W, W, W,  W,   W,   W,   L,
-      R,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W, W, W, W, W, W, W, W, W,  W,   W,   W,   L,
-      R,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W, W, W, W, W, W, W, W, W,  W,   W,   W,   L,
-      R,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W, W, W, W, W, W, W, W, W,  W,   W,   W,   L,
-      R,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W, W, W, W, W, W, W, W, W,  W,   W,   W,   L,
-      R,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W, W, W, W, W, W, W, W, W,  W,   W,   W,   L,
-      R,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W, W, W, W, W, W, W, W, W,  W,   W,   W,   L,
-      R,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W, W, W, W, W, W, W, W, W,  W,   W,   W,   L,
-      R,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W, W, W, W, W, W, W, W, W,  W,   W,   W,   L,
-      R,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W, W, W, W, W, W, W, W, W,  W,   W,   W,   L,
-      R,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W, W, W, W, W, W, W, W, W,  W,   W,   W,   L,
-      R,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W, W, W, W, W, W, W, W, W,  W,   W,   W,   L,
-      R,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W, W, W, W, W, W, W, W, W,  W,   W,   W,   L,
-      R,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W, W, W, W, W, W, W, W, W,  W,   W,   W,   L,
-      R,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W, W, W, W, W, W, W, W, W,  W,   W,   W,   L,
-      R,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W, W, W, W, W, W, W, W, W,  W,   W,   W,   L,
-      R,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W,   W, W, W, W, W, W, W, W, W,  W,   W,   W,   L,
-      W,   T,   T,   T,   T,   T,   T,   T,   T,   T,   T,   T,   T,   T,   T,   T,   T,   T,   T,   T, T, T, T, T, T, T, T, T,  T,   T,   T,   W,
-};
-static_assert(sizeof(g_waterways) == (I16(WORLD_EXTENT) * I16(WORLD_STRIDE)));
-
-const EntityType g_waterwaysEntities[] = 
-{
-    Prop_Barrel,
-    Enemy_Tunichtgut,
-    Enemy_Halunke,
-    Enemy_Halunke,
-    Enemy_Halunke,
-    Enemy_Halunke,
-    Prop_Barrel,
-    Prop_Barrel,
-    Prop_Barrel,
-    Prop_Barrel,
-    Prop_Barrel,
-    Prop_Barrel,
-};
-static_assert(sizeof(g_waterwaysEntities) <= ENTITIES_MAX);
-
-
-const stage_metadata_t g_stagesMetadata[] = 
-{
-    // Stage_Sewers
-    {
-        .startingTile   = { 2, 1 },
-        .adjacentStages = { Stage_Waterways, Stage_Waterways },
-        .pentities      = g_sewersEntities,
-    },
-    // Stage_Waterways
-    {
-        .startingTile   = { 2, 1 },
-        .adjacentStages = { Stage_Sewers, Stage_Sewers },
-        .pentities      = g_waterwaysEntities,
-    }
-};
-
-const Tile* const g_tilesets[] = 
-{
-    g_stageSewers,
-    g_waterways,
-    // g_stageMolEnlands,
-    // g_stageBonus,
-};
-
-static bool g_tileFlags[4];
-world_t g_world;
-
-#define ENT WORLD.selectedEntity
-void check_collision()
-{
-    ENT->isGrounded = ENT->velocity.y < 0;
-    ENT->velocity.x -= (WORLD.gravity | ENT->transform) * (!!ENT->velocity.x & !ENT->velocity.y);
-	ENT->velocity.y -= WORLD.gravity;
-    // WORLD.selectedEntity->velocity.y  = MAX8(-8, WORLD.selectedEntity->velocity.y);
-    // print_signed_int(-100, -50, WORLD.selectedEntity->tile.y);
-    // print_signed_int(-100, -20, WORLD.selectedEntity->tile.x);
+	e->velocity.y -= Velocity_Friction;
+    e->isGrounded = false;
     
-    v2i tiles[3]; // tiles to check
-    tiles[0].y = ENT->tile.y;
-    tiles[0].x = ENT->tile.x;
-    tiles[1].y = I8((ENT->position.y - ENT->velocity.y) >> TILE_SCALE_BITS);
-    tiles[1].x = ENT->tile.x;
-    tiles[2].y = ENT->tile.y;
-    tiles[2].x = I8((ENT->position.x + ENT->velocity.x) >> TILE_SCALE_BITS);
-
-    for (i8 i = 0; i < 3; ++i)
+    static const void* jump[] =
     {
-        v2i* tile = &tiles[i];
+        &&LBL(Tile_Air), 
+        &&LBL(Tile_Water),
+        &&LBL(Tile_Top2),
+        &&LBL(Tile_Top),
+        &&LBL(Tile_TopLeft),
+        &&LBL(Tile_TopRight),
+        &&LBL(Tile_Bottom2),
+        &&LBL(Tile_Bottom),
+        &&LBL(Tile_BottomLeft),
+        &&LBL(Tile_BottomRight),
+        &&LBL(Tile_Left2),
+        &&LBL(Tile_Left),
+        &&LBL(Tile_Right2),
+        &&LBL(Tile_Right),
+        &&LBL(Tile_MiddleLeftTop),
+        &&LBL(Tile_MiddleLeft),
+        &&LBL(Tile_MiddleRight),
+        &&LBL(Tile_Middle),
+        &&LBL(Tile_MiddleBottom),
+        &&LBL(Tile_MiddleRightTop),
+        &&LBL(Tile_MiddleTop),
+        &&LBL(Tile_Spikes),
+        &&LBL(Tile_SpikedBall),
+        &&LBL(Tile_Jumper),
+        &&LBL(Tile_BarrierVertical),
+        &&LBL(Tile_BarrierHorizontal),
+        &&LBL(Tile_WaterTop),
+        &&end,
+        &&end,
+        &&end,
+        &&end,
+        &&end,
+        &&end,
+        &&end,
+        &&end,
+        &&end,
+        &&end,
+        &&end,
+        &&end,
+        &&end,
+        &&end,
+        &&end,
+        &&end,
+        &&LBL(Tile_Portal0),
+        &&LBL(Tile_Portal0),
+    };
+    
+    void* next = &&horizontal;
+
+     // The current tile
+    const i16 tileX = I16(e->tile.x);
+    const i16 currentX = tileX << STRIDE_BITS;
+    i16 tX = currentX;
+    i16 tY = I16(e->tile.y) << STRIDE_BITS;
+    i8 tile = WORLD.tiles[tY + tileX];
+    goto *jump[tile];
+
+    // The horizontal tile
+horizontal:;
+    volatile const i8 xAfter = I8((e->position.x + e->velocity.x) >> TILE_SCALE_BITS);
+    if (xAfter != e->tile.x)
+    {
+        tX = I16(xAfter) << TILE_SCALE_BITS;
+        next = &&vertical;
+        tile = WORLD.tiles[tY + xAfter];
+        goto *jump[tile];
+    }
+    // The vertical tile
+vertical:;
+    volatile const i8 yAfter = I8((e->position.y - e->velocity.y) >> TILE_SCALE_BITS);
+    if (yAfter != e->tile.y)
+    {
+        tX = currentX;
+        tY = I16(yAfter) << TILE_SCALE_BITS;
+        next = &&adjust;
+        tile = WORLD.tiles[tY + tileX];
+        goto* jump[tile];
+    }
+adjust: // Adjust position and flags if necessary
+    if (e->velocity.x)
+    {
+        e->position.x += I16(e->velocity.x);
+        e->tile.x     = xAfter;
+        e->velocity.x = 0;
+    }
+
+    if (e->velocity.y)
+    {
+        e->position.y -= I16(e->velocity.y);
+        e->tile.y = yAfter;
+    }
+    
+    i8 dy = e->tile.y - CAMERA.tile.y;
+    const i8 dyMask = dy >> 7;
+    dy = (dy ^ dyMask) - dyMask;
+    i8 dx = e->tile.x - CAMERA.tile.x;
+    const i8 dxMask = dx >> 7;
+    dx = ((dx ^ dxMask) - dxMask);
+    
+    // Check if entity is local.
+    e->isLocal = dx < 4 && dy < 4;
+    if (!e->isLocal)
+    {
+        if (dx >= 6 || dy >= 6) // Possibly remove entity if too far away
         {
-            const Tile type = WORLD.tileset[(I16(tile->y) << STRIDE_BITS) + tile->x];
-            switch (type)
+            entity_set_status(e, EntityStatus_Inactive);
+        }
+        e->isSameTile = false;
+    }
+    else
+    {
+        e->isSameTile = e->tile.x == CAMERA.tile.x && e->tile.y == CAMERA.tile.y;
+    }
+    return;
+
+LBL(Tile_Air):
+    if (e->id == 0 && e->substance != Substance_Air)
+    {
+        e->routine = e->type == Character_Croc ? routine_croc_air : routine_doc_air;
+        e->substance = Substance_Air;
+    }
+    goto *next;
+LBL(Tile_Water):
+    if (e->id == 0 && e->substance != Substance_Water)
+    {
+        e->routine = e->type == Character_Croc ? routine_croc_water : routine_doc_water;
+        e->substance = Substance_Water;
+    }
+    goto *next;
+LBL(Tile_Top2):
+    if (relative_y(e) - e->velocity.y <= 0)
+        set_ground(e);
+        /* fallthrough */
+LBL(Tile_Top):
+    if (relative_y(e) + e->velocity.y <= 0)
+        set_ground(e);
+    goto *next;
+LBL(Tile_TopLeft):
+    if (relative_y(e) + e->velocity.y <= 0)
+        set_ground(e);
+    if (relative_x(e) - e->velocity.x <= 0)
+        e->velocity.x = 0;
+    goto *next;
+LBL(Tile_TopRight):
+    if (relative_y(e) + e->velocity.y <= 0)
+        set_ground(e);
+    if (relative_x(e) - e->velocity.x >= TILE_WIDTH)
+        e->velocity.x = 0;
+    goto* next;
+LBL(Tile_Bottom2):
+    if (relative_y(e) - e->velocity.y >= TILE_HEIGHT)
+        set_ground(e);
+    goto* next;
+LBL(Tile_Bottom):
+    if (relative_y(e) + e->velocity.y >= TILE_HEIGHT)
+        set_ground(e);
+    goto *next;
+LBL(Tile_BottomLeft):
+    if (relative_y(e) - e->velocity.y >= TILE_HEIGHT)
+        set_ground(e);
+    if (relative_x(e) + e->velocity.x <= 0)
+        e->velocity.x = 0;
+    goto *next;
+LBL(Tile_BottomRight):
+    if (relative_y(e) - e->velocity.y >= TILE_HEIGHT)
+        set_ground(e);
+    if (relative_x(e) + e->velocity.x >= TILE_WIDTH)
+        e->velocity.x = 0;
+    goto *next;
+LBL(Tile_Left2):
+    if (relative_x(e) + e->velocity.x < 0)
+        e->velocity.x = 0;
+    goto* next;
+LBL(Tile_Left):
+    if (relative_x(e) + e->velocity.x >= 0)
+        e->velocity.x = 0;
+    goto *next;
+LBL(Tile_Right2):
+    if (relative_x(e) + e->velocity.x >= TILE_WIDTH)
+        e->velocity.x = 0;
+    goto* next;
+LBL(Tile_Right):
+    if (relative_x(e) - e->velocity.x >= TILE_WIDTH)
+        e->velocity.x = 0;
+    goto *next;
+LBL(Tile_MiddleLeftTop):
+    {
+        const i8 relativeY = relative_y(e);
+        if (relativeY - e->velocity.y <= 0 && relativeY < TILE_HEIGHT_2 && relative_x(e) <= (TILE_WIDTH_2 + PLATFORM_TOLERANCE))
+            set_ground(e);
+    }
+    goto *next;
+LBL(Tile_MiddleLeft):
+    {
+        const i8 relativeY = relative_y(e);
+        if (relativeY - e->velocity.y >= TILE_HEIGHT_2 && relativeY < TILE_HEIGHT_2 && relative_x(e) <= (TILE_WIDTH_2 + PLATFORM_TOLERANCE))
+            set_ground(e);
+    }
+    goto *next;
+LBL(Tile_MiddleRight):
+    {
+        const i8 relativeY = relative_y(e);
+        if (relativeY - e->velocity.y >= TILE_HEIGHT_2 && relativeY < TILE_HEIGHT_2 && relative_x(e) >= (TILE_WIDTH_2 - PLATFORM_TOLERANCE))
+            set_ground(e);
+    }
+    goto *next;
+LBL(Tile_Middle):
+    {
+        const i8 relativeX = relative_x(e);
+        const i8 relativeY = relative_y(e);
+        if (relativeY - e->velocity.y >= TILE_HEIGHT_2 && relativeY < TILE_HEIGHT_2 && relativeX >= (TILE_WIDTH_4 - PLATFORM_TOLERANCE) && relativeX <= (TILE_WIDTH_3_4 + PLATFORM_TOLERANCE))
+            set_ground(e);
+    }
+    goto *next;
+LBL(Tile_MiddleBottom):
+    {
+        const i8 relativeX = relative_x(e);
+        const i8 relativeY = relative_y(e);
+        if (relativeY - e->velocity.y >= TILE_HEIGHT_2 && relativeY < TILE_HEIGHT && relativeX >= (TILE_WIDTH_4 - PLATFORM_TOLERANCE) && relativeX <= (TILE_WIDTH_3_4 + PLATFORM_TOLERANCE))
+            set_ground(e);
+    }
+    goto *next;
+LBL(Tile_MiddleRightTop):
+    {
+        const i8 relativeY = relative_y(e);
+        if (relativeY - e->velocity.y >= 0 && relativeY < 0 && relative_x(e) >= (TILE_WIDTH_2 - PLATFORM_TOLERANCE))
+            set_ground(e);
+    }
+    goto *next;
+LBL(Tile_MiddleTop):
+    {
+        const i8 relativeX = relative_x(e);
+        const i8 relativeY = relative_y(e);
+        if (relativeY - e->velocity.y >= 0 && relativeY < 0 && relativeX >= (TILE_WIDTH_4 - PLATFORM_TOLERANCE) && relativeX <= (TILE_WIDTH_3_4 + PLATFORM_TOLERANCE))
+            set_ground(e);
+    }
+    goto *next;
+LBL(Tile_Spikes):
+    if (relative_y(e) - e->velocity.y >= (TILE_HEIGHT >> 1))
+    {
+        set_ground(e);
+        if (e->id > 0)
+        {
+            entity_set_status(e, EntityState_Dead);
+        }
+        else if (!WORLD.gameIsOver)
+        {
+            WORLD.playerDamage();
+            CAMERA.invisiblityFrames = 0;
+            WORLD.playerDamage();
+            WORLD.gameIsOver = true;
+        }
+    }
+    goto *next;
+LBL(Tile_SpikedBall):
+    {
+        i8 nextX = relative_x(e) + e->velocity.x;
+        i8 nextY = relative_y(e) + e->velocity.y;
+        if (e->globalId == -1 && ((nextX >= ((TILE_WIDTH >> 2) + (TILE_WIDTH >> 3)) && nextX <= TILE_WIDTH - ((TILE_WIDTH >> 2) + (TILE_WIDTH >> 3))) ||
+            (nextY >= ((TILE_HEIGHT >> 2) + (TILE_HEIGHT >> 3)) && nextY <= TILE_HEIGHT - ((TILE_HEIGHT >> 2) + (TILE_HEIGHT >> 3)))))
+            WORLD.playerDamage();
+    }
+    goto *next;
+LBL(Tile_Jumper):
+{
+    const i8 relativeX = relative_x(e);
+    const i8 relativeY = relative_y(e);
+    if (relativeY - e->velocity.y >= TILE_HEIGHT_2 && relativeY < TILE_HEIGHT && relativeX >= (TILE_WIDTH_4 - PLATFORM_TOLERANCE) && relativeX <= (TILE_WIDTH_3_4 + PLATFORM_TOLERANCE))
+        e->velocity.y = Velocity_Jumper;
+}
+    goto *next;
+LBL(Tile_BarrierVertical):
+    if (!TILE_FLAG(0))
+    {
+        if (relative_x(e) + e->velocity.x >= TILE_WIDTH - 1)
+        {
+            if (e->id == 0 && e->stopwatch != 0)
+                TILE_FLAG(0) = true;
+            else
+                e->velocity.x = 0;
+        }
+    }
+    goto *next;
+LBL(Tile_BarrierHorizontal):
+    if (!TILE_FLAG(1))
+    {
+        if (relative_y(e) - e->velocity.y >= TILE_WIDTH)
+        {
+            if (e->id == 0)
             {
-            case Tile_Air:
-                ENT->substance = Substance_Air;
-                break;
-            case Tile_Water:
-                ENT->substance = Substance_Water;
-                break;
-            case Tile_Top2:
-                if (I8(ENT->position.y - (tile->y << TILE_SCALE_BITS)) - ENT->velocity.y <= 0)
-                    ENT->velocity.y = 0;
-                /* fallthrough */
-            case Tile_Top:
-                if (I8(ENT->position.y - (tile->y << TILE_SCALE_BITS)) + ENT->velocity.y <= 0)
-                    ENT->velocity.y = 0;
-            break;
-            case Tile_TopLeft:
-                if (I8(ENT->position.y - (tile->y << TILE_SCALE_BITS)) + ENT->velocity.y <= 0)
-                    ENT->velocity.y = 0;
-                if (I8(ENT->position.x - (tile->x << TILE_SCALE_BITS)) - ENT->velocity.x <= 0)
-                    ENT->velocity.x = 0;
-                break;
-            case Tile_TopRight:
-                if (I8(ENT->position.y - (tile->y << TILE_SCALE_BITS)) + ENT->velocity.y <= 0)
-                    ENT->velocity.y = 0;
-                if (I8(ENT->position.x - (tile->x << TILE_SCALE_BITS)) - ENT->velocity.x >= TILE_WIDTH - 1)
-                    ENT->velocity.x = 0;
-                break;
-            case Tile_Bottom2:
-                if (I8(ENT->position.y - (tile->y << TILE_SCALE_BITS)) - ENT->velocity.y >= TILE_HEIGHT - 1)
-                    ENT->velocity.y = 0;
-                /* fallthrough */
-            case Tile_Bottom:
-                if (I8(ENT->position.y - (tile->y << TILE_SCALE_BITS)) + ENT->velocity.y >= TILE_HEIGHT - 1)
-                    ENT->velocity.y = 0;
-                break;
-            case Tile_BottomLeft:
-                if (I8(ENT->position.y - (tile->y << TILE_SCALE_BITS)) - ENT->velocity.y >= TILE_HEIGHT - 1)
-                    ENT->velocity.y = 0;
-                if (I8(ENT->position.x - (tile->x << TILE_SCALE_BITS)) + ENT->velocity.x <= 0)
-                    ENT->velocity.x = 0;
-                break;
-            case Tile_BottomRight:
-                if (I8(ENT->position.y - (tile->y << TILE_SCALE_BITS)) - ENT->velocity.y >= TILE_HEIGHT - 1)
-                    ENT->velocity.y = 0;
-                if (I8(ENT->position.x - (tile->x << TILE_SCALE_BITS)) + ENT->velocity.x >= TILE_WIDTH - 1)
-                    ENT->velocity.x = 0;
-                break;
-            case Tile_Left2:
-                if (I8(ENT->position.x - (tile->x << TILE_SCALE_BITS)) - ENT->velocity.x <= 0)
-                    ENT->velocity.x = 0;
-                /* fallthrough */
-            case Tile_Left:
-                if (I8(ENT->position.x - (tile->x << TILE_SCALE_BITS)) + ENT->velocity.x <= 0)
-                    ENT->velocity.x = 0;
-                break;
-            case Tile_Right2:
-                if (I8(ENT->position.x - (tile->x << TILE_SCALE_BITS)) - ENT->velocity.x >= TILE_WIDTH - 1)
-                    ENT->velocity.x = 0;
-                /* fallthrough */
-            case Tile_Right:
-                if (I8(ENT->position.x - (tile->x << TILE_SCALE_BITS)) + ENT->velocity.x >= TILE_WIDTH - 1)
-                    ENT->velocity.x = 0;
-                break;
-            case Tile_MiddleLeftTop:
-            {
-                const i8 relativeX = I8(ENT->position.x - (tile->x << TILE_SCALE_BITS));
-                const i8 relativeY = I8(ENT->position.y - (tile->y << TILE_SCALE_BITS));
-                if (relativeY - ENT->velocity.y <= 0 && relativeY < (TILE_HEIGHT >> 1) && relativeX <= TILE_WIDTH >> 1)
-                    ENT->velocity.y = 0;
-            }
-                break;
-            case Tile_MiddleLeft:
-            {
-                const i8 relativeX = I8(ENT->position.x - (tile->x << TILE_SCALE_BITS));
-                const i8 relativeY = I8(ENT->position.y - (tile->y << TILE_SCALE_BITS));
-                if (relativeY - ENT->velocity.y >= (TILE_HEIGHT >> 1) - 1 && relativeY < (TILE_HEIGHT >> 1) && relativeX <= TILE_WIDTH >> 1)
-                    ENT->velocity.y = 0;
-            }
-                break;
-            case Tile_MiddleRight:
-            {
-                const i8 relativeX = I8(ENT->position.x - (tile->x << TILE_SCALE_BITS));
-                const i8 relativeY = I8(ENT->position.y - (tile->y << TILE_SCALE_BITS));
-                if (relativeY - ENT->velocity.y >= (TILE_HEIGHT >> 1) - 1 && relativeY < (TILE_HEIGHT >> 1) && relativeX >= TILE_WIDTH >> 1)
-                    ENT->velocity.y = 0;
-            }
-                break;
-            case Tile_Middle:
-            {
-                const i8 relativeX = I8(ENT->position.x - (tile->x << TILE_SCALE_BITS));
-                const i8 relativeY = I8(ENT->position.y - (tile->y << TILE_SCALE_BITS));
-                if (relativeY - ENT->velocity.y >= (TILE_HEIGHT >> 1) - 1 && relativeY < (TILE_HEIGHT >> 1) && relativeX >= TILE_WIDTH >> 2 && relativeX <= (TILE_WIDTH- (TILE_WIDTH >> 2)))
-                    ENT->velocity.y = 0;
-            }
-                break;
-            case Tile_MiddleBottom:
-            {
-                const i8 relativeX = I8(ENT->position.x - (tile->x << TILE_SCALE_BITS));
-                const i8 relativeY = I8(ENT->position.y - (tile->y << TILE_SCALE_BITS));
-                if (relativeY - ENT->velocity.y >= TILE_HEIGHT - 1 && relativeY < TILE_HEIGHT && relativeX >= TILE_WIDTH >> 2 && relativeX <= (TILE_WIDTH- (TILE_WIDTH >> 2)))
-                    ENT->velocity.y = 0;
-            }
-                break;
-            case Tile_MiddleRightTop:
-            {
-                const i8 relativeX = I8(ENT->position.x - (tile->x << TILE_SCALE_BITS));
-                const i8 relativeY = I8(ENT->position.y - (tile->y << TILE_SCALE_BITS));
-                if (relativeY - ENT->velocity.y >= 0 && relativeY < 0 && relativeX >= TILE_WIDTH >> 1)
-                    ENT->velocity.y = 0;
-            }
-                break;
-            case Tile_MiddleTop:
-            {
-                const i8 relativeX = I8(ENT->position.x - (tile->x << TILE_SCALE_BITS));
-                const i8 relativeY = I8(ENT->position.y - (tile->y << TILE_SCALE_BITS));
-                if (relativeY - ENT->velocity.y >= 0 && relativeY < 0 && relativeX >= TILE_WIDTH >> 2 && relativeX <= (TILE_WIDTH- (TILE_WIDTH >> 2)))
-                    ENT->velocity.y = 0;
-            }
-                break;
-            case Tile_Spikes:
-            {
-                const i8 relative = I8(ENT->position.y - (tile->y << TILE_SCALE_BITS));
-                if (relative - ENT->velocity.y >= (TILE_HEIGHT >> 1))
+                if (e->velocity.y < -14 || e->velocity.y > 14) // Broke the barrier
                 {
-                    ENT->velocity.y = 0;
-                    if (ENT->id >= 0)
-                    {
-                        world_entity_set_status(ENT, WORLD.selectedEntityIdxIdx, EntityState_Dead);
-                    }
-                    else
-                    {
-                        WORLD.playerDamage();
-                        WORLD.playerDamage();
-                    }
+                    TILE_FLAG(1) = true;
+                }
+                else
+                {
+                    set_ground(e);
                 }
             }
-                break;
-            case Tile_SpikedBall:
+            else
             {
-                i8 nextX = I8(ENT->position.x - (tile->x << TILE_SCALE_BITS)) + ENT->velocity.x;
-                i8 nextY = I8(ENT->position.y - (tile->y << TILE_SCALE_BITS)) + ENT->velocity.y;
-                if (ENT->id == -1 && ((nextX >= ((TILE_WIDTH >> 2) + (TILE_WIDTH >> 3)) && nextX <= TILE_WIDTH - ((TILE_WIDTH >> 2) + (TILE_WIDTH >> 3))) || 
-                    (nextY >= ((TILE_HEIGHT >> 2) + (TILE_HEIGHT >> 3)) && nextY <= TILE_HEIGHT - ((TILE_HEIGHT >> 2) + (TILE_HEIGHT >> 3)))))
-                    WORLD.playerDamage();
-            }
-                break;
-            case Tile_Jumper:
-            {
-                const i8 relativeY = I8(ENT->position.y - (tile->y << TILE_SCALE_BITS));
-                const i8 relativeX = I8(ENT->position.x - (tile->x << TILE_SCALE_BITS));
-                if (relativeY + ENT->velocity.y >= (TILE_HEIGHT >> 1) && relativeX + ENT->velocity.x <= (TILE_WIDTH - (TILE_WIDTH >> 2)) && relativeX + ENT->velocity.x >= (TILE_WIDTH >> 2))
-                {
-                    ENT->velocity.y = Velocity_Jumper;
-                }
-            }
-                break; 
-            case Tile_BarrierVertical:
-            if (!TILE_FLAG(0))
-            {
-                if (I8(ENT->position.x - (tile->x << TILE_SCALE_BITS)) + ENT->velocity.x >= TILE_WIDTH - 1)
-                {
-                    if (ENT->id == -1 && ENT->stopwatch != 0)
-                        TILE_FLAG(0) = true;
-                    else
-                        ENT->velocity.x = 0;
-                }
-            }
-                break;
-            case Tile_BarrierHorizontal:
-                if (!TILE_FLAG(1))
-                {
-                    if (I8(ENT->position.y - (tile->y << TILE_SCALE_BITS)) - ENT->velocity.y >= TILE_WIDTH)
-                    {                   
-                        if (ENT->velocity.y < -14) // Broke the barrier
-                            TILE_FLAG(1) = true;
-                        else
-                            ENT->velocity.y = 0;
-                    }
-                }
-                break;
-            case Tile_WaterTop:
-                if (ENT->id == -1 && (I8(ENT->position.y - (tile->y << TILE_SCALE_BITS)) + ENT->velocity.y >= TILE_HEIGHT - 1) && ENT->velocity.y > 0)
-                    ENT->velocity.y += Velocity_Jump;
-                break;
-            case Tile_E0:
-            case Tile_E1:
-            case Tile_E2:
-            case Tile_E3:
-            case Tile_E4:
-            case Tile_E5:
-            case Tile_E6:
-            case Tile_E7:
-            case Tile_E8:
-            case Tile_E9:
-            case Tile_E10:
-            case Tile_E11:
-            case Tile_E12:
-            case Tile_E13:
-            case Tile_E14:
-            case Tile_E15:
-                break;
-            case Tile_Portal0:
-            case Tile_Portal1:
-            {
-                i8 nextX = I8(ENT->position.x - (tile->x << TILE_SCALE_BITS)) + ENT->velocity.x;
-                i8 nextY = I8(ENT->position.y - (tile->y << TILE_SCALE_BITS)) + ENT->velocity.y;
-                if ((nextX >= ((TILE_WIDTH >> 2) + (TILE_WIDTH >> 3)) && nextX <= TILE_WIDTH - ((TILE_WIDTH >> 2) + (TILE_WIDTH >> 3))) || 
-                    (nextY >= ((TILE_HEIGHT >> 2) + (TILE_HEIGHT >> 3)) && nextY <= TILE_HEIGHT - ((TILE_HEIGHT >> 2) + (TILE_HEIGHT >> 3))))
-                    WORLD.stageEntered(WORLD.metadata->adjacentStages[type - Tile_Portal0]);
-            }
-                break;
-            default:
-                break;
+                set_ground(e);
             }
         }
     }
-    ENT->position.x += ENT->velocity.x;
-    ENT->position.y -= I16(ENT->velocity.y);
-    ENT->tile.x = I8(ENT->position.x >> TILE_SCALE_BITS);
-    ENT->tile.y = I8(ENT->position.y >> TILE_SCALE_BITS);
-    
-    // Check if entity is local.
-    u8 distX = Abs_b(ENT->tile.x - CAMERA.tile.x);
-    u8 distY = Abs_b(ENT->tile.y - CAMERA.tile.y);
-    ENT->isLocal = distX < 3 && distY < 3;
-    ENT->isSameTile = ENT->tile.x == CAMERA.tile.x && ENT->tile.y == CAMERA.tile.y;
-    //if (!ENT->isLocal)
-    //{
-    //    if (distX >= 12 || distY >= 12) // Possibly remove entity if too far away
-    //    {
-    //        world_entity_set_status(ENT, WORLD.selectedEntityIdxIdx, EntityStatus_Inactive);
-    //    }
-    //}
-    ENT->isGrounded = ENT->velocity.y == 0;
+    goto *next;
+LBL(Tile_WaterTop):
+    if ((relative_y(e) + e->velocity.y >= TILE_HEIGHT - 1) && e->velocity.y > 0)
+        e->velocity.y = Velocity_Breaching;
+    goto *next;
+LBL(Tile_Portal0):
+    {
+        i8 nextX = relative_x(e) + e->velocity.x;
+        i8 nextY = relative_y(e) + e->velocity.y;
+        if ((nextX >= ((TILE_WIDTH >> 2) + (TILE_WIDTH >> 3)) && nextX <= TILE_WIDTH - ((TILE_WIDTH >> 2) + (TILE_WIDTH >> 3))) ||
+            (nextY >= ((TILE_HEIGHT >> 2) + (TILE_HEIGHT >> 3)) && nextY <= TILE_HEIGHT - ((TILE_HEIGHT >> 2) + (TILE_HEIGHT >> 3))))
+            WORLD.stageEntered(WORLD.level->adjacentStages[tile - Tile_Portal0]);
+    }
+end:
+    goto *next;
 }
 
-#define LBL(x) lbl_##x
 
+#if 0
 void world_progress(void)
 {
     ++WORLD.ticks;
-    WORLD.gravity = WORLD.ticks & 1;
+    //WORLD.gravity = I8(WORLD.ticks & 1);
 
-    for (WORLD.selectedEntityIdxIdx = 0; WORLD.selectedEntityIdxIdx < WORLD.entityCount; ++WORLD.selectedEntityIdxIdx)
+    for (i8 id = 0; id < WORLD.entityCount; ++id)
     {
-        WORLD.selectedEntity = &WORLD.entities[WORLD.entityIdxs[WORLD.selectedEntityIdxIdx]];
-        check_collision();
+        WORLD.selectedEntity = &WORLD.entities[WORLD.entityIdxs[id]];
+        check_tiles();
     }
 
-    WORLD.selectedTile.x = I8((CAMERA.position.x - 128) >> TILE_SCALE_BITS);
-    WORLD.selectedTile.y = I8((CAMERA.position.y - 128) >> TILE_SCALE_BITS);
+    v2i selectedTile;
+    selectedTile.x = I8((CAMERA.position.x - 128) >> TILE_SCALE_BITS);
+    selectedTile.y = I8((CAMERA.position.y - 128) >> TILE_SCALE_BITS) + 1;
 
-    i8 xMax = WORLD.selectedTile.x + 4;
+    i8 xMax = selectedTile.x + 9;
     xMax = MIN8(xMax, WORLD_STRIDE);
     xMax = MAX8(0, xMax);
-    i8 yMax = WORLD.selectedTile.y + 5;
+    i8 yMax = selectedTile.y + 8;
     yMax = MIN8(yMax, WORLD_EXTENT);
     yMax = MAX8(0, yMax);
-    WORLD.selectedTile.x = MAX8(0, WORLD.selectedTile.x);
-    WORLD.selectedTile.y = MAX8(0, WORLD.selectedTile.y);
-    
+    selectedTile.x = MAX8(0, selectedTile.x);
+    selectedTile.y = MAX8(0, selectedTile.y);
     
     static const void* jump[] = 
     {
@@ -550,18 +434,19 @@ void world_progress(void)
         &&LBL(Tile_Portal0),
     };
 
-    i8 idxStride = xMax - WORLD.selectedTile.x;
-    i8 idxDelta  = WORLD_STRIDE - idxStride + 1;
+    i8 xMin = selectedTile.x;
+    i8 idxDelta  = WORLD_STRIDE - (xMax - selectedTile.x) + 1;
     
     i16 tileLeft, tileRight, tileTop; //, tileBottom;
     i8 startX, deltaX;
-    Tile const* tiles = WORLD.tileset + (I16(WORLD.selectedTile.y) << STRIDE_BITS) + WORLD.selectedTile.x;
+    Tile const* tiles = WORLD.level + (I16(selectedTile.y) << STRIDE_BITS) + selectedTile.x;
     Tile tile = *tiles; 
 
-    tileLeft   = (I16(WORLD.selectedTile.x) << TILE_SCALE_BITS) - CAMERA.position.x;
-    tileRight  = tileLeft          + TILE_WIDTH;
-    tileTop    = CAMERA.position.y - (I16(WORLD.selectedTile.y) << TILE_SCALE_BITS); // This one inverts the y axis
-    // tileBottom = tileTop           - TILE_HEIGHT;
+    i16 firstTileLeft  = (I16(selectedTile.x) << TILE_SCALE_BITS) - CAMERA.position.x;
+    i16 firstTileRight = firstTileLeft + TILE_WIDTH;
+    tileLeft  = firstTileLeft;
+    tileRight = firstTileRight;
+    tileTop   = CAMERA.position.y - (I16(selectedTile.y) << TILE_SCALE_BITS); // This one inverts the y axis
 
     goto *jump[tile];
 
@@ -968,7 +853,7 @@ LBL(Tile_WaterTop):
     if (tileTop <= 127 && tileLeft >= -128 && tileLeft <= 127)
     {
         beam_set_position(I8(tileTop), I8(tileLeft));
-        Draw_VLc((void* const)watertop[(WORLD.ticks >> 3) & 0x7]);
+        Draw_VLc((void* const)watertop[WORLD.freq8_8]);
     }
     goto end;
 LBL(Tile_E0):
@@ -977,25 +862,12 @@ LBL(Tile_E0):
     if (last->status == EntityStatus_Inactive)
     {
         last->status = EntityStatus_Active;
-        entity e      = &WORLD.entities[WORLD.entityIdxs[WORLD.entityCount++]];
-        e->id         = tile;
-        e->tile.y     = WORLD.selectedTile.y;
-        e->tile.x     = WORLD.selectedTile.x;
-        e->position.y = -(I16(e->tile.y) << TILE_SCALE_BITS) - (TILE_HEIGHT >> 1);
-        e->position.x = (I16(e->tile.x) << TILE_SCALE_BITS) + (TILE_WIDTH >> 1);
-        e->velocity.x = 0, e->velocity.y = 0;
-        e->type       = WORLD.metadata->pentities[tile];
-        e->isLocal    = true;
-        e->isSameTile = false;
-        e->isGrounded = false;
-        e->isEnemy    = e->type > Prop_Max;
-        e->transform  = 0;
-        WORLD.entityAdded(e);
+        entity_create_named(tile, selectedTile);
     }
     goto end;
 LBL(Tile_Portal0):
 {
-    i8 tick = (WORLD.ticks >> 3) & 0x7;
+    i8 tick = I8(WORLD.freq8_8);
     const i8* p = portal[tick];
     i16 tileCenterY = tileTop - (TILE_HEIGHT >> 1) + p[1];
     i16 tileCenterX = tileLeft + (TILE_WIDTH >> 1) + p[2];
@@ -1007,82 +879,650 @@ LBL(Tile_Portal0):
 }
 
 end:
-    if (++WORLD.selectedTile.x < xMax)
+    if (++selectedTile.x < xMax)
     {
         tile = *++tiles;
-        tileLeft   = (I16(WORLD.selectedTile.x) << TILE_SCALE_BITS) - CAMERA.position.x;
-        tileRight  = tileLeft          + TILE_WIDTH;
-        tileTop    = CAMERA.position.y - (I16(WORLD.selectedTile.y) << TILE_SCALE_BITS); 
+        tileLeft   = tileRight;
+        tileRight  = tileLeft + TILE_WIDTH;
         goto *jump[tile];
     }
-    else if (++WORLD.selectedTile.y < yMax)
+    else if (++selectedTile.y < yMax)
     {
-        WORLD.selectedTile.x -= idxStride; // Reset to start of row
+        selectedTile.x = xMin; // Reset to start of row
         tile = *(tiles += idxDelta);
-        tileLeft   = (I16(WORLD.selectedTile.x) << TILE_SCALE_BITS) - CAMERA.position.x;
-        tileRight  = tileLeft          + TILE_WIDTH;
-        tileTop    = CAMERA.position.y - (I16(WORLD.selectedTile.y) << TILE_SCALE_BITS); 
+        tileLeft   = firstTileLeft;
+        tileRight  = firstTileRight;
+        tileTop    -= TILE_HEIGHT; 
         goto *jump[tile];
     }
-    
 }
+
+
+#else
+
+#define draw_top() \
+{ \
+    if (tt > tb) \
+    { \
+        if (tr > tl) \
+        { \
+            startX = tl; \
+            deltaX = TILE_WIDTH; \
+        } \
+        else \
+        { \
+            startX = -128; \
+            deltaX = I8(-128) - tr; \
+        } \
+        beam_set_position(tt, startX); \
+        Draw_Line_d(0, deltaX); \
+    }\
+}
+
+#define draw_bottom() \
+{ \
+    if (tt > tb) \
+    { \
+        if (tr > tl) \
+        { \
+            startX = tl; \
+            deltaX = TILE_WIDTH; \
+        } \
+        else \
+        { \
+            startX = -128; \
+            deltaX = I8(-128) - tr; \
+        } \
+        beam_set_position(tb, startX); \
+        Draw_Line_d(0, deltaX); \
+    } \
+}
+
+#define draw_left() \
+{ \
+    if (tr > I8(U8(tr) - TILE_WIDTH)) \
+    { \
+        if (96 > I8(U8(tt) - TILE_HEIGHT)) \
+        { \
+            startY = I8(tt); \
+            deltaY = -TILE_HEIGHT; \
+        } \
+        else \
+        { \
+            startY = 127; \
+            deltaY = -(I8(-128) - tt); \
+        } \
+        beam_set_position(startY, I8(tl)); \
+        Draw_Line_d(deltaY, 0); \
+    } \
+}
+
+#define draw_right() \
+{ \
+    if (tr > tl) \
+    { \
+        if (tt > tb) \
+        { \
+            startY = I8(tt); \
+            deltaY = -TILE_HEIGHT; \
+        } \
+        else \
+        { \
+            startY = 127; \
+            deltaY = -(I8(-128) - tt); \
+        } \
+        beam_set_position(startY, I8(tr)); \
+        Draw_Line_d(deltaY, 0); \
+    } \
+}
+
+#define draw_middle_left_top() \
+{ \
+    if (tt > tb) \
+    { \
+        if (tr > tl) \
+        { \
+            startX = tl; \
+            deltaX = (TILE_WIDTH >> 1); \
+        } \
+        else \
+        { \
+            startX = -128; \
+            deltaX = I8(-128) - tr; \
+        } \
+        beam_set_position(tt, startX); \
+        Draw_Line_d(0, deltaX); \
+    } \
+} 
+
+
+#define draw_spikes() \
+{ \
+    if (tr > tl && tt > tb) \
+    { \
+        beam_set_position(tb, tl); \
+        Draw_VLc((void* const)spikes); \
+    } \
+}
+
+//#define draw_spikes() 
+//{ 
+//    i8 clippedTL = I8(U8(tr) - TILE_WIDTH_3_4); 
+//    if (tr > clippedTL) 
+//    { 
+//        i8 clippedTB = I8(U8(tt) - TILE_HEIGHT); 
+//        if (tt > clippedTB) 
+//        { 
+//            startX = tl; 
+//            deltaX = TILE_WIDTH_4; 
+//            startY = tb; 
+//            deltaY = TILE_HEIGHT; 
+//        } 
+//        else 
+//        { 
+//            clippedTB += I8(-128); 
+//            deltaY = TILE_HEIGHT + clippedTB; 
+//            startY = I8(-128); 
+//            clippedTB >>= 2; 
+//            deltaX = TILE_WIDTH_4 + clippedTB; 
+//            startX = tl - clippedTB; 
+//        } 
+//        beam_set_position(startY, startX); 
+//        Draw_Line_d(deltaY, deltaX); 
+//        Draw_VLc((void* const)spikes); 
+//    } 
+//    else 
+//    {
+//        i8 clippedTB = I8(U8(tt) - TILE_HEIGHT);
+//        if (tt > clippedTB)
+//        {
+//            clippedTL += I8(-128);
+//            startX = -128;
+//            deltaX = tr - clippedTL;
+//            clippedTL >>= 2;
+//            startY = tb - clippedTL;
+//            deltaY = TILE_HEIGHT + clippedTL;
+//        }
+//        else 
+//        {
+//            
+//        }
+//        beam_set_position(startY, startX);
+//        Draw_Line_d(deltaY, deltaX);
+//        Draw_VLc((void* const)spikes);
+//    }
+//}
+
+#define draw_middle_left() \
+{ \
+    if (tr > tl) \
+    { \
+        i8 centerY = I8(U8(tt) - TILE_HEIGHT_2); \
+        if (tt > centerY) \
+        { \
+            startX = tl; \
+            deltaX = TILE_WIDTH_2; \
+            beam_set_position(centerY, startX); \
+            Draw_Line_d(0, deltaX); \
+        } \
+    } \
+}
+
+#define draw_middle_right() \
+{ \
+    i8 centerX = I8(U8(tl) + TILE_WIDTH_2); \
+    if (tr > centerX) \
+    { \
+        i8 centerY = I8(U8(tt) - TILE_HEIGHT_2); \
+        if (tt > centerY) \
+        { \
+            beam_set_position(centerY, centerX); \
+            Draw_Line_d(0, TILE_WIDTH_2); \
+        } \
+    }\
+}
+
+#define draw_middle() \
+{ \
+    i8 centerX = I8(U8(tl) + TILE_WIDTH_4); \
+    if (tr > centerX) \
+    { \
+        i8 centerY = I8(U8(tt) - TILE_HEIGHT_2); \
+        if (tt > centerY) \
+        { \
+            beam_set_position(centerY, centerX); \
+            Draw_Line_d(0, TILE_WIDTH_2); \
+        } \
+    }\
+}
+
+#define draw_middle_bottom() \
+{ \
+    i8 centerX = I8(U8(tl) + TILE_WIDTH_4); \
+    if (tr > centerX) \
+    { \
+        if (tt > tb) \
+        { \
+            beam_set_position(tb, centerX); \
+            Draw_Line_d(0, TILE_WIDTH_2); \
+        } \
+    }\
+}
+
+#define draw_middle_left_bottom() \
+{ \
+    if (tt > tb) \
+    { \
+        if (tr > tl) \
+        { \
+            startX = tl; \
+            deltaX = (TILE_WIDTH >> 1); \
+        } \
+        else  \
+        { \
+            startX = -128; \
+            deltaX = I8(-128) - tr; \
+        } \
+        beam_set_position(tb, startX); \
+        Draw_Line_d(0, deltaX); \
+    } \
+}
+
+#define draw_middle_right_top() \
+{ \
+    if (tt > tb) \
+    { \
+        if (tr > tl) \
+        { \
+            startX = tr - (TILE_WIDTH >> 1); \
+            deltaX = TILE_WIDTH >> 1; \
+        } \
+        else \
+        { \
+            startX = -128; \
+            deltaX = I8(-128) - tr; \
+        } \
+        beam_set_position(tt, startX); \
+        Draw_Line_d(0, deltaX); \
+    } \
+}
+
+#define draw_middle_top() \
+{ \
+    if (tt > tb) \
+    { \
+        if (tr > tl) \
+        { \
+            startX = tl + (TILE_WIDTH >> 2); \
+            deltaX = TILE_WIDTH >> 1; \
+        } \
+        else \
+        { \
+            startX = -128; \
+            deltaX = I8(-128) - tr; \
+        } \
+        beam_set_position(tt, startX); \
+        Draw_Line_d(0, deltaX); \
+    } \
+}
+
+#define draw_spiked_ball() \
+{ \
+    i8 centerY = tb + (TILE_HEIGHT >> 1); \
+    i8 centerX = tl + (TILE_WIDTH >> 1); \
+    if (centerY < tt && centerX < tr) \
+    { \
+        beam_set_position(centerY, centerX); \
+        Draw_VLc((void* const)spikedBall); \
+    } \
+}
+
+#define draw_jumper() \
+{ \
+    i8 x = tl + (TILE_WIDTH >> 2); \
+    if (tb < tt && x < tr) \
+    { \
+        beam_set_position(tb, x); \
+        Draw_VLc((void* const)jumper); \
+    } \
+}
+
+#define draw_barrier_vertical() \
+{ \
+    if (!TILE_FLAG(0) && tt > tb && tr > tl) \
+    { \
+        beam_set_position(tt, tr); \
+        Draw_VLc((void* const)barrierVertical); \
+    } \
+}
+
+#define draw_barrier_horizontal() \
+{ \
+    if (!TILE_FLAG(1) && tt > tb && tr > tl) \
+    { \
+        beam_set_position(tb, tr); \
+        Draw_VLc((void* const)barrierHorizontal); \
+    } \
+}
+
+#define draw_water_top() \
+{ \
+    if (tt > tb) \
+    { \
+        beam_set_position(tt, tl); \
+        Draw_VLc((void* const)watertop[WORLD.freq8_8]); \
+    } \
+}
+
+#define draw_portal() \
+{ \
+    i8 centerY = tb + (TILE_HEIGHT >> 1); \
+    i8 centerX = tl + (TILE_WIDTH >> 1); \
+    if (centerY < tt && centerX < tr) \
+    { \
+        beam_set_position(centerY, centerX); \
+        Draw_VLc((void* const)portal[WORLD.freq8_8]); \
+    } \
+}
+
+void world_progress(void)
+{
+    ++WORLD.ticks;
+    WORLD.freq2   = I8(WORLD.ticks & 1);
+    WORLD.freq16  = I8((WORLD.ticks >> 4) & 1);
+    WORLD.freq8_8 = I8((WORLD.ticks >> 3) & 7);
+
+    WORLD.entities[0].collision(&WORLD.entities[0]);
+    WORLD.entities[1].collision(&WORLD.entities[1]);
+    WORLD.entities[2].collision(&WORLD.entities[2]);
+    WORLD.entities[3].collision(&WORLD.entities[3]);
+    /*WORLD.entities[4].collision(&WORLD.entities[4]);
+    WORLD.entities[5].collision(&WORLD.entities[5]);*/
+
+
+   /* for (i8 id = 0; id < ENTITIES_ACTIVE_MAX; ++id)
+    {
+        WORLD.selectedEntity = &WORLD.entities[WORLD.entityIdxs[id]];
+        
+    }
+    print_signed_int(100, 50, WORLD.entityCount);*/
+
+    v2i selectedTile;
+    i8 xMin = I8((CAMERA.position.x - 128) >> TILE_SCALE_BITS);
+    selectedTile.x = xMin;
+    i8 yMin = I8((CAMERA.position.y - 128) >> TILE_SCALE_BITS);
+    selectedTile.y = yMin + 7;
+    yMin = MAX8(0, yMin);
+    selectedTile.y = MIN8(selectedTile.y, (WORLD_EXTENT - 1));
+
+    xMin = MAX8(0, xMin);
+
+    i8 xMax = selectedTile.x + 8;
+    xMax = MIN8(xMax, (WORLD_STRIDE));
+    xMax = MAX8(0, xMax);
+
+    selectedTile.x = MAX8(0, selectedTile.x);
+
+    static const void* jump[] =
+    {
+        &&end, // Tile_Air
+        &&end, // Tile_Water
+        &&LBL(Tile_Top),
+        &&LBL(Tile_Top),
+        &&LBL(Tile_TopLeft),
+        &&LBL(Tile_TopRight),
+        &&LBL(Tile_Bottom),
+        &&LBL(Tile_Bottom),
+        &&LBL(Tile_BottomLeft),
+        &&LBL(Tile_BottomRight),
+        &&LBL(Tile_Left),
+        &&LBL(Tile_Left),
+        &&LBL(Tile_Right),
+        &&LBL(Tile_Right),
+        &&LBL(Tile_MiddleLeftTop),
+        &&LBL(Tile_MiddleLeft),
+        &&LBL(Tile_MiddleRight),
+        &&LBL(Tile_Middle),
+        &&LBL(Tile_MiddleBottom),
+        &&LBL(Tile_MiddleRightTop),
+        &&LBL(Tile_MiddleTop),
+        &&LBL(Tile_Spikes),
+        &&LBL(Tile_SpikedBall),
+        &&LBL(Tile_Jumper),
+        &&LBL(Tile_BarrierVertical),
+        &&LBL(Tile_BarrierHorizontal),
+        &&LBL(Tile_WaterTop),
+        &&LBL(Tile_E0),
+        &&LBL(Tile_E0),
+        &&LBL(Tile_E0),
+        &&LBL(Tile_E0),
+        &&LBL(Tile_E0),
+        &&LBL(Tile_E0),
+        &&LBL(Tile_E0),
+        &&LBL(Tile_E0),
+        &&LBL(Tile_E0),
+        &&LBL(Tile_E0),
+        &&LBL(Tile_E0),
+        &&LBL(Tile_E0),
+        &&LBL(Tile_E0),
+        &&LBL(Tile_E0),
+        &&LBL(Tile_E0),
+        &&LBL(Tile_E0),
+        &&LBL(Tile_Portal0),
+        &&LBL(Tile_Portal0),
+    };
+
+    i8 idxDelta = (1 << STRIDE_BITS) + (xMax - xMin) - 1;
+
+    Tile const* tiles = WORLD.tiles + (I16(selectedTile.y) << STRIDE_BITS) + selectedTile.x;
+    Tile tile = *tiles;
+
+    i8 tt, tb, tl, tr;
+    i8 startX = 0, deltaX = 0;
+    i8 startY = 0, deltaY = 0;
+
+    tr = I8((I16(selectedTile.x) << TILE_SCALE_BITS) - CAMERA.position.x + TILE_WIDTH);
+    tl = tr - TILE_WIDTH;
+    tt = I8(CAMERA.position.y - (I16(selectedTile.y) << TILE_SCALE_BITS));
+    tb = tt - TILE_HEIGHT;
+
+    i8 firstTL = tl;
+    i8 firstTR = tr;
+    //assert(tt < 0 && tb > 0)
+
+
+
+    goto *jump[tile];
+
+LBL(Tile_Top):
+    draw_top();
+    goto end;
+LBL(Tile_TopLeft):
+    draw_top();
+    draw_left();
+    goto end;
+LBL(Tile_TopRight):
+    draw_top();
+    draw_right();
+    goto end;
+LBL(Tile_Bottom):
+    draw_bottom();
+    goto end;
+LBL(Tile_BottomLeft):
+    draw_bottom();
+    draw_left();
+    goto end;
+LBL(Tile_BottomRight):
+    draw_bottom();
+    draw_right();
+    goto end;
+LBL(Tile_Left):
+    draw_left();
+    goto end;
+LBL(Tile_Right):
+    draw_right();
+    goto end;
+LBL(Tile_MiddleLeft):
+    draw_middle_left();
+    goto end;
+LBL(Tile_MiddleRight):
+    draw_middle_right();
+    goto end;
+LBL(Tile_Middle):
+    draw_middle();
+    goto end;
+LBL(Tile_MiddleBottom) :
+    draw_middle_bottom();
+    goto end;
+LBL(Tile_MiddleRightTop) :
+    draw_middle_right_top();
+    goto end;
+LBL(Tile_MiddleTop) :
+    draw_middle_top();
+    goto end;
+LBL(Tile_MiddleLeftTop):
+    draw_middle_left_top();
+    goto end;
+LBL(Tile_Spikes):
+    draw_spikes();
+    goto end;
+LBL(Tile_SpikedBall):
+    draw_spiked_ball();
+    goto end;
+LBL(Tile_Jumper):
+    draw_jumper();
+    goto end;
+LBL(Tile_BarrierVertical):
+    draw_barrier_vertical();
+    goto end;
+LBL(Tile_BarrierHorizontal):
+    draw_barrier_horizontal();
+    goto end;
+LBL(Tile_WaterTop):
+    draw_water_top();
+    goto end;
+LBL(Tile_E0):
+if (WORLD.entityCount < ENTITIES_ACTIVE_MAX)
+{
+    tile -= Tile_E0;
+    last_sighting last = &WORLD.lastSeen[tile];
+    if (last->status == EntityStatus_Inactive)
+    {
+        last->status = EntityStatus_Active;
+        entity_create_named(tile, selectedTile);
+    }
+}
+    goto end;
+LBL(Tile_Portal0):
+    draw_portal();
+
+end:
+    if ((++selectedTile.x) < xMax)
+    {
+        tile = *(++tiles);
+        tl = tr;
+        tr += TILE_WIDTH;
+        goto *jump[tile];
+    }
+    else if ((--selectedTile.y) >= yMin)
+    {
+        selectedTile.x = xMin; // Reset to start of row
+        tile = *(tiles -= idxDelta);
+        tl = firstTL;
+        tr = firstTR;
+        tb = tt;
+        tt += TILE_HEIGHT;
+        goto* jump[tile];
+    }
+}
+
+#endif
 
 void __routine_stub(entity e) { (void)e; }
 
-void world_entity_set_status(entity e, idx_t idxInIdxs, EntityStatus status)
+void entity_set_status(entity e, EntityStatus status)
 {
-    if (idxInIdxs < 0) // Find idx
+    if (e->globalId >= 0)
     {
-        idx_t* idx = &WORLD.entityIdxs[0];
-        for (idxInIdxs = 1; idxInIdxs < WORLD.entityCount; ++idxInIdxs, ++idx)
-        {
-            if (e == (WORLD.entities + WORLD.entityIdxs[*idx]))
-                break;
-        }
-    }
+        WORLD.lastSeen[e->globalId].status = status;
+    } // else Entity is unknown, so just destroy it. (e.g. projectiles)
 
-    switch (status)
+    const idx_t last = WORLD.entityCount - 1;
+    if (last != e->id) // Swap with last if not last
     {
-    case EntityStatus_Inactive:
-    deactivate:
-    {
-        const idx_t last = WORLD.entityCount - 1;
-        if (last != idxInIdxs) // Swap with last
-        {
-            WORLD.lastSeen[e->id].status = status;
-            i8 tmp = WORLD.entityIdxs[idxInIdxs];
-            WORLD.entityIdxs[idxInIdxs] = WORLD.entityIdxs[last];
-            WORLD.entityIdxs[last]      = tmp;
-        }
-        --WORLD.entityCount;
-        e->routine = __routine_stub;
+        i8 tmp = WORLD.entityIdxs[e->id];
+        WORLD.entityIdxs[e->id] = WORLD.entityIdxs[last];
+        WORLD.entityIdxs[last] = tmp;
     }
-        break;
-    case EntityStatus_Dead:
-        goto deactivate;
-    default: // not responsible for: EntityStatus_Active
-        break;
-    }
+    WORLD.entityCount = last;
+    e->routine   = __routine_stub;
+    e->collision = __routine_stub;
+    e->state = EntityState_Dead;
 }
 
+void entity_create_named(idx_t const globalId, v2i const tile)
+{
+    entity e      = &WORLD.entities[WORLD.entityIdxs[WORLD.entityCount]];
+    e->id         = WORLD.entityCount++;
+    e->globalId   = globalId;
+    e->tile.y     = tile.y;
+    e->tile.x     = tile.x;
+    e->position.y = (I16(tile.y) << TILE_SCALE_BITS) - (TILE_HEIGHT >> 1);
+    e->position.x = (I16(tile.x) << TILE_SCALE_BITS) + (TILE_WIDTH >> 1);
+    e->velocity.x = 0, e->velocity.y = 0;
+    e->type       = WORLD.level->entities[globalId];
+    e->isEnemy    = e->type > Prop_Max;
+    e->isLocal    = true;
+    e->isSameTile = false;
+    e->isGrounded = false;
+    e->transform  = 0;
+    e->collision  = check_tiles;
+    WORLD.entityAdded(e);
+}
+
+void entity_create_anonymous(EntityType const type, v2i const tile)
+{
+    if (WORLD.entityCount < ENTITIES_ACTIVE_MAX)
+    {
+        entity e      = &WORLD.entities[WORLD.entityIdxs[WORLD.entityCount]];
+        e->id         = WORLD.entityCount++;
+        e->globalId   = -1;
+        e->tile.y     = tile.y;
+        e->tile.x     = tile.x;
+        e->position.y = (I16(tile.y) << TILE_SCALE_BITS) - (TILE_HEIGHT >> 1);
+        e->position.x = (I16(tile.x) << TILE_SCALE_BITS) + (TILE_WIDTH >> 1);
+        e->velocity.x = 0, e->velocity.y = 0;
+        e->type       = type;
+        e->isEnemy    = e->type > Prop_Max;
+        e->isLocal    = true;
+        e->isSameTile = false;
+        e->isGrounded = false;
+        e->transform  = 0;
+        e->collision  = check_tiles;
+        WORLD.entityAdded(e);
+    }
+}
 
 void world_create(Stage const stage)
 {
     MEMZERO(WORLD);
-    WORLD.tileset     = g_tilesets[stage];
-    WORLD.metadata    = g_stagesMetadata + stage;
+    WORLD.level       = &levels[stage];
+    WORLD.tiles       = WORLD.level->level;
     WORLD.entityCount = 1; // 1 for the player
     for (idx_t idx = 0; idx < ENTITIES_ACTIVE_MAX; ++idx)
     {
-        WORLD.entities[idx].id = idx;
-        WORLD.entities[idx].routine = __routine_stub;
-        WORLD.entityIdxs[idx] = idx;
+        WORLD.entities[idx].id        = idx;
+        WORLD.entities[idx].globalId  = -1;
+        WORLD.entities[idx].routine   = __routine_stub;
+        WORLD.entities[idx].collision = __routine_stub;
+        WORLD.entityIdxs[idx]         = idx;
     }
 
-    CAMERA.id         = -1;
-    CAMERA.tile.y     = WORLD.metadata->startingTile.y;
-    CAMERA.tile.x     = WORLD.metadata->startingTile.x;
+    CAMERA.tile.y     = WORLD.level->startingTile.y;
+    CAMERA.tile.x     = WORLD.level->startingTile.x;
     CAMERA.position.y = (I16(CAMERA.tile.y) << TILE_SCALE_BITS)  - (TILE_HEIGHT >> 1);
     CAMERA.position.x = (I16(CAMERA.tile.x) << TILE_SCALE_BITS)  + (TILE_WIDTH >> 1);
-    MEMZERO(g_tileFlags);
+    CAMERA.id         = 0; // Player is always at 0
+    CAMERA.globalId   = -1; // Player does not have an id
+    CAMERA.collision = check_tiles;
 }

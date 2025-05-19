@@ -33,47 +33,16 @@
 #include <cnd/world.h>
 
 /////////////////////////////////////////////////////////////////////////
-//	Defines
-//
-#define GAME   g_game
-#define PLAYER GAME.player
-#define BTNS   PLAYER.buttons
-#define JOYS   PLAYER.joystick
-
-/////////////////////////////////////////////////////////////////////////
-//	Globals
-//
-extern game_t g_game;
-extern const procedure_t g_update_table[];
-
-/////////////////////////////////////////////////////////////////////////
 //	Game Functions
 //
-void game_init(void);
+void game_create(void);
 void game_soft_reset(void);
-void game_start_frame(void);
-
+void game_set_gameover(void);
 void game_update_play(void);
 void game_update_plot(void);
 void game_update_gameover(void);
-
 void game_enter_stage(Stage stage);
 void game_entity_added(entity e);
-
-/////////////////////////////////////////////////////////////////////////
-//	Routine Functions
-//
-void routine_doc_air(entity e);
-void routine_croc_air(entity e);
-void routine_player_air(entity e);
-void routine_player_damage(void);
-void routine_player_changed_substance(void);
-
-
-/////////////////////////////////////////////////////////////////////////
-//	Rest Functions
-//
-void __stub(void);
 
 
 #endif /* GAME_H */

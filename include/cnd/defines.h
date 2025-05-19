@@ -43,9 +43,38 @@
 #define DEVELOPMENT
 
 /////////////////////////////////////////////////////////////////////////
-//	Macro Helper Values
+//	Macro Values
 //
-#define EOS "\x80" // End of String
+#define EOS					"\x80" // End of String
+#define TILE_SCALE_BITS     5
+#define TILES_VIEW_WIDTH    I8(256u >> (TILE_SCALE_BITS + 1))
+#define TILES_VIEW_HEIGHT   I8(256u >> (TILE_SCALE_BITS + 1))
+#define WORLD_WIDTH         8
+#define WORLD_HEIGHT        8
+#define WORLD_STRIDE        I8(TILES_VIEW_WIDTH * WORLD_WIDTH)
+#define STRIDE_BITS         5
+#define WORLD_EXTENT        I8(TILES_VIEW_HEIGHT * WORLD_HEIGHT)
+#define TILE_WIDTH          I8(1 << 5)
+#define TILE_HEIGHT         I8(1 << 5)
+#define TILE_WIDTH_2        (TILE_WIDTH  >> 1)
+#define TILE_WIDTH_4        (TILE_WIDTH  >> 2)
+#define TILE_WIDTH_3_4      (TILE_WIDTH - TILE_WIDTH_4) 
+#define TILE_HEIGHT_2       (TILE_HEIGHT >> 1)
+#define TILE_HEIGHT_4       (TILE_HEIGHT >> 2)
+#define TILE_HEIGHT_3_4     (TILE_HEIGHT - TILE_HEIGHT_4) 
+#define PLATFORM_TOLERANCE   8
+#define PLATFORM_TOLERANCE_2 (PLATFORM_TOLERANCE >> 1)
+#define ENTITIES_ACTIVE_MAX 4  // Maximum of entities that can be active.
+#define ENTITIES_MAX        16 // Maximum of entities that can be in a level.
+
+/////////////////////////////////////////////////////////////////////////
+//	Macro References
+//
+#define WORLD  g_world
+#define GAME   g_game
+#define CAMERA WORLD.entities[0]
+#define PLAYER GAME.player
+#define BTNS   Vec_Buttons
 
 /////////////////////////////////////////////////////////////////////////
 //	Macro Helper Functions
@@ -62,6 +91,7 @@
 #define LENGTH(n) n-1 
 #define MIN8(x, y) y + ((x - y) & ((x - y) >> 7))
 #define MAX8(x, y) x - ((x - y) & ((x - y) >> 7))
+#define MOD2(x, y) ((x) & (y - 1))
 
 #define U8(x) ((u8)(x))
 #define I8(x) ((i8)(x))

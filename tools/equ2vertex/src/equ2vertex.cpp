@@ -121,8 +121,8 @@ void fermat2lines(std::string const& name, int samples, int points, std::string&
 void gerstner2lines(std::string const& name, int samples, int points, std::string& o)
 {
 	// Parameterrs
-	float A      = 8;
-	float lambda = 64;
+	float A      = 4;
+	float lambda = 32;
 	float dx     = lambda / points;
 	float dt     = (2.0f * M_PI) / samples;
 	float T      = 0.5;
@@ -135,7 +135,7 @@ void gerstner2lines(std::string const& name, int samples, int points, std::strin
 	{
 		o += "\t{\n\t\tLENGTH(" + std::to_string(points) + "),\n";
 		x = dx;
-		last.y = gerstner(8, 0, 64, 0.5, t);
+		last.y = gerstner(A, 0, lambda, T, t);
 		last.x = 0;
 
 		for (int p = 0; p < points; ++p, x += dx)
@@ -530,14 +530,13 @@ void wfbn2lines(std::string const& name, int samples, std::string& o)
 v2f cloud_line(float phi, float t, float radius = 20.0f, float f = 2.0f, float jitter = 4.0f) {
 	float noise = 2.5 * perlinfbm({ phi + t, 0, 0 }, f, 16);
 	float rx = 0.25  * radius + noise;
-	float ry = 0.175 * radius + noise;
+	float ry = 0.225 * radius + noise;
 	return { rx * cos(phi), ry * sin(phi) };
 }
 
 void cloud2lines(std::string const& name, int samples, int points, std::string& o)
 {
 	// Params
-	float a = 8;
 	float omega = (2 * M_PI);
 	float dphi = omega / points;
 	float dt = omega / samples;
@@ -570,16 +569,16 @@ int main()
 {
 	
 	int samples = 8;
-	int points  = 8;
+	int points  = 4;
 
 	v2i* vs = new v2i[points];
 	std::string o = "";
 	
 
-	//fermat2lines("spiral", samples, points, o); // Create Spiral
-	//gerstner2lines("waves", samples, points, o); // Create Waves
+	fermat2lines("spiral", samples, points, o); // Create Spiral
+	//gerstner2lines("watertop", samples, points, o); // Create Waves
 	//wfbn2lines("cloud", samples, o);
-	cloud2lines("cloud", samples, points, o);
+	//cloud2lines("cloud", samples, points, o);
 
 	printf("%s\n Code also has been copied to clipboard. Note that this is a duffy type list!\n", o.c_str());
 	// Copy to clipboard

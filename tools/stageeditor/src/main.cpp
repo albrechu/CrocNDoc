@@ -48,6 +48,9 @@
 #define STB_TRUETYPE_IMPLEMENTATION
 #include <stb_truetype.h>
 
+#undef min
+#undef max
+
 /////////////////////////////////////////////////////////////////////////
 //	Types
 //
@@ -208,7 +211,6 @@ struct txt_t
 struct editor_t
 {
 	std::vector<line_t>     lines;
-	std::vector<f32>        cellIntensities;
 	std::vector<glm::ivec2> sprite;
 	char spriteName[50]{};
 	char stageName[50]{};
@@ -219,13 +221,14 @@ struct editor_t
 	f32 spriteSplitRatio = 0.75;
 	bool spriteFirstIsMov = true;
 	f32 spriteRotation = 0.0f;
+	int draggedSpritePoint = -1;
 	// Camera
 	f32       zoom = 7.5f;
 	glm::vec2 position = glm::vec2(0.5);
 	bool      isPanning = false;
 	glm::vec2 lastMousePos;
 	glm::ivec2 tile = { 0,0 };
-	glm::ivec2 selectedTile = { 0, 0 };
+	glm::ivec2 selectionStart{ 0, 0 }, selectionEnd{ 1, 1 };
 	uniforms_t uniforms;
 	// GL stuff
 	GLuint   ubo = 0;
@@ -236,6 +239,7 @@ struct editor_t
 	glm::ivec2 atlasDim = {1000, 1000};
 	std::vector<stbtt_packedchar> atlasChars;
 	std::map<idx_t, txt_t> txts;
+	double last = 0.0;
 };
 editor_t e;
 
@@ -246,6 +250,8 @@ struct world_t
 	glm::ivec2 beam = { 0, 0 };
 	glm::ivec2 selectedTile;
 	int ticks = 0;
+	bool freq2;
+	bool freq16;
 	std::vector<Tile> stage;
 	int tileIdx;
 };
@@ -273,7 +279,9 @@ void world_render_tile(Tile tile, i16 tileLeft, i16 tileRight, i16 tileTop, i16 
 void world_progress(void);
 void copy_to_clipboard(std::string const& text);
 void load_font();
-void print_txt(float x, float y, idx_t id, std::string txt);
+void print_txt(float x, float y, idx_t id, std::string txt, float scaleX = 0.6, float scaleY = 0.75);
+void window_size_callback(GLFWwindow* window, int width, int height);
+void window_draw();
 
 /////////////////////////////////////////////////////////////////////////
 //	Functions
@@ -301,8 +309,7 @@ int main()
 		gridVert.c_str(),
 	};
 
-	int w = 1280, h = 720;
-	GLFWwindow* win = window_create("Stage Editor", w, h);
+	GLFWwindow* win = window_create("Stage Editor", 1280, 720);
 	if (!win)
 	{
 		glfwTerminate();
@@ -324,7 +331,7 @@ int main()
 			glBindBuffer(GL_UNIFORM_BUFFER, 0);
 		}
 		// Create texture to render to 
-		target_texture_recreate(w, h, e.target);
+		target_texture_recreate(1280, 720, e.target);
 
 		// Create line list buffers
 		{
@@ -360,14 +367,14 @@ int main()
 			glUniform1i(location, 0);
 			glUseProgram(0);
 			// Create Texture
-			e.cellIntensities.resize(e.uniforms.gridWidth * e.uniforms.gridHeight, 0.2f);
-			e.cellIntensities[(WORLD_EXTENT - 1) * WORLD_STRIDE] = 1.0f;
+			std::vector<float> intensities(e.uniforms.gridWidth * e.uniforms.gridHeight, 0.2f);
+			intensities[(WORLD_EXTENT - 1) * WORLD_STRIDE] = 1.f;
 			glGenTextures(1, &e.grid.tex);
 			glBindTexture(GL_TEXTURE_2D, e.grid.tex);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glTexStorage2D(GL_TEXTURE_2D, 1, GL_RED, e.uniforms.gridWidth, e.uniforms.gridHeight);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, e.uniforms.gridWidth, e.uniforms.gridHeight, 0, GL_RED, GL_FLOAT, e.cellIntensities.data());
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, e.uniforms.gridWidth, e.uniforms.gridHeight, 0, GL_RED, GL_FLOAT, intensities.data());
 			glBindTexture(GL_TEXTURE_2D, 0);
 
 			// Create quad
@@ -402,8 +409,9 @@ int main()
 	}
 
 	double last = glfwGetTime();
-	WORLD.stage.resize(e.cellIntensities.size(), Tile_Air);
+	WORLD.stage.resize(e.uniforms.gridWidth * e.uniforms.gridHeight, Tile_Air);
 	
+	glfwSetWindowSizeCallback(win, window_size_callback);
 	/**
 	* Main Loop
 	*/
@@ -415,483 +423,8 @@ int main()
 			ImGui_ImplGlfw_Sleep(10);
 			continue;
 		}
-
-		// Update target texture on window size change
-		{
-			int width, height;
-			glfwGetWindowSize(win, &width, &height);
-			if (width ^ w || height ^ h)
-				target_texture_recreate(w, h, e.target);
-		}
-
-		// Update lines and camera. This is super inefficient, but who cares with 4.2GHz and PCIe 5.0.
-		e.uniforms.view = glm::mat4(1.f);
-		e.uniforms.view = glm::translate(e.uniforms.view, glm::vec3(-e.position, 0.f));
-		e.uniforms.view = glm::scale(e.uniforms.view, glm::vec3(e.zoom / e.uniforms.cellWidth, e.zoom / e.uniforms.cellHeight, 1.0f));
-		e.uniforms.viewport = { w, h };
-
-		double current = glfwGetTime();
-		if ((current - last) >= 0.02f)
-		{
-			e.lines.clear();
-			//e.lines.push_back({ glm::vec2(0,0), glm::vec2(100,100) });
-			world_progress();
-			last = glfwGetTime();
-		}
-
-		glBindBuffer(GL_ARRAY_BUFFER, e.lineList.vbo);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, e.lines.size() * sizeof(e.lines[0]), e.lines.data());
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-		glBindBuffer(GL_UNIFORM_BUFFER, e.ubo);
-		glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(e.uniforms), &e.uniforms);
-		glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
-
-		// Start Frame
-		ImGui_ImplOpenGL3_NewFrame();
-		ImGui_ImplGlfw_NewFrame();
-		ImGui::NewFrame();
-
-		// Draw scene
-		glBindFramebuffer(GL_FRAMEBUFFER, e.target.fbo);
-		{
-			glViewport(0, 0, w, h);
-			glClearColor(0.25, 0.55, 0.28, 1.0);
-			glClear(GL_COLOR_BUFFER_BIT);
-			// Draw grid
-			glUseProgram(e.grid.program);
-			glBindVertexArray(e.grid.vao);
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, e.grid.tex);
-			glDrawArraysInstanced(GL_TRIANGLES, 0, 6, e.cellIntensities.size());
-			glBindTexture(GL_TEXTURE_1D, 0);
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-			glUseProgram(0);
-			glBindVertexArray(0);
-			// Draw line list
-			glUseProgram(e.lineList.program);
-			glBindVertexArray(e.lineList.vao);
-			glDrawArrays(GL_LINES, 0, e.lines.size() * 2);
-			glUseProgram(0);
-			glBindVertexArray(0);
-			// Draw txts
-			glUseProgram(e.atlas.program);
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, e.atlas.tex);
-			for (auto const& kv : e.txts)
-			{
-				if (kv.second.object.vao)
-				{
-					glBindVertexArray(kv.second.object.vao);
-					glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, kv.second.object.ebo);
-					glDrawElements(GL_TRIANGLES, kv.second.txt.size() * 6, GL_UNSIGNED_INT, nullptr);
-					glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-					glBindVertexArray(0);
-				}
-			}
-			glBindTexture(GL_TEXTURE_2D, 0);
-			glUseProgram(0);
-		}
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-		// UI
-		if (ImGui::IsKeyPressed(ImGuiKey_Q))
-			glfwSetWindowShouldClose(win, true);
-
-		ImGui::DockSpaceOverViewport(1, nullptr, ImGuiDockNodeFlags_NoUndocking);
-
-		ImGui::SetNextWindowDockID(1);
-		if (ImGui::Begin("Sprite"))
-		{
-			glm::vec2 size = ImGui::GetWindowSize();
-			if (ImGui::BeginTable("Table", 3, ImGuiTableFlags_SizingFixedFit))
-			{
-				glm::vec2 dummySize = size;
-				dummySize.x *= e.spriteSplitRatio;
-				ImGui::TableNextColumn();
-				//ImGui::SetColumnWidth(0, size.x* e.splitRatio);
-				//ImGui::Image((ImTextureID)e.target.tex, imgSize, ImVec2(0, 1), ImVec2(1, 0));
-				ImGui::InvisibleButton("Sprite Grid", dummySize);
-				glm::vec2 p = ImGui::GetItemRectMin();
-				float cellSize = dummySize.y / TILE_HEIGHT;
-				float gridWidth = cellSize * TILE_WIDTH;
-				ImDrawList* drawList = ImGui::GetWindowDrawList();
-				float x = 0;
-				float y = 0;
-				for (size_t yi = 0; yi <= TILE_HEIGHT; yi++)
-				{
-					drawList->AddLine({ p.x, p.y + y }, { p.x + min(gridWidth, dummySize.x), p.y + y }, yi == TILE_HEIGHT / 2 ? 0xFF00FF00 : 0xFFFFFFFF, yi == TILE_HEIGHT / 2 ? 2.0 : 0.125);
-					y += cellSize;
-				}
-				for (size_t xi = 0; xi <= TILE_WIDTH; xi++)
-				{
-					drawList->AddLine({ p.x + min(x, dummySize.x), p.y }, { p.x + min(x, dummySize.x), p.y + dummySize.y }, xi == TILE_WIDTH / 2 ? 0xFFFF0000 : 0xFFFFFFFF, xi == TILE_WIDTH / 2 ? 2.0 : 0.125);
-					x += cellSize;
-				}
-
-				const auto cellMidByTile = [=](glm::vec2 point) -> glm::vec2 { return p + glm::vec2(point) * cellSize; };
-
-				if (e.sprite.size())
-				{
-					glm::vec2 origin = cellMidByTile(e.sprite.front()); // rotate around first point
-					glm::vec2 lastMid = origin;
-					for (glm::ivec2 const& point : e.sprite)
-					{
-						glm::vec2 mid = cellMidByTile(point);
-						drawList->AddCircleFilled(mid, cellSize / 2, 0xA0FF0000);
-						drawList->AddLine(lastMid, mid, 0xFFFFFFFF, 3.f);
-						lastMid = mid;
-					}
-				}
-
-				if (ImGui::IsItemHovered())
-				{
-					glm::vec2 mousePos = ImGui::GetMousePos();
-					glm::vec2 local = mousePos - p;
-					glm::vec2 tile = glm::floor(local / cellSize);
-					glm::vec2 tileMid = cellMidByTile(tile);
-					if (tile.x >= 0 && tile.x < TILE_WIDTH && tile.y >= 0 && tile.y < TILE_HEIGHT)
-					{
-						drawList->AddCircleFilled(tileMid, cellSize / 2, 0xFF000080);
-
-						auto contains = [&](glm::ivec2 const& t) { return t.x == tile.x && t.y == tile.y; };
-						if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-						{
-							e.sprite.emplace_back(glm::ivec2(tile.x, tile.y));
-						}
-						else if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
-						{
-							auto it = std::find_if(e.sprite.rbegin(), e.sprite.rend(), contains);
-							if (it != e.sprite.rend())
-								e.sprite.erase(std::next(it).base());
-						}
-					}
-				}
-
-				ImGui::TableNextColumn();
-				ImGui::Button("Sprite Splitter", ImVec2(e.splitterWidth, size.y));
-				if (ImGui::IsItemActive())
-				{
-					int x, y;
-					glfwGetWindowPos(win, &x, &y);
-					e.spriteSplitRatio = (ImGui::GetMousePos().x - x) / size.x;
-					e.spriteSplitRatio = min(max(e.spriteSplitRatio, 0.01), 0.99);
-				}
-
-				ImGui::TableNextColumn();
-				if (centered_button("Flip H."))
-				{
-					for (size_t i = 0; i < e.sprite.size(); ++i)
-					{
-						e.sprite[i].x = TILE_WIDTH / 2 - (e.sprite[i].x - TILE_WIDTH / 2);
-					}
-				}
-				ImGui::SameLine();
-				if (centered_button("Flip V."))
-				{
-					for (size_t i = 0; i < e.sprite.size(); ++i)
-					{
-						e.sprite[i].y = TILE_HEIGHT / 2 - (e.sprite[i].y - TILE_HEIGHT / 2);
-					}
-				}
-				ImGui::NewLine();
-
-				f32 spriteRotation = e.spriteRotation;
-
-				if (ImGui::ArrowButton("RotateLeft", ImGuiDir_Left))
-					spriteRotation -= 5.f;
-				ImGui::SameLine();
-				if (ImGui::ArrowButton("RotateRight", ImGuiDir_Right))
-					spriteRotation += 5.f;
-
-				if (spriteRotation != e.spriteRotation)
-				{
-					f32 dphi = spriteRotation - e.spriteRotation;
-					e.spriteRotation = spriteRotation;
-					if (!e.sprite.empty())
-					{
-						f32 deg = DEG2RAD(dphi);
-						glm::mat2 rot = glm::mat2(
-							glm::vec2(cos(deg), sin(deg)),
-							glm::vec2(-sin(deg), cos(deg))
-						);
-
-						// Compute center of shape (average of all points)
-						glm::vec2 center(0.f);
-						for (const auto& p : e.sprite)
-							center += glm::vec2(p);
-						center /= static_cast<float>(e.sprite.size());
-
-						for (auto& p : e.sprite)
-						{
-							glm::vec2 pos = glm::vec2(p);
-							glm::vec2 rotated = rot * (pos - center) + center;
-							p = glm::round(rotated); // or use floor() if you prefer
-						}
-					}
-					// HEre	
-				}
-				ImGui::NewLine();
-				if (ImGui::Button("Clear"))
-				{
-					e.sprite.clear();
-					e.selectedPoint = -1;
-				}
-				ImGui::SameLine();
-				if (ImGui::Button("Export") && e.sprite.size() > 0)
-				{
-					size_t points = e.sprite.size() - e.spriteFirstIsMov;
-					std::string stage = "const i8 " + std::string(e.spriteName) + "[" + std::to_string(points * 2 + 1) + "] = \n{\n\tLENGTH(" + std::to_string(points) + "),\n";
-					glm::ivec2 prev = e.spriteFirstIsMov ? e.sprite.front() : glm::ivec2{ TILE_WIDTH / 2, TILE_HEIGHT / 2 };
-					for (size_t i = e.spriteFirstIsMov; i < e.sprite.size(); i++)
-					{
-						glm::ivec2 point = e.sprite[i];
-						stage += std::format("\t{}, {},\n", prev.y - point.y, point.x - prev.x);
-						prev = point;
-					}
-					stage += "};\n";
-					copy_to_clipboard(stage);
-				}
-				ImGui::SameLine();
-				if (ImGui::Button("Save"))
-				{
-					save_sprite();
-				}
-				if (ImGui::Button("Open..."))
-				{
-					open_sprite();
-				}
-				ImGui::Checkbox("Move On First Point", &e.spriteFirstIsMov);
-
-				ImGui::InputText("Name", e.spriteName, sizeof(e.spriteName));
-
-
-				if (ImGui::BeginTable("points", 2, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_SizingStretchSame, ImVec2{ size.x - dummySize.x - e.splitterWidth, 0 }))
-				{
-					ImGui::TableSetupColumn("Position");
-					ImGui::TableSetupColumn("Change");
-
-					ImGui::TableHeadersRow();
-					if (e.sprite.size())
-					{
-						glm::ivec2 prevPoint = e.spriteFirstIsMov ? e.sprite.front() : glm::ivec2{ TILE_WIDTH / 2, TILE_HEIGHT / 2 };
-						for (i32 i = e.spriteFirstIsMov; i < e.sprite.size(); ++i)
-						{
-							ImGui::TableNextRow();
-							ImGui::TableNextColumn();
-
-							glm::ivec2 point = e.sprite[i];
-							std::string txt = std::format("({}, {})##{}", point.x - TILE_WIDTH / 2, TILE_HEIGHT / 2 - point.y, i);
-							bool selected = e.selectedPoint == i;
-							ImVec2 selectableSize = { ImGui::GetContentRegionAvail().x, ImGui::GetTextLineHeightWithSpacing() };
-							if (ImGui::Selectable(txt.c_str(), &selected, 0, selectableSize))
-							{
-								e.selectedPoint = i;
-							}
-							if (ImGui::BeginDragDropSource())
-							{
-								ImGui::SetDragDropPayload("POINT_INDEX", &i, sizeof(int));
-								ImGui::EndDragDropSource();
-							}
-
-							if (ImGui::BeginDragDropTarget())
-							{
-								if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("POINT_INDEX"))
-								{
-									if (idx_t idx = *(idx_t*)payload->Data; idx != i)
-										std::swap(e.sprite[idx], e.sprite[i]);
-								}
-								ImGui::EndDragDropTarget();
-							}
-
-							ImGui::TableNextColumn();
-							ImGui::Text("(%d, %d)", point.x - prevPoint.x, prevPoint.y - point.y);
-							prevPoint = point;
-						}
-					}
-					ImGui::EndTable();
-				}
-				ImGui::EndTable();
-			}
-		}
-		ImGui::End();
-
-		ImGui::SetNextWindowDockID(1);
-		if (ImGui::Begin("Stage", nullptr, ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoDecoration))
-		{
-			glm::vec2 size = ImGui::GetWindowSize();
-			if (ImGui::BeginTable("Table", 3, ImGuiTableFlags_SizingFixedFit))
-			{
-				ImGui::TableNextColumn();
-				//ImGui::SetColumnWidth(0, size.x* e.splitRatio);
-				glm::vec2 imgSize = size;
-				imgSize.x = size.x * e.stageSplitRatio;
-				ImGui::Image((ImTextureID)e.target.tex, imgSize, ImVec2(0, 1), ImVec2(1, 0));
-				if (ImGui::IsItemHovered())
-				{
-					if (ImGui::IsMouseDragging(ImGuiMouseButton_Right))
-						e.isPanning = true;
-
-					if (f32 wheel = ImGui::GetIO().MouseWheel; ImGui::IsKeyDown(ImGuiKey_LeftCtrl) && wheel)
-						e.zoom += wheel;
-
-					glm::vec2 imagePosition  = ImGui::GetItemRectMin();
-					glm::vec2 mouse          = ImGui::GetMousePos(); 
-					glm::vec2 screenPosition = mouse - imagePosition;
-					
-					glm::vec2 screenSpace = glm::vec2((screenPosition.x / imgSize.x - 0.5) * 2.f, (0.5 - screenPosition.y / imgSize.y) * 2.f);
-					glm::vec2 worldSpace  = glm::inverse(e.uniforms.view) * glm::vec4(screenSpace, -1.f, 1.f);
-					float i = 0.2f;
-					glBindTexture(GL_TEXTURE_2D, e.grid.tex);
-					if (e.tile != e.selectedTile)
-					{
-						glTexSubImage2D(GL_TEXTURE_2D, 0, e.tile.x, WORLD_EXTENT - e.tile.y - 1, 1, 1, GL_RED, GL_FLOAT, &i);
-					}
-					e.tile.x = worldSpace.x;
-					e.tile.y = WORLD_EXTENT - worldSpace.y;
-					bool inside = e.tile.x >= 0 && e.tile.x < e.uniforms.gridWidth && e.tile.y >= 0 && e.tile.y < e.uniforms.gridHeight;
-					if (inside && e.tile != e.selectedTile)
-					{
-						i = 0.5f;
-						if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-						{
-							glTexSubImage2D(GL_TEXTURE_2D, 0, e.selectedTile.x, WORLD_EXTENT - e.selectedTile.y - 1, 1, 1, GL_RED, GL_FLOAT, &i);
-							e.selectedTile = e.tile;
-							i = 1.f;
-						}
-						glTexSubImage2D(GL_TEXTURE_2D, 0, e.tile.x, WORLD_EXTENT - e.tile.y - 1, 1, 1, GL_RED, GL_FLOAT, &i);
-					}
-					glBindTexture(GL_TEXTURE_2D, 0);
-				}
-				if (e.isPanning)
-				{
-					glm::vec2 delta = glm::vec2(ImGui::GetMousePos()) - e.lastMousePos;
-					delta.y *= -1;
-					e.position += (e.zoom * delta) / glm::vec2(w, h);
-				}
-
-				if (ImGui::IsMouseReleased(ImGuiMouseButton_Right))
-				{
-					e.isPanning = false;
-				}
-				e.lastMousePos = ImGui::GetMousePos();
-
-				ImGui::TableNextColumn();
-				ImGui::Button("Stage Splitter", ImVec2(e.splitterWidth, size.y));
-				if (ImGui::IsItemActive())
-				{
-					int x, y;
-					glfwGetWindowPos(win, &x, &y);
-					e.stageSplitRatio = (ImGui::GetMousePos().x - x) / size.x;
-					e.stageSplitRatio = min(max(e.stageSplitRatio, 0.01), 0.99);
-				}
-				//ImGui::SameLine();
-				ImGui::TableNextColumn();
-				ImGui::SetNextWindowSize({ size.x - imgSize.x - e.splitterWidth, size.y });
-				if (ImGui::BeginChild("Buttons and stuff..."))
-				{
-					ImGui::Text("Pos:      (%.3f, %.3f), Zoom: %.3f", e.position.x* e.uniforms.cellWidth, e.position.y* e.uniforms.cellHeight, e.zoom);
-					ImGui::Text("Tile:     (%d, %d)", e.tile.x, e.tile.y);
-					ImGui::Text("Selected: (%d, %d)", e.selectedTile.x, e.selectedTile.y);
-					ImGui::NewLine();
-					ImGui::InputText("Stage", e.stageName, IM_ARRAYSIZE(e.stageName));
-					if (ImGui::Button("Fill"))
-					{
-						ImGui::OpenPopup("Material");
-					}
-
-					if (ImGui::BeginPopup("Material"))
-					{
-						if (ImGui::Selectable("Air"))
-						{
-							std::fill(WORLD.stage.begin(), WORLD.stage.end(), Tile_Air);
-						}
-						if (ImGui::Selectable("Water"))
-						{
-							std::fill(WORLD.stage.begin(), WORLD.stage.end(), Tile_Water);
-						}
-						ImGui::EndPopup();
-					}
-
-					if (ImGui::Button("Export"))
-					{
-						std::string stage = "";
-						stage += "const Tile " + std::string(e.stageName) + "[" + std::to_string(WORLD_EXTENT * WORLD_STRIDE) + "] = \n{\n";
-						for (size_t y = 0, idx = 0; y < WORLD_EXTENT; ++y)
-						{
-							stage += "\t";
-							for (size_t x = 0; x < WORLD_STRIDE; ++x, ++idx)
-							{
-								stage += std::format("Tile_{}, ", tileStrings[WORLD.stage[idx]]);
-							}
-							stage += "\n";
-						}
-						stage += "};\n";
-						copy_to_clipboard(stage);
-					}
-					ImGui::SameLine();
-					if (ImGui::Button("Save"))
-					{
-						save_stage();
-					}
-					ImGui::SameLine();
-					if (ImGui::Button("Open..."))
-					{
-						open_stage();
-					}
-
-					ImGui::NewLine();
-					Tile& tile = WORLD.stage[e.selectedTile.y * WORLD_STRIDE + e.selectedTile.x];
-					glm::vec2 uiTileSize = { TILE_WIDTH, TILE_HEIGHT };
-					int tilesInRow = std::floor((size.x - imgSize.x - e.splitterWidth) / uiTileSize.x);
-					WORLD.sceneIsTarget = false;
-					if (tilesInRow > 0)
-					{
-						for (int i = 0; i <= Tile_Portal1; i++)
-						{
-							std::string id = std::format("##TILE_{}", i);
-							if (ImGui::Selectable(id.c_str(), tile == i, 0, uiTileSize))
-								tile = i;
-
-							ImDrawList* draw_list = ImGui::GetWindowDrawList();
-							glm::vec2 p = ImGui::GetItemRectMin();
-							glm::vec2 q = ImGui::GetItemRectMax();
-							glm::vec2 txtSize = ImGui::CalcTextSize(tileStrings[i]);
-							glm::vec2 mid = (p + q - txtSize) / 2.f;
-							draw_list->AddRect(p, q, IM_COL32(255, 255, 255, 255));
-							draw_list->AddText(ImVec2(mid.x, p.y), IM_COL32(255, 255, 255, 255), tileStrings[i]);
-							world_render_tile(i, 0, TILE_WIDTH, 0, -TILE_HEIGHT);
-
-							if ((i + 1) % tilesInRow != 0)
-								ImGui::SameLine();
-						}
-					}
-					WORLD.sceneIsTarget = true;
-
-				}
-				ImGui::EndChild();
-				
-				ImGui::EndTable();
-			}
-		}
-		ImGui::End();
-
 		
-
-		// ImGui
-		ImGui::Render();
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-		// End Frame
-		if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-		{
-			GLFWwindow* context = glfwGetCurrentContext();
-			ImGui::UpdatePlatformWindows();
-			ImGui::RenderPlatformWindowsDefault();
-			glfwMakeContextCurrent(context);
-		}
-		glfwSwapBuffers(win);
+		window_draw();
 	}
 	// Im too lazy to clean up opengl stuff
 	ImGui_ImplOpenGL3_Shutdown();
@@ -900,6 +433,572 @@ int main()
 	glfwDestroyWindow(win);
 	glfwTerminate();
 	return 0;
+}
+
+void window_draw()
+{
+	// Update target texture on window size change
+	{
+		int width, height;
+		glfwGetWindowSize(glfwGetCurrentContext(), &width, &height);
+		if (width ^ ((int)e.uniforms.viewport.x) || height ^ ((int)e.uniforms.viewport.y))
+		{
+			target_texture_recreate(((int)e.uniforms.viewport.x), ((int)e.uniforms.viewport.y), e.target);
+			e.uniforms.viewport = glm::vec2(width, height);
+		}
+	}
+
+	// Update lines and camera. This is super inefficient, but who cares with 4.2GHz and PCIe 5.0.
+	e.uniforms.view = glm::mat4(1.f);
+	e.uniforms.view = glm::translate(e.uniforms.view, glm::vec3(-e.position, 0.f));
+	e.uniforms.view = glm::scale(e.uniforms.view, glm::vec3(e.zoom / e.uniforms.cellWidth, e.zoom / e.uniforms.cellHeight, 1.0f));
+
+	double current = glfwGetTime();
+	if ((current - e.last) >= 0.02f)
+	{
+		e.lines.clear();
+		//e.lines.push_back({ glm::vec2(0,0), glm::vec2(100,100) });
+		world_progress();
+		e.last = glfwGetTime();
+	}
+
+	glBindBuffer(GL_ARRAY_BUFFER, e.lineList.vbo);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, e.lines.size() * sizeof(e.lines[0]), e.lines.data());
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	glBindBuffer(GL_UNIFORM_BUFFER, e.ubo);
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(e.uniforms), &e.uniforms);
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+
+	// Start Frame
+	ImGui_ImplOpenGL3_NewFrame();
+	ImGui_ImplGlfw_NewFrame();
+	ImGui::NewFrame();
+
+	// Draw scene
+	glBindFramebuffer(GL_FRAMEBUFFER, e.target.fbo);
+	{
+		glViewport(0, 0, e.uniforms.viewport.x, e.uniforms.viewport.y);
+		glClearColor(0.21, 0.25, 0.27, 1.00);
+		glClear(GL_COLOR_BUFFER_BIT);
+		// Draw grid
+		glUseProgram(e.grid.program);
+		glBindVertexArray(e.grid.vao);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, e.grid.tex);
+		glDrawArraysInstanced(GL_TRIANGLES, 0, 6, e.uniforms.gridWidth * e.uniforms.gridHeight);
+		glBindTexture(GL_TEXTURE_1D, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		glUseProgram(0);
+		glBindVertexArray(0);
+		// Draw line list
+		glUseProgram(e.lineList.program);
+		glBindVertexArray(e.lineList.vao);
+		glDrawArrays(GL_LINES, 0, e.lines.size() * 2);
+		glUseProgram(0);
+		glBindVertexArray(0);
+		// Draw txts
+		glUseProgram(e.atlas.program);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, e.atlas.tex);
+		for (auto const& kv : e.txts)
+		{
+			if (kv.second.object.vao)
+			{
+				glBindVertexArray(kv.second.object.vao);
+				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, kv.second.object.ebo);
+				glDrawElements(GL_TRIANGLES, kv.second.txt.size() * 6, GL_UNSIGNED_INT, nullptr);
+				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+				glBindVertexArray(0);
+			}
+		}
+		glBindTexture(GL_TEXTURE_2D, 0);
+		glUseProgram(0);
+	}
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	// UI
+	if (ImGui::IsKeyPressed(ImGuiKey_Q))
+		glfwSetWindowShouldClose(glfwGetCurrentContext(), true);
+
+	ImGui::DockSpaceOverViewport(1, nullptr, ImGuiDockNodeFlags_NoUndocking);
+
+	ImGui::SetNextWindowDockID(1);
+	if (ImGui::Begin("Sprite"))
+	{
+		glm::vec2 size = ImGui::GetWindowSize();
+		if (ImGui::BeginTable("Table", 3, ImGuiTableFlags_SizingFixedFit))
+		{
+			glm::vec2 dummySize = size;
+			dummySize.x *= e.spriteSplitRatio;
+			ImGui::TableNextColumn();
+			//ImGui::SetColumnWidth(0, size.x* e.splitRatio);
+			//ImGui::Image((ImTextureID)e.target.tex, imgSize, ImVec2(0, 1), ImVec2(1, 0));
+			ImGui::InvisibleButton("Sprite Grid", dummySize);
+			glm::vec2 p = ImGui::GetItemRectMin();
+			float cellSize = dummySize.y / TILE_HEIGHT;
+			float gridWidth = cellSize * TILE_WIDTH;
+			ImDrawList* drawList = ImGui::GetWindowDrawList();
+			drawList->AddRectFilled(p, ImGui::GetItemRectMax(), ImColor(0.21f, 0.25f, 0.27f));
+			float x = 0, y = 0;
+			for (size_t yi = 0; yi <= TILE_HEIGHT; yi++)
+			{
+				drawList->AddLine({ p.x, p.y + y }, { p.x + std::min(gridWidth, dummySize.x), p.y + y }, yi == TILE_HEIGHT / 2 ? 0xFF00FF00 : 0xFFFFFFFF, yi == TILE_HEIGHT / 2 ? 2.0 : 0.125);
+				y += cellSize;
+			}
+			for (size_t xi = 0; xi <= TILE_WIDTH; xi++)
+			{
+				drawList->AddLine({ p.x + std::min(x, dummySize.x), p.y }, { p.x + std::min(x, dummySize.x), p.y + dummySize.y }, xi == TILE_WIDTH / 2 ? 0xFFFF0000 : 0xFFFFFFFF, xi == TILE_WIDTH / 2 ? 2.0 : 0.125);
+				x += cellSize;
+			}
+
+			const auto cellMidByTile = [=](glm::vec2 point) -> glm::vec2 { return p + glm::vec2(point) * cellSize; };
+
+			if (e.sprite.size())
+			{
+				glm::vec2 origin = cellMidByTile(e.sprite.front()); // rotate around first point
+				glm::vec2 lastMid = origin;
+				for (glm::ivec2 const& point : e.sprite)
+				{
+					glm::vec2 mid = cellMidByTile(point);
+					drawList->AddCircleFilled(mid, cellSize / 2, 0xA0FF0000);
+					drawList->AddLine(lastMid, mid, 0xFFFFFFFF, 3.f);
+					lastMid = mid;
+				}
+			}
+
+			if (ImGui::IsItemHovered())
+			{
+				glm::vec2 mousePos = ImGui::GetMousePos();
+				glm::vec2 local = mousePos - p;
+				glm::vec2 tile = glm::floor(local / cellSize);
+				glm::vec2 tileMid = cellMidByTile(tile);
+				if (tile.x >= 0 && tile.x < TILE_WIDTH && tile.y >= 0 && tile.y < TILE_HEIGHT)
+				{
+					drawList->AddCircleFilled(tileMid, cellSize / 2, 0xFF000080);
+
+					auto contains = [&](glm::ivec2 const& t) { return t.x == tile.x && t.y == tile.y; };
+					if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+					{
+						e.sprite.emplace_back(glm::ivec2(tile.x, tile.y));
+					}
+					else if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+					{
+						auto it = std::find_if(e.sprite.rbegin(), e.sprite.rend(), contains);
+						if (it != e.sprite.rend())
+							e.sprite.erase(std::next(it).base());
+					}
+					else if (ImGui::IsMouseClicked(ImGuiMouseButton_Middle))
+					{
+						auto it = std::find_if(e.sprite.rbegin(), e.sprite.rend(), contains);
+						if (it != e.sprite.rend())
+						{
+							e.draggedSpritePoint = std::distance(e.sprite.begin(), std::next(it).base());
+						}
+					}
+				}
+			}
+
+			if (ImGui::IsMouseReleased(ImGuiMouseButton_Middle))
+			{
+				e.draggedSpritePoint = -1;
+			}
+			else if (e.draggedSpritePoint >= 0)
+			{
+				glm::vec2 mousePos = ImGui::GetMousePos();
+				glm::vec2 local = mousePos - p;
+				glm::vec2 tile = glm::floor(local / cellSize);
+				e.sprite[e.draggedSpritePoint] = tile;
+			}
+
+			ImGui::TableNextColumn();
+			ImGui::Button("Sprite Splitter", ImVec2(e.splitterWidth, size.y));
+			if (ImGui::IsItemActive())
+			{
+				int x, y;
+				glfwGetWindowPos(glfwGetCurrentContext(), &x, &y);
+				e.spriteSplitRatio = (ImGui::GetMousePos().x - x) / size.x;
+				e.spriteSplitRatio = std::min(std::max(e.spriteSplitRatio, 0.01f), 0.99f);
+			}
+
+			ImGui::TableNextColumn();
+			if (centered_button("Flip H."))
+			{
+				for (size_t i = 0; i < e.sprite.size(); ++i)
+				{
+					e.sprite[i].x = TILE_WIDTH / 2 - (e.sprite[i].x - TILE_WIDTH / 2);
+				}
+			}
+			ImGui::SameLine();
+			if (centered_button("Flip V."))
+			{
+				for (size_t i = 0; i < e.sprite.size(); ++i)
+				{
+					e.sprite[i].y = TILE_HEIGHT / 2 - (e.sprite[i].y - TILE_HEIGHT / 2);
+				}
+			}
+			ImGui::NewLine();
+
+			f32 spriteRotation = e.spriteRotation;
+
+			if (ImGui::ArrowButton("RotateLeft", ImGuiDir_Left))
+				spriteRotation -= 5.f;
+			ImGui::SameLine();
+			if (ImGui::ArrowButton("RotateRight", ImGuiDir_Right))
+				spriteRotation += 5.f;
+
+			f32 scaling;
+			ImGui::SameLine();
+			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 10);
+			if (ImGui::Button("+"))
+			{
+				scaling = 1;
+				goto scale;
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("-"))
+			{
+				scaling = -1;
+			scale:
+				if (!e.sprite.empty())
+				{
+					glm::vec2 centroid(0.f);
+					for (glm::ivec2& pos : e.sprite)
+						centroid += glm::vec2(pos);
+					centroid /= static_cast<float>(e.sprite.size());
+					for (glm::ivec2& pos : e.sprite)
+					{
+						glm::vec2 posF = pos;
+						glm::vec2 centered = (posF - centroid);
+						pos = glm::round(centered + scaling * glm::sign(centered) + centroid); // or use floor() if you prefer
+					}
+				}
+			}
+
+			if (spriteRotation != e.spriteRotation)
+			{
+				f32 dphi = spriteRotation - e.spriteRotation;
+				e.spriteRotation = spriteRotation;
+				if (!e.sprite.empty())
+				{
+					f32 deg = DEG2RAD(dphi);
+					glm::mat2 rot = glm::mat2(
+						glm::vec2(cos(deg), sin(deg)),
+						glm::vec2(-sin(deg), cos(deg))
+					);
+
+					glm::vec2 centroid(0.f);
+					for (const auto& p : e.sprite)
+						centroid += glm::vec2(p);
+					centroid /= static_cast<float>(e.sprite.size());
+
+					for (auto& pos : e.sprite)
+					{
+						glm::vec2 posF = pos;
+						glm::vec2 rotated = rot * (posF - centroid) + centroid;
+						pos = glm::floor(rotated);
+					}
+				}
+				// HEre	
+			}
+			ImGui::NewLine();
+			if (ImGui::Button("Clear"))
+			{
+				e.sprite.clear();
+				e.selectedPoint = -1;
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Export") && e.sprite.size() > 0)
+			{
+				size_t points = e.sprite.size() - e.spriteFirstIsMov;
+				std::string stage = "const i8 " + std::string(e.spriteName) + "[" + std::to_string(points * 2 + 1) + "] = \n{\n\tLENGTH(" + std::to_string(points) + "),\n";
+				glm::ivec2 prev = e.spriteFirstIsMov ? e.sprite.front() : glm::ivec2{ TILE_WIDTH / 2, TILE_HEIGHT / 2 };
+				for (size_t i = e.spriteFirstIsMov; i < e.sprite.size(); i++)
+				{
+					glm::ivec2 point = e.sprite[i];
+					stage += std::format("\t{}, {},\n", prev.y - point.y, point.x - prev.x);
+					prev = point;
+				}
+				stage += "};\n";
+				copy_to_clipboard(stage);
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Save"))
+			{
+				save_sprite();
+			}
+			if (ImGui::Button("Open..."))
+			{
+				open_sprite();
+			}
+			ImGui::Checkbox("Move On First Point", &e.spriteFirstIsMov);
+
+			ImGui::InputText("Name", e.spriteName, sizeof(e.spriteName));
+
+
+			if (ImGui::BeginTable("points", 2, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_SizingStretchSame, ImVec2{ size.x - dummySize.x - e.splitterWidth, 0 }))
+			{
+				ImGui::TableSetupColumn("Position");
+				ImGui::TableSetupColumn("Change");
+
+				ImGui::TableHeadersRow();
+				if (e.sprite.size())
+				{
+					glm::ivec2 prevPoint = e.spriteFirstIsMov ? e.sprite.front() : glm::ivec2{ TILE_WIDTH / 2, TILE_HEIGHT / 2 };
+					for (i32 i = e.spriteFirstIsMov; i < e.sprite.size(); ++i)
+					{
+						ImGui::TableNextRow();
+						ImGui::TableNextColumn();
+
+						glm::ivec2 point = e.sprite[i];
+						std::string txt = std::format("({}, {})##{}", point.x - TILE_WIDTH / 2, TILE_HEIGHT / 2 - point.y, i);
+						bool selected = e.selectedPoint == i;
+						ImVec2 selectableSize = { ImGui::GetContentRegionAvail().x, ImGui::GetTextLineHeightWithSpacing() };
+						if (ImGui::Selectable(txt.c_str(), &selected, 0, selectableSize))
+						{
+							e.selectedPoint = i;
+						}
+						if (ImGui::BeginDragDropSource())
+						{
+							ImGui::SetDragDropPayload("POINT_INDEX", &i, sizeof(int));
+							ImGui::EndDragDropSource();
+						}
+
+						if (ImGui::BeginDragDropTarget())
+						{
+							if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("POINT_INDEX"))
+							{
+								if (idx_t idx = *(idx_t*)payload->Data; idx != i)
+									std::swap(e.sprite[idx], e.sprite[i]);
+							}
+							ImGui::EndDragDropTarget();
+						}
+
+						ImGui::TableNextColumn();
+						ImGui::Text("(%d, %d)", point.x - prevPoint.x, prevPoint.y - point.y);
+						prevPoint = point;
+					}
+				}
+				ImGui::EndTable();
+			}
+			ImGui::EndTable();
+		}
+	}
+	ImGui::End();
+
+	ImGui::SetNextWindowDockID(1);
+	if (ImGui::Begin("Stage", nullptr, ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoDecoration))
+	{
+		glm::vec2 size = ImGui::GetWindowSize();
+		if (ImGui::BeginTable("Table", 3, ImGuiTableFlags_SizingFixedFit))
+		{
+			ImGui::TableNextColumn();
+			//ImGui::SetColumnWidth(0, size.x* e.splitRatio);
+			glm::vec2 imgSize = size;
+			imgSize.x = size.x * e.stageSplitRatio;
+			ImGui::Image((ImTextureID)e.target.tex, imgSize, ImVec2(0, 1), ImVec2(1, 0));
+			if (ImGui::IsItemHovered())
+			{
+				if (ImGui::IsMouseDragging(ImGuiMouseButton_Right))
+					e.isPanning = true;
+
+				if (f32 wheel = ImGui::GetIO().MouseWheel; ImGui::IsKeyDown(ImGuiKey_LeftCtrl) && wheel)
+					e.zoom += wheel;
+
+				glm::vec2 imagePosition = ImGui::GetItemRectMin();
+				glm::vec2 mouse = ImGui::GetMousePos();
+				glm::vec2 screenPosition = mouse - imagePosition;
+
+				glm::vec2 screenSpace = glm::vec2((screenPosition.x / imgSize.x - 0.5) * 2.f, (0.5 - screenPosition.y / imgSize.y) * 2.f);
+				glm::vec2 worldSpace = glm::inverse(e.uniforms.view) * glm::vec4(screenSpace, -1.f, 1.f);
+				glBindTexture(GL_TEXTURE_2D, e.grid.tex);
+				auto outsideSelection = [&]() { return !(glm::all(glm::greaterThanEqual(e.tile, e.selectionStart)) && glm::all(glm::lessThan(e.tile, e.selectionEnd)));};
+				if (outsideSelection())
+				{
+					float opacity = 0.2f;
+					glTexSubImage2D(GL_TEXTURE_2D, 0, e.tile.x, WORLD_EXTENT - e.tile.y - 1, 1, 1, GL_RED, GL_FLOAT, &opacity);
+				}
+				e.tile.x = worldSpace.x;
+				e.tile.y = WORLD_EXTENT - worldSpace.y;
+				bool insideGrid = e.tile.x >= 0 && e.tile.x < e.uniforms.gridWidth && e.tile.y >= 0 && e.tile.y < e.uniforms.gridHeight;
+				if (insideGrid)
+				{
+					if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
+					{
+						float opacity = 0.2f;
+						glTexSubImage2D(GL_TEXTURE_2D, 0, e.selectionStart.x, WORLD_EXTENT - e.selectionEnd.y, e.selectionEnd.x - e.selectionStart.x, e.selectionEnd.y - e.selectionStart.y, GL_RED, GL_FLOAT, &opacity);
+						if (!ImGui::IsKeyDown(ImGuiKey_LeftShift))
+						{
+							e.selectionStart = e.tile;
+							e.selectionEnd = e.tile;
+						}
+						else
+						{
+							e.selectionEnd = e.tile;
+						}
+
+						glm::ivec2 selMin = glm::min(e.selectionStart, e.selectionEnd);
+						glm::ivec2 selMax = glm::max(e.selectionStart, e.selectionEnd);
+						e.selectionStart = selMin;
+						e.selectionEnd = selMax;
+						e.selectionEnd += glm::ivec2(1, 1);
+						opacity = 1.f;
+						glTexSubImage2D(GL_TEXTURE_2D, 0, e.selectionStart.x, WORLD_EXTENT - e.selectionEnd.y, e.selectionEnd.x - e.selectionStart.x, e.selectionEnd.y - e.selectionStart.y, GL_RED, GL_FLOAT, &opacity);
+					}
+					//else // Hover
+					//{
+					//	opacity = 0.5f;
+					//	glTexSubImage2D(GL_TEXTURE_2D, 0, e.tile.x, WORLD_EXTENT - e.tile.y - 1, 1, 1, GL_RED, GL_FLOAT, &opacity);
+					//}
+				}
+				glBindTexture(GL_TEXTURE_2D, 0);
+			}
+			if (e.isPanning)
+			{
+				glm::vec2 delta = glm::vec2(ImGui::GetMousePos()) - e.lastMousePos;
+				delta.y *= -1;
+				e.position += (e.zoom * delta) / e.uniforms.viewport;
+			}
+
+			if (ImGui::IsMouseReleased(ImGuiMouseButton_Right))
+			{
+				e.isPanning = false;
+			}
+			e.lastMousePos = ImGui::GetMousePos();
+
+			ImGui::TableNextColumn();
+			ImGui::Button("Stage Splitter", ImVec2(e.splitterWidth, size.y));
+			if (ImGui::IsItemActive())
+			{
+				int x, y;
+				glfwGetWindowPos(glfwGetCurrentContext(), &x, &y);
+				e.stageSplitRatio = (ImGui::GetMousePos().x - x) / size.x;
+				e.stageSplitRatio = std::min(std::max(e.stageSplitRatio, 0.01f), 0.99f);
+			}
+			//ImGui::SameLine();
+			ImGui::TableNextColumn();
+			ImGui::SetNextWindowSize({ size.x - imgSize.x - e.splitterWidth, size.y });
+			if (ImGui::BeginChild("Buttons and stuff..."))
+			{
+				ImGui::Text("Pos:      (%.3f, %.3f), Zoom: %.3f", e.position.x * e.uniforms.cellWidth, e.position.y * e.uniforms.cellHeight, e.zoom);
+				ImGui::Text("Tile:     (%d, %d)", e.tile.x, e.tile.y);
+				if (e.selectionStart == e.selectionEnd)
+				{
+					ImGui::Text("Selected: (%d, %d)", e.selectionStart.x, e.selectionStart.y);
+				}
+				else
+				{
+					ImGui::Text("Selected: (%d, %d) To (%d, %d)", e.selectionStart.x, e.selectionStart.y, e.selectionEnd.x, e.selectionEnd.y);
+				}
+				ImGui::NewLine();
+				ImGui::InputText("Stage", e.stageName, IM_ARRAYSIZE(e.stageName));
+				if (ImGui::Button("Fill"))
+				{
+					ImGui::OpenPopup("Material");
+				}
+
+				if (ImGui::BeginPopup("Material"))
+				{
+					if (ImGui::Selectable("Air"))
+					{
+						std::fill(WORLD.stage.begin(), WORLD.stage.end(), Tile_Air);
+					}
+					if (ImGui::Selectable("Water"))
+					{
+						std::fill(WORLD.stage.begin(), WORLD.stage.end(), Tile_Water);
+					}
+					ImGui::EndPopup();
+				}
+
+				if (ImGui::Button("Export"))
+				{
+					std::string stage = "";
+					stage += "const Tile " + std::string(e.stageName) + "[" + std::to_string(WORLD_EXTENT * WORLD_STRIDE) + "] = \n{\n";
+					for (size_t y = 0, idx = 0; y < WORLD_EXTENT; ++y)
+					{
+						stage += "\t";
+						for (size_t x = 0; x < WORLD_STRIDE; ++x, ++idx)
+						{
+							stage += std::format("Tile_{}, ", tileStrings[WORLD.stage[idx]]);
+						}
+						stage += "\n";
+					}
+					stage += "};\n";
+					copy_to_clipboard(stage);
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("Save"))
+				{
+					save_stage();
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("Open..."))
+				{
+					open_stage();
+				}
+
+				ImGui::NewLine();
+				Tile& tile = WORLD.stage[e.selectionStart.y * WORLD_STRIDE + e.selectionStart.x];
+				glm::vec2 uiTileSize = { TILE_WIDTH, TILE_HEIGHT };
+				int tilesInRow = std::floor((size.x - imgSize.x - e.splitterWidth) / uiTileSize.x);
+				WORLD.sceneIsTarget = false;
+				if (tilesInRow > 0)
+				{
+					for (int i = 0; i <= Tile_Portal1; i++)
+					{
+						std::string id = std::format("##TILE_{}", i);
+						if (ImGui::Selectable(id.c_str(), tile == i, 0, uiTileSize))
+						{
+							for (int y = e.selectionStart.y; y < e.selectionEnd.y; ++y)
+								for (int x = e.selectionStart.x; x < e.selectionEnd.x; ++x)
+									WORLD.stage[y * WORLD_STRIDE + x] = i;
+						}
+
+						ImDrawList* draw_list = ImGui::GetWindowDrawList();
+						glm::vec2 p = ImGui::GetItemRectMin();
+						glm::vec2 q = ImGui::GetItemRectMax();
+						glm::vec2 txtSize = ImGui::CalcTextSize(tileStrings[i]);
+						glm::vec2 mid = (p + q - txtSize) / 2.f;
+						draw_list->AddRect(p, q, IM_COL32(255, 255, 255, 255));
+						draw_list->AddText(ImVec2(mid.x, p.y), IM_COL32(255, 255, 255, 255), tileStrings[i]);
+						world_render_tile(i, 0, TILE_WIDTH, 0, -TILE_HEIGHT);
+
+						if ((i + 1) % tilesInRow != 0)
+							ImGui::SameLine();
+					}
+				}
+				WORLD.sceneIsTarget = true;
+
+			}
+			ImGui::EndChild();
+
+			ImGui::EndTable();
+		}
+	}
+	ImGui::End();
+
+
+
+	// ImGui
+	ImGui::Render();
+	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+	// End Frame
+	if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+	{
+		GLFWwindow* context = glfwGetCurrentContext();
+		ImGui::UpdatePlatformWindows();
+		ImGui::RenderPlatformWindowsDefault();
+		glfwMakeContextCurrent(context);
+	}
+	glfwSwapBuffers(glfwGetCurrentContext());
+}
+
+void window_size_callback(GLFWwindow* window, int width, int height)
+{
+	glfwPollEvents();
+	window_draw();
 }
 
 GLuint program_create_fv(const char* const fragmentVertexShader[2])
@@ -1120,7 +1219,10 @@ void target_texture_recreate(int width, int height, frame_t& frame)
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, frame.rbo);
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-		assert(false); // Oopsie...
+	{
+
+	}
+		//assert(false); // Oopsie...
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
@@ -1222,6 +1324,20 @@ void world_render_tile(Tile tile, i16 tileLeft, i16 tileRight, i16 tileTop, i16 
 {
 	switch (tile)
 	{
+	case Tile_Air:
+		if (WORLD.sceneIsTarget)
+		{
+			idx_t idx = tile - Tile_E0;
+			print_txt(tileLeft + (tileRight - tileLeft) / 4, tileBottom + (tileTop - tileBottom) / 4, WORLD.tileIdx, "Air", 0.35, 0.50);
+		}
+		break;
+	case Tile_Water:
+		if (WORLD.sceneIsTarget)
+		{
+			idx_t idx = tile - Tile_E0;
+			print_txt(tileLeft + (tileRight - tileLeft) / 16, tileBottom + (tileTop - tileBottom) / 4, WORLD.tileIdx, "Water", 0.35, 0.50);
+		}
+		break;
 	case Tile_Top2:
 	case Tile_Top:
 	{
@@ -1515,7 +1631,7 @@ void world_render_tile(Tile tile, i16 tileLeft, i16 tileRight, i16 tileTop, i16 
 	}
 }
 
-void print_txt(float x, float y, idx_t id, std::string txt)
+void print_txt(float x, float y, idx_t id, std::string txt, float scaleX, float scaleY)
 {
 	auto& kv = e.txts[id];
 	kv.tick = WORLD.ticks;
@@ -1548,8 +1664,6 @@ void print_txt(float x, float y, idx_t id, std::string txt)
 
 		uint32_t qi = 0, ii = 0;
 		f32 xOff = 0, yOff = 0;
-		float scaleX = 0.6;
-		float scaleY = 0.75;
 		for (char const& c : txt)
 		{
 			stbtt_aligned_quad quad;
@@ -1620,6 +1734,8 @@ void clean_up_unused_txts()
 void world_progress(void)
 {
 	++WORLD.ticks;
+	WORLD.freq2  = WORLD.ticks & 1;
+	WORLD.freq16 = (WORLD.ticks >> 4) & 1;
 
 	// int y = I8(CAMERA.position.y >> TILE_SCALE_BITS);
 	// int x = I8(CAMERA.position.x >> TILE_SCALE_BITS);
@@ -1651,7 +1767,6 @@ void world_progress(void)
 		// bool clip       = !(tileRight <= left || tileLeft >= right || tileBottom <= top || tileTop >= bottom);
 		// if (tileLeft >= -128 && tileLeft <= 127 && tileTop <= 127 && tileTop >= -128)
 		{
-			// assert(LIST.count <= DRAW_STRIPS_MAX);
 			// i16 offsetX = tileLeft - left;
 			// i16 offsetY = tileTop  - top;
 			const Tile tile = WORLD.stage[tileIdx];
@@ -1698,13 +1813,12 @@ void Draw_Line_d(int y, int x)
 	{
 		glm::vec2 p = ImGui::GetItemRectMin();
 		glm::vec2 q = ImGui::GetItemRectMax();
-		q.x -= 5.f;
+		//q.x -= 5.f;
 		glm::vec2 itemSize = (glm::vec2(q) - glm::vec2(p));
 
-		glm::vec2 tileSize = glm::vec2(TILE_WIDTH, TILE_HEIGHT);
-		glm::vec2 scale = glm::vec2(0.5f * itemSize.y, -0.5f * itemSize.y) / tileSize;
+		glm::vec2 scale = 0.5f * glm::vec2(itemSize.y, -itemSize.y) / glm::vec2(TILE_WIDTH, TILE_HEIGHT);
 
-		glm::vec2 anchor = p + glm::vec2(itemSize.x - 32.0f * scale.x, itemSize.y + 64.0f * scale.y);
+		glm::vec2 anchor = p + glm::vec2(itemSize.x - 96.0f * scale.x, itemSize.y + 80.0f * scale.y);
 
 		glm::vec2 begin_ = anchor + begin * scale;
 		glm::vec2 end_ = anchor + end * scale;

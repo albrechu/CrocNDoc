@@ -34,32 +34,32 @@ enum Note_
     BH = 0x04U,
     C3 = 0x05U, CS3 = 0x06U, DB3 = 0x06U,
     D3 = 0x07U, DS3 = 0x08U, EB3 = 0x08U,
-    E3 = 0x09U,
+    E3 = 0x09U, ES3 = 0x0AU, FB3 = 0x0AU,
     F3 = 0x0AU, FS3 = 0x0BU, GB3 = 0x0BU,
     G3 = 0x0CU, GS3 = 0x0DU, AB3 = 0x0DU,
     A3 = 0x0EU, AS3 = 0x0FU, BB3 = 0x0FU,
-    B3 = 0x10U,
+    B3 = 0x10U, BS3 = 0x11U,
     C4 = 0x11U, CS4 = 0x12U, DB4 = 0x12U,
     D4 = 0x13U, DS4 = 0x14U, EB4 = 0x14U,
-    E4 = 0x15U,
+    E4 = 0x15U, ES4 = 0x16U,
     F4 = 0x16U, FS4 = 0x17U, GB4 = 0x17U,
     G4 = 0x18U, GS4 = 0x19U, AB4 = 0x19U,
     A4 = 0x1AU, AS4 = 0x1BU, BB4 = 0x1BU,
-    B4 = 0x1CU,
+    B4 = 0x1CU, BS4 = 0x1DU,
     C5 = 0x1DU, CS5 = 0x1EU, DB5 = 0x1EU,
     D5 = 0x1FU, DS5 = 0x20U, EB5 = 0x20U,
     E5 = 0x21U,
     F5 = 0x22U, FS5 = 0x23U, GB5 = 0x23U,
     G5 = 0x24U, GS5 = 0x25U, AB5 = 0x25U,
     A5 = 0x26U, AS5 = 0x27U, BB5 = 0x27U,
-    B5 = 0x28U,
+    B5 = 0x28U, BS5 = 0x29U, CB6 = 0x28U,
     C6 = 0x29U, CS6 = 0x2AU, DB6 = 0x2AU,
     D6 = 0x2BU, DS6 = 0x2CU, EB6 = 0x2CU,
-    E6 = 0x2DU,
+    E6 = 0x2DU, ES6 = 0x2EU,
     F6 = 0x2EU, FS6 = 0x2FU, GB6 = 0x2FU,
     G6 = 0x30U, GS6 = 0x31U, AB6 = 0x31U,
     A6 = 0x32U, AS6 = 0x33U, BB6 = 0x33U,
-    B6 = 0x34U,
+    B6 = 0x34U, BS6 = 0x35U,
     C7 = 0x35U, CS7 = 0x36U, DB7 = 0x36U,
     D7 = 0x37U, DS7 = 0x38U, EB7 = 0x38U,
     E7 = 0x39U,
@@ -80,6 +80,13 @@ typedef struct twang_table_t
     u8 frequencies[8];
 } twang_table_t, *twang_table;
 
+typedef struct explosion_t
+{
+    int enable;				// noise (bits 5-3) and tone channel (bits 2-0) enable (0b00nnnccc), 
+    int noise;				// noise source sweep, =0 up, >0 down, <0 inhibit  
+    int volume;				// volume sweep, =0 up, >0 down, <0 inhibit
+    unsigned int duration;	// explosion duration, 0x01 longest to 0x80 shortest 
+} explosion_t;
 
 typedef struct track_t
 {
@@ -92,11 +99,10 @@ extern const track_t g_yellow;
 extern const track_t g_level0;
 extern const track_t g_corneria;
 extern const track_t g_jibjig;
-extern const track_t* g_tracks[];
+extern const track_t g_crocodileCacophony;
+extern const track_t g_champion;
+extern const explosion_t g_monsterPeng;
 
-inline const track_t* track_get(Track const track)
-{
-    return g_tracks[track];
-}
+extern const track_t musicOff;
 
 #endif /* TRACK_H */

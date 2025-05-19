@@ -28,5 +28,5 @@ void main()
 {
 	const vec3 Remap = calculate_wireframe(0.25, 1.0);
 	const float ClosestEdge = min(min(Remap.x, Remap.y), Remap.z);
-	fragColor = vec4(1.0, 0.5, 0.5, mix(0.5, 1-(enabler == 0.f ? ClosestEdge : Remap.y), 1-texelFetch(grid, uv, 0).r));
+	fragColor = vec4(0.51, 0.55, 0.57, mix(0.5, 1-(enabler == 0.f ? ClosestEdge : Remap.y), 1-texelFetch(grid, uv, 0).r));
 }

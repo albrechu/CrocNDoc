@@ -81,10 +81,6 @@ typedef union v2l
 	};
 } v2l;
 
-//#define VEC_IS_LOCAL(vec) ((vec.x_msb | vec.y_msb) == 0 || (vec.x_msb | vec.y_msb) == -1) // Checks whether a 16 bit vector is within 8-bit coords.
-//#define VEC_IS_LOCAL(vec) (((vec.x_msb) != ((vec.x_lsb) >> 7))) && (((vec.y_msb) != ((vec.y_lsb) >> 7)))
-//#define VEC_IS_LOCAL(v)  (( (v.x_msb + 1) | (-v.x_msb) | (v.y_msb + 1) | (-v.y_msb) ) >= 0)
-
 /** 
 * @brief rect_t is a rectangle defined by its position and size.
 * 
@@ -129,14 +125,16 @@ enum Player_
 enum Velocity_
 {
     Velocity_Run      = 2,
-    Velocity_Bite     = 8,
+    Velocity_Hit      = 7,
 	Velocity_Friction = 1,
     Velocity_Jump     = 10,
+    Velocity_Breaching = 12,
+    Velocity_SwimUp   = 9,
+    Velocity_KillUpWind = 12,
     Velocity_JumpX    = 0,
     Velocity_ThrowX   = 5,
     Velocity_ThrowY   = 8,
-    Velocity_Jumper   = 16,
-
+    Velocity_Jumper   = 12,
 };
 typedef i8 Velocity;
 
@@ -192,11 +190,19 @@ enum EntityState_
 
 typedef i8 EntityState;
 
+/**
+* @brief Character_ is a EntityType
+*/
 enum Character_
 {
     Character_Croc,
     Character_Doc,
+    Character_Marvin,
 };
+
+/**
+* @brief Enemy_ is a EntityType
+*/
 enum Enemy_
 {
     Prop_Crate,
@@ -206,14 +212,14 @@ enum Enemy_
     Enemy_Halunke,
     Enemy_Gauner,
     Enemy_Schuft,
-    Enemy_Strolch,
+    Enemy_Schelm,
+    Enemy_Bandit,
     Enemy_Boesewicht,
+    //Enemy_Strolch,
     // Enemy_Ganove,
     // Enemy_Spitzbube
     // Enemy_Schurke
     // Enemy_Betrüger
-    // Enemy_Bandit
-    // Enemy_Schelm
     // Enemy_Schwindler
     // Enemy_Verbrecher
     // Enemy_Lump
@@ -223,26 +229,71 @@ enum Enemy_
 };
 typedef u8 EntityType;
 
-/**
- * @brief Mesh_ is a look up enumeration
- */
-// enum Mesh_
-// {
-// 	Mesh_CrocIdleRight,
-// 	Mesh_CrocIdleLeft,
-// 	Mesh_DocIdleRight,
-// 	Mesh_DocIdleLeft,
-// 	Mesh_MantisRight,
-// 	Mesh_MantisLeft,
-// 	Mesh_BarrelLeft,
-// 	Mesh_Barrel,
-// 	Mesh_BarrelRight,
-// 	Mesh_CrateLeft,
-// 	Mesh_Crate,
-// 	Mesh_CrateRight,
-//     Mesh_Halunke,
-// };
-// typedef i8 Mesh;
+enum Tile_
+{
+    // Materials
+    Tile_Air,
+    Tile_Water,
+    Tile_Top2,
+    Tile_Top,
+    Tile_TopLeft,
+    Tile_TopRight,
+    Tile_Bottom2,
+    Tile_Bottom,
+    Tile_BottomLeft,
+    Tile_BottomRight,
+    Tile_Left2,
+    Tile_Left,
+    Tile_Right2,
+    Tile_Right,
+    Tile_MiddleLeftTop,
+    Tile_MiddleLeft,
+    Tile_MiddleRight,
+    Tile_Middle,
+    Tile_MiddleBottom,
+    Tile_MiddleRightTop,
+    Tile_MiddleTop,
+    Tile_Spikes,
+    Tile_SpikedBall,
+    Tile_Jumper,
+    Tile_BarrierVertical,
+    Tile_BarrierHorizontal,
+    Tile_WaterTop,
+    // Entities
+    Tile_E0,
+    Tile_E1,
+    Tile_E2,
+    Tile_E3,
+    Tile_E4,
+    Tile_E5,
+    Tile_E6,
+    Tile_E7,
+    Tile_E8,
+    Tile_E9,
+    Tile_E10,
+    Tile_E11,
+    Tile_E12,
+    Tile_E13,
+    Tile_E14,
+    Tile_E15,
+    // Portal
+    Tile_Portal0,
+    Tile_Portal1,
+    // Wormhole
+    // Tile_Wormhole0,
+    // Tile_Wormhole1,
+    // Tile_Wormhole2,
+    // Tile_Wormhole3,
+};
+typedef i8 Tile;
+
+enum EntityStatus_
+{
+    EntityStatus_Inactive, // The entity is alive and well but takes not part in any calculations.
+    EntityStatus_Active,   // The entity is currently active, takes part in the physics calculation and is possibly rendered.
+    EntityStatus_Dead,     // May it rest in peace.
+};
+typedef i8 EntityStatus;
 
 enum Material_
 {
@@ -253,21 +304,13 @@ typedef i8 Material;
 
 enum Stage_
 {
-    Stage_Sewers,   
-    Stage_Waterways,
-    Stage_Moltenlands,
+    Stage_Tutorial,
+    Stage_JumpWorld,   
+    Stage_Water,
+    Stage_Gravitas,
     Stage_Bonus,
 };
 typedef i8 Stage;
-
-enum Track_
-{
-    Track_Yellow   = 0,
-    Track_Forgot   = 1,
-    Track_Corneria = 2,
-    Track_JibJib   = 3,
-};
-typedef i8 Track;
 
 /////////////////////////////////////////////////////////////////////////
 //	Types
@@ -278,8 +321,9 @@ typedef void (*normal_routine_t)(void);
 typedef void (*stage_routine_t)(Stage);
 struct entity_t
 {
-    const void*       mesh;
-    routine_t   routine;
+    const void* mesh;
+    routine_t routine;
+    routine_t collision;
     v2l         position;
     v2i         velocity;
 	v2i         tile;
@@ -291,14 +335,19 @@ struct entity_t
     bool        isSameTile;
     bool        isGrounded;
     bool        isEnemy;
+    bool        isAttacking;
     Material    substance;
     idx_t       id;
+    idx_t       globalId;
+    // Animation
     i8          stopwatch;
+    i8          invisiblityFrames;
+    i8          data[4];
 };
 
 typedef struct player_t
 {
-    Input    buttons, joystick;
+    Input    joystick;
     Action   action;
     u16      score;
     bool     isOtherCharacterDead;
@@ -308,13 +357,61 @@ typedef struct game_t
 {
     procedure_t progress;
     void const* explosion;
+    void const* track;
     // Entities
     player_t player;
     // Game State
-    u8    ticks;
-    Track track;
     bool  isFinished;
-    i8    data[4];
+    union
+    {
+        struct 
+        {
+            v2i finTxtPos; // Position of the Game Over text.
+        };
+        i8  data[4];
+    };
 } game_t, *game;
+
+typedef struct last_sighting_t
+{
+    // v2l       position; // Last known position. Probably impossible to do without wasting a bunch of cycles by searching a "look aside" list. Though I could do this every cycles or so. But not here.
+    EntityStatus status;   // Last known state. Initially is EntityStatus_Alive.
+} last_sighting_t, * last_sighting;
+
+typedef struct level_t
+{
+    EntityType const* entities;
+    Tile       const* level;
+    v2i        const  startingTile;
+    Stage      const  adjacentStages[2];
+} level_t, *level;
+
+typedef struct world_t
+{
+    // Callbacks
+    routine_t        entityAdded;
+    stage_routine_t  stageEntered;
+    normal_routine_t playerDamage, playerChangedFluid;
+    // Entities
+    entity_t  entities[ENTITIES_ACTIVE_MAX];
+    idx_t     entityIdxs[ENTITIES_ACTIVE_MAX];
+    i8        entityCount;
+
+
+    last_sighting_t lastSeen[ENTITIES_MAX];
+    // State
+    bool gameIsOver;
+    bool tileFlags[4];
+    // Stage information
+    const Tile*    tiles;
+    const level_t* level;
+
+    u8 ticks;
+    bool freq2;
+    bool freq8_8;
+    bool freq16;
+    // Physics
+    i8 gravity;
+} world_t;
 
 #endif /* TYPES_H */

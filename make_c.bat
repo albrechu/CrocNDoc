@@ -22,7 +22,7 @@ set ENABLE_PREPROCESSING=no
 set ENABLE_C_DEBUGGING=yes
 set ENABLE_C_OPTIMIZATION=yes
 set ENABLE_ASSEMBLY_OPTIMIZATION=yes
-set C_OPTIMIZATION_LEVEL=-O2
+set C_OPTIMIZATION_LEVEL=-O3
 
 @REM ---------------------------------------------------------------------------------------------
 @REM chose emulator
