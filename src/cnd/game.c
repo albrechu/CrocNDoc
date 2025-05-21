@@ -62,13 +62,9 @@ void game_soft_reset(void)
     MEMZERO(PLAYER);
 	MEMZERO(GAME);
     Intensity_7F();
-    Vec_Music_Flag = 0;
-    Clear_Sound();
-    Stop_Sound();
     game_enter_stage(g_stage);
     plot_init();
     GAME.progress = game_update_play;
-    PLAYER.isOtherCharacterDead = true;
     // Assign the initial player state 
     // Assign Game State
     
@@ -95,8 +91,11 @@ void game_enter_stage(Stage stage)
     default:
         break;
     }
-
+    Stop_Sound();
+    Vec_Music_Flag = 0;
+    Clear_Sound();
     world_create(stage);
+    PLAYER.isOtherCharacterDead = true;
     // Install callbacks
     WORLD.entityAdded        = game_entity_added;
     WORLD.stageEntered       = game_enter_stage;
