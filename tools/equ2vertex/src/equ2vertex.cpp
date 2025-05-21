@@ -259,7 +259,6 @@ float worley(v3f uv, float freq)
 	return 1. - minDist;
 }
 
-// Fbm for Perlin noise based on iq's blog
 float perlinfbm(v3f p, float freq, int octaves)
 {
 	float G = exp2(-.85);

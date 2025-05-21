@@ -24,8 +24,11 @@ void routine_death1(entity e);
 * @brief Croc
 */
 void routine_croc_air(entity e);
+void routine_croc_gravitas_air(entity e);
 void routine_croc_water(entity e);
+void routine_croc_gravitas_water(entity e);
 void routine_croc_hit(entity e);
+void routine_croc_gravitas_hit(entity e);
 
 /**
 * @brief Doc
@@ -33,6 +36,9 @@ void routine_croc_hit(entity e);
 void routine_doc_air(entity e);
 void routine_doc_water(entity e);
 void routine_doc_glide(entity e);
+void routine_doc_gravitas_air(entity e);
+void routine_doc_gravitas_water(entity e);
+void routine_doc_gravitas_glide(entity e);
 
 /**
 * @brief Marvin-Mode

@@ -494,9 +494,9 @@ exit /B 0
 	@del ..\..\ParaJVE\project\project.bin
 	@copy .\build\bin\%PROJECT%.bin ..\..\ParaJVE\project\project.bin 1>nul || exit \b
 	@del ..\..\ParaJVE\project\project.png
-	@copy .\overlay\%PROJECT%.png ..\..\ParaJVE\project\project.png 1>nul
+	@copy .\assets\overlay\%PROJECT%.png ..\..\ParaJVE\project\project.png 1>nul
 	@del ..\..\ParaJVE\project\project.pdf
-	@copy .\manual\%PROJECT%.pdf ..\..\ParaJVE\project\project.pdf 1>nul
+	@copy .\assets\manual\%PROJECT%.pdf ..\..\ParaJVE\project\project.pdf 1>nul
 	echo running project %PROJECT% ...
 	start "%PROJECT%" /D ..\..\ParaJVE ParaJVE.exe -game="PROJECT" -config="project/configuration.xml"
 exit /B 0

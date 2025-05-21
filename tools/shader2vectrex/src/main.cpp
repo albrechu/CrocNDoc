@@ -1,3 +1,8 @@
+/**
+* This was an attempt to turn fragment shaders from https://www.shadertoy.com/ in to few lines or points 
+* to save me the annoyance of typing in animations into an array. Unfortunately, this is a very stupid idea.
+*/
+
 /////////////////////////////////////////////////////////////////////////
 //	Defines
 //
@@ -364,6 +369,7 @@ int main(int argc, const char* argv[])
             glBindBuffer(GL_UNIFORM_BUFFER, ubo);
             glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(uniforms), &uniforms);
 
+            // Do ping pong
             // Do inserted fragment shader
             {
                 glBindFramebuffer(GL_FRAMEBUFFER, ping.fbo);
@@ -689,24 +695,22 @@ void marching_squares(std::vector<rgb_t> const& pixels, int width, int height, f
 
 void simplify(std::vector<v2f> const& lines, float epsilon, std::vector<v2f>& out)
 {
-    struct hash1
+    struct hash1_t
     {
         std::size_t operator()(const v2f& p) const 
         {
             return std::hash<int>{}(std::round(p.x * 10000.0f)) ^ (std::hash<int>{}(std::round(p.y * 10000.0f)) << 1);
         }
     };
-    struct hash2 {
-        std::size_t operator()(const std::pair<v2f, v2f>& segment) const {
-            hash1 hash;
-            // Order-independent hash (segments AB and BA are the same)
-            std::size_t h1 = hash(segment.first);
-            std::size_t h2 = hash(segment.second);
-            return h1 ^ h2;
+    struct hash2_t 
+    {
+        std::size_t operator()(const std::pair<v2f, v2f>& segment) const 
+        {
+            return hash1_t{}(segment.first) ^ hash1_t {}(segment.second);
         }
     };
 
-    std::unordered_map<v2f, std::vector<v2f>, hash1> adjacency;
+    std::unordered_map<v2f, std::vector<v2f>, hash1_t> adjacency;
     line_t const* l = (line_t const*)lines.data();
     for (size_t i = 0; i < (lines.size() >> 1); ++i, ++l)
     {
@@ -715,12 +719,14 @@ void simplify(std::vector<v2f> const& lines, float epsilon, std::vector<v2f>& ou
     }
 
     std::vector<std::vector<v2f>> polylines;
-    std::unordered_set<std::pair<v2f, v2f>, hash2> visited;
+    std::unordered_set<std::pair<v2f, v2f>, hash2_t> visited;
 
-    for (auto& entry : adjacency) {
+    for (auto& entry : adjacency) 
+    {
         const v2f& start = entry.first;
 
-        for (const v2f& neighbor : entry.second) {
+        for (const v2f& neighbor : entry.second) 
+        {
             auto seg = std::make_pair(start, neighbor);
             if (visited.count(seg)) continue;
 
@@ -731,21 +737,26 @@ void simplify(std::vector<v2f> const& lines, float epsilon, std::vector<v2f>& ou
             v2f current = neighbor;
             v2f previous = start;
 
-            while (true) {
+            while (true) 
+            {
                 const auto& nexts = adjacency[current];
                 v2f next = {};
                 bool found = false;
 
-                for (const auto& candidate : nexts) {
-                    if (candidate.x == previous.x && candidate.y == previous.y) continue;
-                    if (!visited.count({ current, candidate })) {
+                for (const auto& candidate : nexts) 
+                {
+                    if (candidate.x == previous.x && candidate.y == previous.y) 
+                        continue;
+                    if (!visited.count({ current, candidate })) 
+                    {
                         next = candidate;
                         found = true;
                         break;
                     }
                 }
 
-                if (!found) break;
+                if (!found) 
+                    break;
 
                 polyline.push_back(next);
                 visited.insert({ current, next });
@@ -769,7 +780,8 @@ void simplify(std::vector<v2f> const& lines, float epsilon, std::vector<v2f>& ou
     }
 }
 
-float perpendicularDistance(v2f point, v2f lineStart, v2f lineEnd) {
+float perpendicular_distance(v2f point, v2f lineStart, v2f lineEnd) 
+{
     float dx = lineEnd.x - lineStart.x;
     float dy = lineEnd.y - lineStart.y;
     if (dx == 0 && dy == 0) return std::hypot(point.x - lineStart.x, point.y - lineStart.y);
@@ -778,13 +790,15 @@ float perpendicularDistance(v2f point, v2f lineStart, v2f lineEnd) {
     return std::hypot(point.x - projection.x, point.y - projection.y);
 }
 
-void rdp(const std::vector<v2f>& points, float epsilon, std::vector<v2f>& out) {
+void rdp(const std::vector<v2f>& points, float epsilon, std::vector<v2f>& out) 
+{
     if (points.size() < 2) return;
 
     float maxDist = 0;
     size_t index = 0;
-    for (size_t i = 1; i < points.size() - 1; ++i) {
-        float dist = perpendicularDistance(points[i], points[0], points.back());
+    for (size_t i = 1; i < points.size() - 1; ++i) 
+    {
+        float dist = perpendicular_distance(points[i], points[0], points.back());
         if (dist > maxDist) 
         {
             maxDist = dist;

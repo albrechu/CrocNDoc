@@ -1,6 +1,12 @@
+/////////////////////////////////////////////////////////////////////////
+//	Includes
+//
 #include <cnd/track.h>
 #include <vectrex.h>
 
+/////////////////////////////////////////////////////////////////////////
+//	Defines and Global Data
+//
 #define DUR(note, duration) note, duration
 #define SPV 17
 #define SPL 12
@@ -49,19 +55,19 @@
 #define CORNERIA_PAUSE2 16
 #define CORNERIA_PAUSE3 63
 
-const nibble_ampoff_table_t melodymasterSoft =
+const amplitudes_t g_amplitudes =
 {
         .amplitudes = {0xCC, 0xCC, 0xBB, 0xBB, 0xAA, 0xAA, 0x99, 0x99, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
 };
 
-const twang_table_t twangtable =
+const frequencies_t g_frequencies =
     {
         .frequencies = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}};
 
 const track_t g_yellow =
     {
-        .amplitudes = &melodymasterSoft,
-        .frequencies = &twangtable,
+        .amplitudes = &g_amplitudes,
+        .frequencies = &g_frequencies,
         .notes =
             {
                 // Measure 1 - Intro jumps
@@ -148,8 +154,8 @@ const track_t g_yellow =
 
 const track_t g_corneria =
     {
-        .amplitudes = &melodymasterSoft,
-        .frequencies = &twangtable,
+        .amplitudes = &g_amplitudes,
+        .frequencies = &g_frequencies,
         .notes =
             {
                 // 1.1
@@ -622,13 +628,13 @@ const track_t g_corneria =
 #undef SPEF
 #undef SPSF
 
-#define SPPQ 15
-#define SPPE 12
-#define SPGF 11
-#define SPHF 10
-#define SPQF 9
-#define SPEF 8
-#define SPSF 7
+#define SPPQ 13
+#define SPPE 11
+#define SPGF 12
+#define SPHF 13
+#define SPQF 11
+#define SPEF 7
+#define SPSF 5
 #define G2F(a, b) CH0 | a, DUR(b, U8(SPGF))
 #define QP(a) DUR(a, U8(SPPQ))
 #define EP(a) DUR(a, U8(SPPE))
@@ -637,8 +643,8 @@ const track_t g_corneria =
 
 const track_t g_champion =
 {
-    .amplitudes = &melodymasterSoft,
-    .frequencies = &twangtable,
+    .amplitudes = &g_amplitudes,
+    .frequencies = &g_frequencies,
     .notes =
     {
         // 1
@@ -902,8 +908,8 @@ const track_t g_champion =
 
 const track_t g_level0 =
     {
-        .amplitudes = &melodymasterSoft,
-        .frequencies = &twangtable,
+        .amplitudes = &g_amplitudes,
+        .frequencies = &g_frequencies,
         .notes =
             {
                 /*
@@ -1180,342 +1186,314 @@ const track_t g_level0 =
             },
 };
 
-#define CROCODILE_CACOPHONY_BASE 2
-
-#define CROCODILE_CACOPHONY_VERY_SHORT (CROCODILE_CACOPHONY_BASE * 2)
-#define CROCODILE_CACOPHONY_SHORT (CROCODILE_CACOPHONY_BASE * 3)
-#define CROCODILE_CACOPHONY_HALF (CROCODILE_CACOPHONY_BASE * 4)
-#define CROCODILE_CACOPHONY_SPEED (CROCODILE_CACOPHONY_BASE * 6)
-#define CROCODILE_CACOPHONY_DOT (CROCODILE_CACOPHONY_BASE * 9)
-#define CROCODILE_CACOPHONY_SPEED2 (CROCODILE_CACOPHONY_BASE * 12)
-#define CROCODILE_CACOPHONY_PAUSE2 (CROCODILE_CACOPHONY_BASE * 18)
-#define CROCODILE_CACOPHONY_PAUSE3 (CROCODILE_CACOPHONY_BASE * 24)
-#define CROCODILE_CACOPHONY_LONG (CROCODILE_CACOPHONY_BASE * 30)
+#define CROCODILE_CACOPHONY_32ND       4
+#define CROCODILE_CACOPHONY_SIXTEENTH  6
+#define CROCODILE_CACOPHONY_EIGHTH     8
+#define CROCODILE_CACOPHONY_QUARTER    12
+#define CROCODILE_CACOPHONY_DOT        18
+#define CROCODILE_CACOPHONY_PAUSE      24
+#define CROCODILE_CACOPHONY_PAUSE_LONG 36
 
 #define CC1(x, speed) x, speed
-#define CC1S(x) CC1(x, CROCODILE_CACOPHONY_SHORT)
-#define CC2S(x, y) x | CHN, CC1S(y)
-#define CC3S(x, y, z) x | CHN, CC2S(y, z)
-#define CC1H(x) CC1(x, CROCODILE_CACOPHONY_HALF)
-#define CC2H(x, y) x | CHN, CC1H(y)
-#define CC3H(x, y, z) x | CHN, CC2H(y, z)
-#define CC1N(x) CC1(x, CROCODILE_CACOPHONY_SPEED)
-#define CC2N(x, y) x | CHN, CC1H(y)
-#define CC3N(x, y, z) x | CHN, CC2H(y, z)
+#define CCT1(x) CC1(x, CROCODILE_CACOPHONY_32ND)
+#define CCT2(x, y) x | CHN, CCT1(y)
+#define CCS1(x) CC1(x, CROCODILE_CACOPHONY_SIXTEENTH)
+#define CCS2(x, y) x | CHN, CCS1(y)
+#define CCS3(x, y, z) x | CHN, CCS2(y, z)
+#define CCE1(x) CC1(x, CROCODILE_CACOPHONY_EIGHTH)
+#define CCE2(x, y) x | CHN, CCE1(y)
+#define CCE3(x, y, z) x | CHN, CCE2(y, z)
+#define CCQ1(x) CC1(x, CROCODILE_CACOPHONY_QUARTER)
+#define CCQ2(x, y) x | CHN, CCQ1(y)
+#define CCQ3(x, y, z) x | CHN, CCQ2(y, z)
+#define CCH1(x) CC1(x, CROCODILE_CACOPHONY_PAUSE)
+#define CCH2(x, y) x | CHN, CCH1(y)
+#define CCH3(x, y, z) x | CHN, CCH2(y, z)
+#define CCPD1(x) CC1(x, CROCODILE_CACOPHONY_DOT)
+#define CCP1(x) CC1(x, CROCODILE_CACOPHONY_PAUSE_LONG)
+#define CCP2(x, y) x | CHN, CCP1(y)
+#define CCP3(x, y, z) x | CHN, CCP2(y, z)
 
 const track_t g_crocodileCacophony =
     {
-        .amplitudes = &melodymasterSoft,
-        .frequencies = &twangtable,
+        .amplitudes = &g_amplitudes,
+        .frequencies = &g_frequencies,
         .notes =
             {
-                CC1S(D4),
-                CC1S(D4),
-                CC1N(D4),
-                CC1N(D4),
-                CC1S(D4),
-                CC1S(D4),
-                CHN + D4, CHN + A5, D6, CROCODILE_CACOPHONY_SPEED,
-                CHN + D4, CHN + AS5, DS6, CROCODILE_CACOPHONY_SPEED,
-                CHN + D4, CHN + B6, DS6, CROCODILE_CACOPHONY_SPEED,
+                CCS1(D4),
+                CCS1(D4),
+                CCQ1(D4),
+                CCQ1(D4),
+                CCS1(D4),
+                CCS1(D4),
+                CCQ3(D4, A5, D6),
+                CCQ3(D4, AS5, DS6),
+                CCQ3(D4, B6, DS6),
+                
+                CCS1(D4),
+                CCS1(D4),
+                CCQ1(D4),
+                CCQ1(D4),
+                CCS1(D4),
+                CCS1(D4),
+                CCQ3(D4, C6, E6),
+                CCQ3(D4, CS6, F6),
+                CCS3(D4, D6, F6),
+                CCS2(D6, FS6),
 
-                CC1S(D4),
-                CC1S(D4),
-                CC1N(D4),
-                CC1N(D4),
-                CC1S(D4),
-                CC1S(D4),
-                CHN + D4, CHN + C6, E6, CROCODILE_CACOPHONY_SPEED,
-                CHN + D4, CHN + CS6, F6, CROCODILE_CACOPHONY_SPEED,
-                CHN + D4, CHN + D6, F6, CROCODILE_CACOPHONY_SHORT,
-                CHN + D6, FS6, CROCODILE_CACOPHONY_SHORT,
+                CCS1(D4),
+                CCS1(D4),
+                CCQ1(D4),
+                CCQ1(D4),
+                CCS1(D4),
+                CCS1(D4),
 
-                CC1S(D4),
-                CC1S(D4),
-                CC1N(D4),
-                CC1N(D4),
-                CC1S(D4),
-                CC1S(D4),
-                CHN + D4, CHN + B5, E6, CROCODILE_CACOPHONY_SPEED,
-                CHN + D4, CHN + C6, G6, CROCODILE_CACOPHONY_SPEED,
-                CHN + D4, CHN + E6, GS6, CROCODILE_CACOPHONY_SPEED,
+                CCQ3(D4, B5, E6),
+                CCQ3(D4, C6, G6),
+                CCQ3(D4, E6, GS6),
 
-                CC1S(D4),
-                CC1S(D4),
-                CC1N(D4),
-                CC1N(D4),
-                CC1S(D4),
-                CC1S(D4),
-                CHN + D4, CHN + D6, FS6, CROCODILE_CACOPHONY_SPEED,
-                CHN + D4, CHN + DS6, G6, CROCODILE_CACOPHONY_SPEED,
-                CHN + D4, CHN + E6, G6, CROCODILE_CACOPHONY_SHORT,
-                CHN + E6, GS6, CROCODILE_CACOPHONY_SHORT,
+                CCS1(D4),
+                CCS1(D4),
+                CCQ1(D4),
+                CCQ1(D4),
+                CCS1(D4),
+                CCS1(D4),
+                CCQ3(D4, D6, FS6),
+                CCQ3(D4, DS6, G6),
+                CCS3(D4, E6, G6),
+                CCS2(E6, GS6),
 
-                CHN + G3, CHN + G6, AS6, CROCODILE_CACOPHONY_SHORT,
-                CHN + G6, AS6, CROCODILE_CACOPHONY_SHORT,
-                CHN + G6, AS6, CROCODILE_CACOPHONY_SHORT,
-                G3, CROCODILE_CACOPHONY_SHORT,
-                CHN + G3, CHN + G6, AS6, CROCODILE_CACOPHONY_SPEED,
-                CHN + G4, CHN + G6, AS6, CROCODILE_CACOPHONY_SHORT,
-                CHN + G6, AS6, CROCODILE_CACOPHONY_SHORT,
-                CHN + G6, AS6, CROCODILE_CACOPHONY_SHORT,
-                CHN + G3, CHN + G6, AS6, CROCODILE_CACOPHONY_SHORT,
-                G3, CROCODILE_CACOPHONY_SHORT,
-                CHN + G6, AS6, CROCODILE_CACOPHONY_SHORT,
-                CHN + G4, CHN + G6, AS6, CROCODILE_CACOPHONY_SPEED,
-                CHN + G3, CHN + G6, AS6, CROCODILE_CACOPHONY_SHORT,
-                CHN + G6, AS6, CROCODILE_CACOPHONY_SHORT,
-                CHN + G3, CHN + G6, AS6, CROCODILE_CACOPHONY_SHORT,
-                CHN + G6, AS6, CROCODILE_CACOPHONY_SHORT,
-                CHN + G6, AS6, CROCODILE_CACOPHONY_SHORT,
-                G3, CROCODILE_CACOPHONY_SHORT,
-                CHN + G4, CHN + G6, AS6, CROCODILE_CACOPHONY_SPEED,
-                CHN + G3, CHN + G6, AS6, CROCODILE_CACOPHONY_SHORT,
-                CHN + G6, AS6, CROCODILE_CACOPHONY_SHORT,
-                CHN + G6, AS6, CROCODILE_CACOPHONY_SHORT,
-                CHN + G3, CHN + G6, AS6, CROCODILE_CACOPHONY_SHORT,
-                G3, CROCODILE_CACOPHONY_SHORT,
-                CHN + G6, AS6, CROCODILE_CACOPHONY_SHORT,
-                CHN + G4, CHN + G6, AS6, CROCODILE_CACOPHONY_SPEED,
-                CHN + G3, CHN + G6, AS6, CROCODILE_CACOPHONY_SHORT,
-                CHN + G6, AS6, CROCODILE_CACOPHONY_SHORT,
+                CCS3(G3, G6, AS6),
+                CCS2(G6, AS6),
+                CCS2(G6, AS6),
+                CCS1(G3),
+                CCS3(G3, G6, AS6),
+                CCS3(G4, G6, AS6),
+                
+                CCS2(G6, AS6),
+                CCS2(G6, AS6),
+                CCS3(G3, G6, AS6),
+                CCS1(G3),
+                CCS2(G6, AS6),
+                CCQ3(G4, G6, AS6),
+                CCS3(G3, G6, AS6),
+                CCS2(G6, AS6),
+                CCS3(G3, G6, AS6), 
+                CCS2(G6, AS6), 
+                CCS2(G6, AS6), 
+                CCS1(G3),
+                CCQ3(G4, G6, AS6),
+                CCS3(G3, G6, AS6),
+                CCS2(G6, AS6),
+                CCS2(G6, AS6),
+                CCS3(G3, G6, AS6),
+                CCS1(G3), 
+                CCS2(G6, AS6), 
+                CCQ3(G4, G6, AS6),
+                CCS3(G3, G6, AS6), 
+                CCS2(G6, AS6),
 
-                CHN + G3, CHN + FS6, A6, CROCODILE_CACOPHONY_SHORT,
-                CHN + FS6, A6, CROCODILE_CACOPHONY_SHORT,
-                CHN + FS6, A6, CROCODILE_CACOPHONY_SHORT,
-                G3, CROCODILE_CACOPHONY_SHORT,
-                CHN + G3, CHN + FS6, A6, CROCODILE_CACOPHONY_SPEED,
-                CHN + G4, CHN + FS6, A6, CROCODILE_CACOPHONY_SHORT,
-                CHN + FS6, A6, CROCODILE_CACOPHONY_SHORT,
-                CHN + FS6, A6, CROCODILE_CACOPHONY_SHORT,
-                CHN + G3, CHN + FS6, A6, CROCODILE_CACOPHONY_SHORT,
-                G3, CROCODILE_CACOPHONY_SHORT,
-                CHN + FS6, A6, CROCODILE_CACOPHONY_SHORT,
-                CHN + G4, CHN + FS6, A6, CROCODILE_CACOPHONY_SPEED,
-                CHN + G3, CHN + FS6, A6, CROCODILE_CACOPHONY_SHORT,
-                CHN + FS6, A6, CROCODILE_CACOPHONY_SHORT,
-                CHN + G3, CHN + FS6, A6, CROCODILE_CACOPHONY_SHORT,
-                CHN + FS6, A6, CROCODILE_CACOPHONY_SHORT,
-                CHN + FS6, A6, CROCODILE_CACOPHONY_SHORT,
-                G3, CROCODILE_CACOPHONY_SHORT,
-                CHN + G4, CHN + FS6, A6, CROCODILE_CACOPHONY_SPEED,
-                CHN + G3, CHN + FS6, A6, CROCODILE_CACOPHONY_SHORT,
-                CHN + FS6, A6, CROCODILE_CACOPHONY_SHORT,
-                CHN + FS6, A6, CROCODILE_CACOPHONY_SHORT,
-                CHN + G3, CHN + FS6, A6, CROCODILE_CACOPHONY_SHORT,
-                G3, CROCODILE_CACOPHONY_SHORT,
-                CHN + FS6, A6, CROCODILE_CACOPHONY_SHORT,
-                CHN + G4, CHN + FS6, A6, CROCODILE_CACOPHONY_SPEED,
-                CHN + G3, CHN + FS6, A6, CROCODILE_CACOPHONY_SHORT,
-                CHN + FS6, A6, CROCODILE_CACOPHONY_SHORT,
+                CCS3(G3, FS6, A6), 
+                CCS2(FS6, A6), 
+                CCS2(FS6, A6), 
+                CCS1(G3), 
+                CCQ3(G3, FS6, A6), 
+                CCS3(G4, FS6, A6), 
+                CCS2(FS6, A6), 
+                CCS2(FS6, A6), 
+                CCS3(G3, FS6, A6), 
+                CCS1(G3), 
+                CCS2(FS6, A6), 
+                CCQ3(G4, FS6, A6), 
+                CCS3(G3, FS6, A6), 
+                CCS2(FS6, A6), 
+                CCS3(G3, FS6, A6), 
+                CCS2(FS6, A6), 
+                CCS2(FS6, A6), 
+                CCS1(G3), 
+                CCQ3(G4, FS6, A6), 
+                CCS3(G3, FS6, A6), 
+                CCS2(FS6, A6), 
+                CCS2(FS6, A6), 
+                CCS3(G3, FS6, A6), 
+                CCS1(G3), 
+                CCS2(FS6, A6), 
+                CCQ3(G4, FS6, A6), 
+                CCS3(G3, FS6, A6), 
+                CCS2(FS6, A6), 
 
-                CHN + G3, CHN + DS6, AS6, CROCODILE_CACOPHONY_SHORT,
-                AS6, CROCODILE_CACOPHONY_SHORT,
-                CHN + D6, AS6, CROCODILE_CACOPHONY_SHORT,
-                G3, CROCODILE_CACOPHONY_SHORT,
-                CHN + G3, CHN + AS5, AS6, CROCODILE_CACOPHONY_SPEED,
-                CHN + G4, CHN + DS6, AS6, CROCODILE_CACOPHONY_SHORT,
-                AS6, CROCODILE_CACOPHONY_SHORT,
-                CHN + D6, AS6, CROCODILE_CACOPHONY_SHORT,
-                CHN + G3, AS6, CROCODILE_CACOPHONY_SHORT,
-                CHN + G3, AS5, CROCODILE_CACOPHONY_SHORT,
-                AS6, CROCODILE_CACOPHONY_SHORT,
-                CHN + G4, CHN + DS6, AS6, CROCODILE_CACOPHONY_SPEED,
-                CHN + G3, CHN + D6, AS6, CROCODILE_CACOPHONY_SHORT,
-                AS6, CROCODILE_CACOPHONY_SHORT,
-                CHN + G3, CHN + DS6, AS6, CROCODILE_CACOPHONY_SHORT,
-                AS6, CROCODILE_CACOPHONY_SHORT,
-                CHN + D6, AS6, CROCODILE_CACOPHONY_SHORT,
-                G3, CROCODILE_CACOPHONY_SHORT,
-                CHN + G4, CHN + AS5, AS6, CROCODILE_CACOPHONY_SPEED,
-                CHN + G3, CHN + DS6, AS6, CROCODILE_CACOPHONY_SHORT,
-                AS6, CROCODILE_CACOPHONY_SHORT,
-                CHN + D6, AS6, CROCODILE_CACOPHONY_SHORT,
-                CHN + G3, AS6, CROCODILE_CACOPHONY_SHORT,
-                CHN + G3, AS5, CROCODILE_CACOPHONY_SHORT,
-                AS6, CROCODILE_CACOPHONY_SHORT,
-                CHN + G4, CHN + F6, AS6, CROCODILE_CACOPHONY_SPEED,
-                CHN + G3, AS6, CROCODILE_CACOPHONY_SHORT,
-                CHN + D6, AS6, CROCODILE_CACOPHONY_SHORT,
+                CCS3(G3, DS6, AS6), 
+                CCS1(AS6), 
+                CCS2(D6, AS6), 
+                CCS1(G3), 
+                CCQ3(G3, AS5, AS6), 
+                CCS3(G4, DS6, AS6), 
+                CCS1(AS6), 
+                CCS2(D6, AS6), 
+                CCS2(G3, AS6), 
+                CCS2(G3, AS5), 
+                CCS1(AS6), 
+                CCQ3(G4, DS6, AS6), 
+                CCS3(G3, D6, AS6), 
+                CCS1(AS6), 
+                CCS3(G3, DS6, AS6), 
+                CCS1(AS6), 
+                CCS2(D6, AS6), 
+                CCS1(G3), 
+                CCQ3(G4, AS5, AS6), 
+                CCS3(G3, DS6, AS6), 
+                CCS1(AS6), 
+                CCS2(D6, AS6), 
+                CCS2(G3, AS6), 
+                CCS2(G3, AS5), 
+                CCS1(AS6), 
+                CCQ3(G4, F6, AS6), 
+                CCS2(G3, AS6), 
+                CCS2(D6, AS6), 
 
-                CHN + G3, CHN + DS6, A6, CROCODILE_CACOPHONY_SHORT,
-                A6, CROCODILE_CACOPHONY_SHORT,
-                CHN + D6, A6, CROCODILE_CACOPHONY_SHORT,
-                G3, CROCODILE_CACOPHONY_SHORT,
-                CHN + G3, CHN + A5, A6, CROCODILE_CACOPHONY_SPEED,
-                CHN + G4, CHN + DS6, A6, CROCODILE_CACOPHONY_SHORT,
-                A6, CROCODILE_CACOPHONY_SHORT,
-                CHN + D6, A6, CROCODILE_CACOPHONY_SHORT,
-                CHN + G3, A6, CROCODILE_CACOPHONY_SHORT,
-                CHN + G3, A5, CROCODILE_CACOPHONY_SHORT,
-                A6, CROCODILE_CACOPHONY_SHORT,
-                CHN + G4, CHN + DS6, A6, CROCODILE_CACOPHONY_SPEED,
-                CHN + G3, CHN + D6, A6, CROCODILE_CACOPHONY_SHORT,
-                A6, CROCODILE_CACOPHONY_SHORT,
-                CHN + G3, CHN + DS6, A6, CROCODILE_CACOPHONY_SHORT,
-                A6, CROCODILE_CACOPHONY_SHORT,
-                CHN + D6, A6, CROCODILE_CACOPHONY_SHORT,
-                G3, CROCODILE_CACOPHONY_SHORT,
-                CHN + G4, CHN + A5, A6, CROCODILE_CACOPHONY_SPEED,
-                CHN + G3, CHN + DS6, A6, CROCODILE_CACOPHONY_SHORT,
-                A6, CROCODILE_CACOPHONY_SHORT,
-                CHN + D6, A6, CROCODILE_CACOPHONY_SHORT,
-                CHN + G3, A6, CROCODILE_CACOPHONY_SHORT,
-                CHN + G3, A5, CROCODILE_CACOPHONY_SHORT,
-                A6, CROCODILE_CACOPHONY_SHORT,
-                CHN + G4, CHN + DS6, A6, CROCODILE_CACOPHONY_SPEED,
-                CHN + G3, CHN + D6, A6, CROCODILE_CACOPHONY_SHORT,
-                A6, CROCODILE_CACOPHONY_SHORT,
+                CCS3(G3, DS6, A6), 
+                CCS1(A6), 
+                CCS2(D6, A6), 
+                CCS1(G3), 
+                CCQ3(G3, A5, A6), 
+                CCS3(G4, DS6, A6), 
+                CCS1(A6), 
+                CCS2(D6, A6), 
+                CCS2(G3, A6), 
+                CCS2(G3, A5), 
+                CCS1(A6), 
+                CCQ3(G4, DS6, A6), 
+                CCS3(G3, D6, A6), 
+                CCS1(A6), 
+                CCS3(G3, DS6, A6), 
+                CCS1(A6), 
+                CCS2(D6, A6), 
+                CCS1(G3), 
+                CCQ3(G4, A5, A6), 
+                CCS3(G3, DS6, A6), 
+                CCS1(A6), 
+                CCS2(D6, A6), 
+                CCS2(G3, A6), 
+                CCS2(G3, A5), 
+                CCS1(A6), 
+                CCQ3(G4, DS6, A6), 
+                CCS3(G3, D6, A6), 
+                CCS1(A6), 
 
-                CC1S(G3),
-                CC1S(G3),
-                CC1S(G3),
-                CC1S(G3),
-                B3, CROCODILE_CACOPHONY_SPEED,
-                G3, CROCODILE_CACOPHONY_SPEED2,
-                CC1S(G3),
-                CC1S(G3),
-                B3, CROCODILE_CACOPHONY_SPEED2,
-                CC1S(G3),
-                CC1S(G3),
-                CC1S(G3),
-                CC1S(G3),
-                B3, CROCODILE_CACOPHONY_SPEED,
-                G3, CROCODILE_CACOPHONY_SPEED2,
-                CC1S(G3),
-                CC1S(G3),
-                FS3, CROCODILE_CACOPHONY_SPEED2,
-                CC1S(G3),
-                CC1S(G3),
-                CC1S(G3),
-                CC1S(G3),
-                B3, CROCODILE_CACOPHONY_SPEED,
-                G3, CROCODILE_CACOPHONY_SPEED2,
-                CC1S(G3),
-                CC1S(G3),
-                B3, CROCODILE_CACOPHONY_SPEED2,
-                CC1S(G3),
-                CC1S(G3),
-                CC1S(G3),
-                CC1S(G3),
-                B3, CROCODILE_CACOPHONY_SPEED,
-                G3, CROCODILE_CACOPHONY_SPEED2,
-                CC1S(G3),
-                CC1S(G3),
-                A3, CROCODILE_CACOPHONY_SPEED2,
+                CCS1(G3),
+                CCS1(G3),
+                CCS1(G3),
+                CCS1(G3),
+                CCQ1(B3), 
+                CCH1(G3), 
+                CCS1(G3),
+                CCS1(G3),
+                CCH1(B3),
+                CCS1(G3),
+                CCS1(G3),
+                CCS1(G3),
+                CCS1(G3),
+                CCQ1(B3),
+                CCH1(G3),
+                CCS1(G3),
+                CCS1(G3),
+                CCH1(FS3),
+                CCS1(G3),
+                CCS1(G3),
+                CCS1(G3),
+                CCS1(G3),
+                CCQ1(B3), 
+                CCH1(G3),
+                CCS1(G3),
+                CCS1(G3),
+                CCH1(B3), 
+                CCS1(G3),
+                CCS1(G3),
+                CCS1(G3),
+                CCS1(G3),
+                CCQ1(B3), 
+                CCH1(G3), 
+                CCS1(G3),
+                CCS1(G3),
+                CCH1(A3), 
 
-                CHN + D3, CHN + D5, A5, CROCODILE_CACOPHONY_SPEED,
-                CHN + D5, A5, CROCODILE_CACOPHONY_SHORT,
-                D3, CROCODILE_CACOPHONY_HALF,
-                F3, CROCODILE_CACOPHONY_SPEED,
-                CHN + G3, CHN + D5, A5, CROCODILE_CACOPHONY_SPEED,
-                CHN + A3, CHN + D5, A5, CROCODILE_CACOPHONY_PAUSE2,
-                CHN + F3, CHN + D5, A5, CROCODILE_CACOPHONY_SPEED,
-                CHN + G3, CHN + CS5, A5, CROCODILE_CACOPHONY_SPEED,
-                CHN + CS5, A5, CROCODILE_CACOPHONY_VERY_SHORT,
-                G3, CROCODILE_CACOPHONY_HALF,
-                F3, CROCODILE_CACOPHONY_SPEED,
-                CHN + G3, CHN + CS5, A5, CROCODILE_CACOPHONY_SPEED,
-                CHN + A3, CHN + D5, A5, CROCODILE_CACOPHONY_SHORT,
-                CHN + D5, A5, CROCODILE_CACOPHONY_SHORT,
-                CHN + F3, CHN + D5, A5, CROCODILE_CACOPHONY_SPEED,
-                CHN + D3, CHN + D5, A5, CROCODILE_CACOPHONY_SPEED2,
+                CCQ3(D3, D5, A5),
+                CCS2(D5, A5),
+                CCE1(D3),
+                CCQ1(F3),
+                CCQ3(G3, D5, A5), 
+                CCP3(A3, D5, A5),
+                CCQ3(F3, D5, A5), 
+                CCQ3(G3, CS5, A5),
+                CCT2(CS5, A5), 
+                CCE1(G3), 
+                CCQ1(F3), 
+                CCQ3(G3, CS5, A5), 
+                CCS3(A3, D5, A5),
+                CCS2(D5, A5), 
+                CCQ3(F3, D5, A5), 
+                CCH3(D3, D5, A5), 
 
-                CHN + D3, CHN + D5, A5, CROCODILE_CACOPHONY_SPEED,
-                CHN + D5, A5, CROCODILE_CACOPHONY_SHORT,
-                D3, CROCODILE_CACOPHONY_HALF,
-                F3, CROCODILE_CACOPHONY_SPEED,
-                CHN + G3, CHN + D5, A5, CROCODILE_CACOPHONY_SPEED,
-                CHN + A3, CHN + D5, A5, CROCODILE_CACOPHONY_PAUSE2,
-                CHN + F3, CHN + D5, A5, CROCODILE_CACOPHONY_SPEED,
-                CHN + G3, CHN + CS5, A5, CROCODILE_CACOPHONY_SPEED,
-                CHN + CS5, A5, CROCODILE_CACOPHONY_VERY_SHORT,
-                G3, CROCODILE_CACOPHONY_HALF,
-                F3, CROCODILE_CACOPHONY_SPEED,
-                CHN + E3, CHN + CS5, A5, CROCODILE_CACOPHONY_SPEED,
-                CHN + D3, CHN + D5, A5, CROCODILE_CACOPHONY_SPEED,
+                CCQ3(D3, D5, A5), 
+                CCS2(D5, A5),
+                CCE1(D3),
+                CCQ1(F3), 
+                CCQ3(G3, D5, A5),
+                CCP3(A3, D5, A5),
+                CCQ3(F3, D5, A5), 
+                CCQ3(G3, CS5, A5), 
+                CCT2(CS5, A5),
+                CCE1(G3),
+                CCQ1(F3), 
+                CCQ3(E3, CS5, A5), 
+                CCQ3(D3, D5, A5), 
 
-                G3, CROCODILE_CACOPHONY_SPEED,
-                CHN + D4, D6, CROCODILE_CACOPHONY_SPEED,
-                FS4, CROCODILE_CACOPHONY_SPEED,
-                CHN + D4, D6, CROCODILE_CACOPHONY_SPEED,
-                CHN + G3, D6, CROCODILE_CACOPHONY_PAUSE2,
-                DS4, CROCODILE_CACOPHONY_SHORT,
-                FS4, CROCODILE_CACOPHONY_SPEED,
-                FS4, CROCODILE_CACOPHONY_SPEED,
+                CCQ1(G3), 
+                CCQ2(D4, D6), 
+                CCQ1(FS4), 
+                CCQ2(D4, D6), 
+                CCP2(G3, D6),
+                CCS1(DS4), 
+                CCQ1(FS4), 
+                CCQ1(FS4), 
 
-                CHN + DS4, C6, CROCODILE_CACOPHONY_SHORT,
-                AS5, CROCODILE_CACOPHONY_SHORT,
-                CHN + G3, A5, CROCODILE_CACOPHONY_SPEED,
-                CS4, CROCODILE_CACOPHONY_SPEED,
-                CHN + FS4, AS5, CROCODILE_CACOPHONY_SPEED,
-                CHN + CS4, A5, CROCODILE_CACOPHONY_SPEED,
-                CHN + G3, AS5, CROCODILE_CACOPHONY_SHORT,
-                CC1S(D4),
-                CHN + FS4, A5, CROCODILE_CACOPHONY_SPEED,
-                CHN + FS4, G5, CROCODILE_CACOPHONY_SPEED2,
+                CCS2(DS4, C6),
+                CCS1(AS5), 
+                CCQ2(G3, A5), 
+                CCQ1(CS4), 
+                CCQ2(FS4, AS5), 
+                CCQ2(CS4, A5), 
+                CCS2(G3, AS5), 
+                CCS1(D4),
+                CCQ2(FS4, A5),
+                CCH2(FS4, G5),
 
-                D6, CROCODILE_CACOPHONY_SPEED2,
-                D6, CROCODILE_CACOPHONY_SPEED,
-                D6, CROCODILE_CACOPHONY_PAUSE2,
-                C6, CROCODILE_CACOPHONY_SHORT,
-                AS5, CROCODILE_CACOPHONY_SHORT,
-                A5, CROCODILE_CACOPHONY_SPEED,
-                A5, CROCODILE_CACOPHONY_SHORT,
-                AS5, CROCODILE_CACOPHONY_SPEED,
-                A5, CROCODILE_CACOPHONY_SPEED2,
-                C6, CROCODILE_CACOPHONY_SPEED,
-                AS5, CROCODILE_CACOPHONY_SPEED,
-                A5, CROCODILE_CACOPHONY_SPEED,
-                A5, CROCODILE_CACOPHONY_SHORT,
-                AS5, CROCODILE_CACOPHONY_SPEED,
-                C6, CROCODILE_CACOPHONY_DOT,
-                A5, CROCODILE_CACOPHONY_SHORT,
-                AS5, CROCODILE_CACOPHONY_SHORT,
-                D6, CROCODILE_CACOPHONY_SPEED2 | Note_End,
-                /*
-                        0x80 + D3,	0x80 + D5,  A5, CROCODILE_CACOPHONY_SPEED,
-                                                        0x80 + D5,  A5, CROCODILE_CACOPHONY_SHORT,
-                               D3,					 								CROCODILE_CACOPHONY_HALF,
-                               F3,					 								CROCODILE_CACOPHONY_SPEED,
-                        0x80 + G3,	0x80 + D5,  A5, CROCODILE_CACOPHONY_SPEED,
-                      0x80 + A3,	0x80 + D5,  A5, CROCODILE_CACOPHONY_SHORT,
-                                                        0x80 + D5,  A5, CROCODILE_CACOPHONY_SHORT,
-                                                        0x80 + D5,  A5, CROCODILE_CACOPHONY_DOT,
-                        0x80 + F3,	0x80 + D5,  A5, CROCODILE_CACOPHONY_SPEED,
-                        0x80 + G3,	0x80 + CS5, A5, CROCODILE_CACOPHONY_SPEED,
-                                                        0x80 + CS5, A5,	CROCODILE_CACOPHONY_VERY_SHORT,
-                                     G3,									        CROCODILE_CACOPHONY_HALF,
-                                     F3,									        CROCODILE_CACOPHONY_SPEED,
-                      0x80 + G3,	0x80 + CS5, A5, CROCODILE_CACOPHONY_SPEED,
-                        0x80 + A3,  0x80 + D5,  A5, CROCODILE_CACOPHONY_SHORT,
-                                                        0x80 + D5,  A5, CROCODILE_CACOPHONY_SHORT,
-                        0x80 + F3,	0x80 + D5,  A5, CROCODILE_CACOPHONY_SPEED,
-                        0x80 + D3,	0x80 + D5,  A5,	CROCODILE_CACOPHONY_SPEED,
-
-
-                        D3, CROCODILE_CACOPHONY_DOT,
-                        D3, CROCODILE_CACOPHONY_HALF,
-                        F3, CROCODILE_CACOPHONY_SPEED,
-                        G3, CROCODILE_CACOPHONY_DOT,
-                        A3, CROCODILE_CACOPHONY_LONG,
-                        F3, CROCODILE_CACOPHONY_SPEED,
-                        G3, CROCODILE_CACOPHONY_DOT,
-                        G3, CROCODILE_CACOPHONY_HALF,
-                        F3, CROCODILE_CACOPHONY_SPEED,
-                        G3, CROCODILE_CACOPHONY_SPEED,
-                        A3, CROCODILE_CACOPHONY_SPEED,
-                        F3, CROCODILE_CACOPHONY_SPEED,
-                        D3,
-                        */
-                // 1 | Note_End
+                CCH1(D6),
+                CCQ1(D6),
+                CCP1(D6), 
+                CCS1(C6), 
+                CCS1(AS5), 
+                CCQ1(A5), 
+                CCS1(A5),
+                CCQ1(AS5),
+                CCH1(A5),
+                CCQ1(C6), 
+                CCQ1(AS5),
+                CCQ1(A5),
+                CCS1(A5), 
+                CCQ1(AS5),
+                CCPD1(C6),
+                CCS1(A5), 
+                CCS1(AS5), 
+                CCH1(D6) | Note_End,
+                
             },
 };
 
 const track_t g_jibjig =
     {
-        .amplitudes = &melodymasterSoft,
-        .frequencies = &twangtable,
+        .amplitudes = &g_amplitudes,
+        .frequencies = &g_frequencies,
         .notes =
             {
                 S(A5), S(B5), Q(C5), E(A5), Q(C5), E(A5), E(D5), E(C5), E(B5), Q(C5), E(A5), E(D5), E(C5), E(B5), Q(C5), E(A5),
@@ -1705,7 +1683,7 @@ const explosion_t g_monsterPeng =
 
 const track_t musicOff =
 {
-    .amplitudes = (nibble_ampoff_table_t const*)&Vec_ADSR_FADE4,
-    .frequencies = (twang_table_t const*)&Vec_TWANG_VIBEHL,
+    .amplitudes = (amplitudes_t const*)&Vec_ADSR_FADE4,
+    .frequencies = (frequencies_t const*)&Vec_TWANG_VIBEHL,
     .notes = {128, 128, 0, 128}
 };

@@ -1,9 +1,15 @@
+/////////////////////////////////////////////////////////////////////////
+//	Includes
+//
 #include <cnd/world.h>
 #include <cnd/entities.h>
 #include <cnd/game.h>
 #include <cnd/globals.h>
 #include <cnd/xutils.h>
 
+/////////////////////////////////////////////////////////////////////////
+//	Functions
+//
 void routine_player_grab(void)
 {
     for (idx_t pi = 1; pi < WORLD.entityCount; ++pi)

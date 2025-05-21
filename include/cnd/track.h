@@ -70,15 +70,15 @@ enum Note_
 };
 typedef u8 Note;
 
-typedef struct nibble_ampoff_table_t
+typedef struct amplitudes_t
 {
     u8 amplitudes[16];
-} nibble_ampoff_table_t, *nibble_ampoff_table;
+} amplitudes_t, *amplitudes;
 
-typedef struct twang_table_t
+typedef struct frequencies_t
 {
     u8 frequencies[8];
-} twang_table_t, *twang_table;
+} frequencies_t, *frequencies;
 
 typedef struct explosion_t
 {
@@ -90,8 +90,8 @@ typedef struct explosion_t
 
 typedef struct track_t
 {
-    nibble_ampoff_table_t const* amplitudes;
-    twang_table_t const*         frequencies;
+    amplitudes_t const* amplitudes;
+    frequencies_t const*         frequencies;
     Note notes[];
 } track_t, *track;
 

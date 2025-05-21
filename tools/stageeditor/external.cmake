@@ -35,7 +35,6 @@ FetchContent_MakeAvailable(json glfw imgui glm)
 ## Add imgui
 add_library(imgui STATIC 
 	# Core
-	"${imgui_SOURCE_DIR}/imconfig.h"
 	"${imgui_SOURCE_DIR}/imgui_internal.h"
 	"${imgui_SOURCE_DIR}/imgui_draw.cpp"
 	"${imgui_SOURCE_DIR}/imgui_tables.cpp"
@@ -50,6 +49,7 @@ add_library(imgui STATIC
 )
 target_include_directories(imgui PUBLIC ${imgui_SOURCE_DIR})
 target_link_libraries(imgui PUBLIC glfw)
+target_compile_definitions(imgui PUBLIC IMGUI_USE_WCHAR32)
 
 ## Add glad
 add_library(glad INTERFACE )

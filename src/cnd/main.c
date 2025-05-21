@@ -57,7 +57,7 @@ soft_reset:
         Explosion_Snd((void* const)GAME.explosion);
         Wait_Recal(); // Synchronize to frame
         Do_Sound();
-
+		DP_to_D0();
         /**
         * Read Input
         */

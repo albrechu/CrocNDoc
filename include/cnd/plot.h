@@ -38,8 +38,10 @@
 //
 enum Plot_
 {
-    Plot_None,
-    Plot_WakeUp,
+    Plot_Tutorial,
+    Plot_JumpWorld,
+    Plot_Water,
+    Plot_Gravity,
 };
 typedef u8 Plot;
 typedef u8 PlotPoint;
@@ -69,6 +71,6 @@ extern plot_t g_plot;
 //	Functions
 //
 void plot_set_plot(const Plot plot);
-void plot_typewriter_next(const u8 ticks);
+void plot_typewriter_next(void);
 bool plot_skip(void);
 void plot_init(void);

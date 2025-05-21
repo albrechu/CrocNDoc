@@ -1,4 +1,8 @@
-﻿/////////////////////////////////////////////////////////////////////////
+﻿/**
+* Bugs Bugs everywhere. This is just a map editor I have hacked down in two days, don't expect something fancy. 
+*/
+
+/////////////////////////////////////////////////////////////////////////
 //	Defines
 //
 #define SHADER_VERSION "#version 450\n"
@@ -21,6 +25,16 @@
 #define TILE_HEIGHT       I8(1 << TILE_SCALE_BITS)
 #define DEG2RAD(x) (x * 0.017453293)
 
+#define SYMBOL_CLEF_G       "\U0001D11E"
+#define SYMBOL_CLEF_F       "\U0001D122"
+#define SYMBOL_FULL         "\U0001D15D"
+#define SYMBOL_HALF         "\U0001D15E"
+#define SYMBOL_QUARTER      "\U0001D15F"
+#define SYMBOL_EIGHTH       "\U0001D160"
+#define SYMBOL_SIXTEENTH    "\U0001D161"
+#define SYMBOL_REPEAT_LEFT  "\U0001D106"
+#define SYMBOL_REPEAT_RIGHT "\U0001D107"
+
 #define IM_VEC2_CLASS_EXTRA \
     constexpr ImVec2(glm::vec2& f) : x(f.x), y(f.y) {} \
     operator glm::vec2() const { return glm::vec2(x, y); }
@@ -33,6 +47,7 @@
 //
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <imgui.h>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
 #define GLAD_GL_IMPLEMENTATION
@@ -140,6 +155,13 @@ enum Tile_
 	// Portal
 	Tile_Portal0,
 	Tile_Portal1,
+	Tile_GravitasUp,
+	Tile_SpikesDown,
+	Tile_Warning,
+	Tile_NA,
+	Tile_GravitasDown,
+	// <Add New Tiles Here>
+	Tile_Max,
 	// Wormhole
 	// Tile_Wormhole0,
 	// Tile_Wormhole1,
@@ -195,6 +217,11 @@ const char* tileStrings[] =
 	"E15",
 	"Portal0",
 	"Portal1",
+	"GravitasUp",
+	"SpikesDown",
+	"Warning",
+	"NA",
+	"GravitasDown",
 	/*"Tile_Wormhole0",
 	"Tile_Wormhole1",
 	"Tile_Wormhole2",
@@ -208,6 +235,106 @@ struct txt_t
 	int tick;
 };
 
+typedef uint8_t u8;
+enum Note_
+{
+	G2 = 0x00U, GS2 = 0x01U, AB2 = 0x01U,
+	A2 = 0x02U, AS2 = 0x03U, BB2 = 0x03U,
+	BH = 0x04U,
+	C3 = 0x05U, CS3 = 0x06U, DB3 = 0x06U,
+	D3 = 0x07U, DS3 = 0x08U, EB3 = 0x08U,
+	E3 = 0x09U, ES3 = 0x0AU, FB3 = 0x0AU,
+	F3 = 0x0AU, FS3 = 0x0BU, GB3 = 0x0BU,
+	G3 = 0x0CU, GS3 = 0x0DU, AB3 = 0x0DU,
+	A3 = 0x0EU, AS3 = 0x0FU, BB3 = 0x0FU,
+	B3 = 0x10U, BS3 = 0x11U,
+	C4 = 0x11U, CS4 = 0x12U, DB4 = 0x12U,
+	D4 = 0x13U, DS4 = 0x14U, EB4 = 0x14U,
+	E4 = 0x15U, ES4 = 0x16U,
+	F4 = 0x16U, FS4 = 0x17U, GB4 = 0x17U,
+	G4 = 0x18U, GS4 = 0x19U, AB4 = 0x19U,
+	A4 = 0x1AU, AS4 = 0x1BU, BB4 = 0x1BU,
+	B4 = 0x1CU, BS4 = 0x1DU,
+	C5 = 0x1DU, CS5 = 0x1EU, DB5 = 0x1EU,
+	D5 = 0x1FU, DS5 = 0x20U, EB5 = 0x20U,
+	E5 = 0x21U,
+	F5 = 0x22U, FS5 = 0x23U, GB5 = 0x23U,
+	G5 = 0x24U, GS5 = 0x25U, AB5 = 0x25U,
+	A5 = 0x26U, AS5 = 0x27U, BB5 = 0x27U,
+	B5 = 0x28U, BS5 = 0x29U, CB6 = 0x28U,
+	C6 = 0x29U, CS6 = 0x2AU, DB6 = 0x2AU,
+	D6 = 0x2BU, DS6 = 0x2CU, EB6 = 0x2CU,
+	E6 = 0x2DU, ES6 = 0x2EU,
+	F6 = 0x2EU, FS6 = 0x2FU, GB6 = 0x2FU,
+	G6 = 0x30U, GS6 = 0x31U, AB6 = 0x31U,
+	A6 = 0x32U, AS6 = 0x33U, BB6 = 0x33U,
+	B6 = 0x34U, BS6 = 0x35U,
+	C7 = 0x35U, CS7 = 0x36U, DB7 = 0x36U,
+	D7 = 0x37U, DS7 = 0x38U, EB7 = 0x38U,
+	E7 = 0x39U,
+	F7 = 0x3AU, FS7 = 0x3BU, GB7 = 0x3BU,
+	G7 = 0x3CU, GS7 = 0x3DU, AB7 = 0x3DU,
+	A7 = 0x3EU, AS7 = 0x3FU, BB7 = 0x3FU,
+	Note_End = 0x80U, CH0 = 0x80U, CH1 = 0x80U, CHN = 0x80U
+};
+typedef u8 Note;
+
+enum Unit_
+{
+	Unit_Full,
+	Unit_Half,
+	Unit_Quarter,
+	Unit_Eighth,
+	Unit_Sixteenth,
+
+	Unit_DottedHalf,
+	Unit_DottedQuarter,
+	Unit_DottedEighth,
+	Unit_DottedSixteenth,
+};
+typedef int Unit;
+
+struct grand_note_t
+{
+	Unit clefG;
+	Unit clefF;
+};
+
+struct measure_t
+{
+	std::vector<grand_note_t> grandStaff;
+};
+
+struct section_t
+{
+	std::vector<measure_t> measures{4};
+	int  beats = 4;
+	Unit unit  = Unit_Quarter;
+};
+
+struct music_sheet_t
+{
+	char trackName[50]{};
+	std::vector<section_t> sections{1};
+};
+
+typedef struct nibble_ampoff_table_t
+{
+	u8 amplitudes[16];
+} nibble_ampoff_table_t, * nibble_ampoff_table;
+
+typedef struct twang_table_t
+{
+	u8 frequencies[8];
+} twang_table_t, * twang_table;
+
+typedef struct track_t
+{
+	nibble_ampoff_table_t const* amplitudes;
+	twang_table_t const* frequencies;
+	Note notes[];
+} track_t, * track;
+
 struct editor_t
 {
 	std::vector<line_t>     lines;
@@ -215,13 +342,18 @@ struct editor_t
 	char spriteName[50]{};
 	char stageName[50]{};
 	int selectedPoint = -1;
+	ImFont* font;
+	music_sheet_t musicSheet;
 	// UI
 	f32 splitterWidth = 6.f;
 	f32 stageSplitRatio = 0.75;
 	f32 spriteSplitRatio = 0.75;
+	f32 trackSplitRatio = 0.75;
 	bool spriteFirstIsMov = true;
 	f32 spriteRotation = 0.0f;
 	int draggedSpritePoint = -1;
+	int beats   = 4; // Beats per measure
+	int unitBit = 2; // Unit of a beat in measure
 	// Camera
 	f32       zoom = 7.5f;
 	glm::vec2 position = glm::vec2(0.5);
@@ -234,7 +366,7 @@ struct editor_t
 	GLuint   ubo = 0;
 	object_t lineList;
 	object_t grid;
-	frame_t  target;
+	frame_t  stageTarget;
 	object_t atlas;
 	glm::ivec2 atlasDim = {1000, 1000};
 	std::vector<stbtt_packedchar> atlasChars;
@@ -331,7 +463,7 @@ int main()
 			glBindBuffer(GL_UNIFORM_BUFFER, 0);
 		}
 		// Create texture to render to 
-		target_texture_recreate(1280, 720, e.target);
+		target_texture_recreate(1280, 720, e.stageTarget);
 
 		// Create line list buffers
 		{
@@ -443,7 +575,7 @@ void window_draw()
 		glfwGetWindowSize(glfwGetCurrentContext(), &width, &height);
 		if (width ^ ((int)e.uniforms.viewport.x) || height ^ ((int)e.uniforms.viewport.y))
 		{
-			target_texture_recreate(((int)e.uniforms.viewport.x), ((int)e.uniforms.viewport.y), e.target);
+			target_texture_recreate(((int)e.uniforms.viewport.x), ((int)e.uniforms.viewport.y), e.stageTarget);
 			e.uniforms.viewport = glm::vec2(width, height);
 		}
 	}
@@ -475,48 +607,6 @@ void window_draw()
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
-
-	// Draw scene
-	glBindFramebuffer(GL_FRAMEBUFFER, e.target.fbo);
-	{
-		glViewport(0, 0, e.uniforms.viewport.x, e.uniforms.viewport.y);
-		glClearColor(0.21, 0.25, 0.27, 1.00);
-		glClear(GL_COLOR_BUFFER_BIT);
-		// Draw grid
-		glUseProgram(e.grid.program);
-		glBindVertexArray(e.grid.vao);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, e.grid.tex);
-		glDrawArraysInstanced(GL_TRIANGLES, 0, 6, e.uniforms.gridWidth * e.uniforms.gridHeight);
-		glBindTexture(GL_TEXTURE_1D, 0);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-		glUseProgram(0);
-		glBindVertexArray(0);
-		// Draw line list
-		glUseProgram(e.lineList.program);
-		glBindVertexArray(e.lineList.vao);
-		glDrawArrays(GL_LINES, 0, e.lines.size() * 2);
-		glUseProgram(0);
-		glBindVertexArray(0);
-		// Draw txts
-		glUseProgram(e.atlas.program);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, e.atlas.tex);
-		for (auto const& kv : e.txts)
-		{
-			if (kv.second.object.vao)
-			{
-				glBindVertexArray(kv.second.object.vao);
-				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, kv.second.object.ebo);
-				glDrawElements(GL_TRIANGLES, kv.second.txt.size() * 6, GL_UNSIGNED_INT, nullptr);
-				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-				glBindVertexArray(0);
-			}
-		}
-		glBindTexture(GL_TEXTURE_2D, 0);
-		glUseProgram(0);
-	}
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	// UI
 	if (ImGui::IsKeyPressed(ImGuiKey_Q))
@@ -557,7 +647,7 @@ void window_draw()
 
 			if (e.sprite.size())
 			{
-				glm::vec2 origin = cellMidByTile(e.sprite.front()); // rotate around first point
+				glm::vec2 origin = cellMidByTile(e.sprite.front()); 
 				glm::vec2 lastMid = origin;
 				for (glm::ivec2 const& point : e.sprite)
 				{
@@ -671,7 +761,7 @@ void window_draw()
 					{
 						glm::vec2 posF = pos;
 						glm::vec2 centered = (posF - centroid);
-						pos = glm::round(centered + scaling * glm::sign(centered) + centroid); // or use floor() if you prefer
+						pos = glm::round(centered + scaling * glm::sign(centered) + centroid);
 					}
 				}
 			}
@@ -699,8 +789,7 @@ void window_draw()
 						glm::vec2 rotated = rot * (posF - centroid) + centroid;
 						pos = glm::floor(rotated);
 					}
-				}
-				// HEre	
+				}	
 			}
 			ImGui::NewLine();
 			if (ImGui::Button("Clear"))
@@ -790,6 +879,49 @@ void window_draw()
 	ImGui::SetNextWindowDockID(1);
 	if (ImGui::Begin("Stage", nullptr, ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoDecoration))
 	{
+		// Draw scene
+		glBindFramebuffer(GL_FRAMEBUFFER, e.stageTarget.fbo);
+		{
+			glViewport(0, 0, e.uniforms.viewport.x, e.uniforms.viewport.y);
+			glClearColor(0.21, 0.25, 0.27, 1.00);
+			glClear(GL_COLOR_BUFFER_BIT);
+			// Draw grid
+			glUseProgram(e.grid.program);
+			glBindVertexArray(e.grid.vao);
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, e.grid.tex);
+			glDrawArraysInstanced(GL_TRIANGLES, 0, 6, e.uniforms.gridWidth * e.uniforms.gridHeight);
+			glBindTexture(GL_TEXTURE_1D, 0);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+			glUseProgram(0);
+			glBindVertexArray(0);
+			// Draw line list
+			glUseProgram(e.lineList.program);
+			glBindVertexArray(e.lineList.vao);
+			glDrawArrays(GL_LINES, 0, e.lines.size() * 2);
+			glUseProgram(0);
+			glBindVertexArray(0);
+			// Draw txts
+			glUseProgram(e.atlas.program);
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, e.atlas.tex);
+			for (auto const& kv : e.txts)
+			{
+				if (kv.second.object.vao)
+				{
+					glBindVertexArray(kv.second.object.vao);
+					glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, kv.second.object.ebo);
+					glDrawElements(GL_TRIANGLES, kv.second.txt.size() * 6, GL_UNSIGNED_INT, nullptr);
+					glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+					glBindVertexArray(0);
+				}
+			}
+			glBindTexture(GL_TEXTURE_2D, 0);
+			glUseProgram(0);
+		}
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+		// ImGui side begins here
 		glm::vec2 size = ImGui::GetWindowSize();
 		if (ImGui::BeginTable("Table", 3, ImGuiTableFlags_SizingFixedFit))
 		{
@@ -797,7 +929,7 @@ void window_draw()
 			//ImGui::SetColumnWidth(0, size.x* e.splitRatio);
 			glm::vec2 imgSize = size;
 			imgSize.x = size.x * e.stageSplitRatio;
-			ImGui::Image((ImTextureID)e.target.tex, imgSize, ImVec2(0, 1), ImVec2(1, 0));
+			ImGui::Image((ImTextureID)e.stageTarget.tex, imgSize, ImVec2(0, 1), ImVec2(1, 0));
 			if (ImGui::IsItemHovered())
 			{
 				if (ImGui::IsMouseDragging(ImGuiMouseButton_Right))
@@ -908,6 +1040,10 @@ void window_draw()
 					{
 						std::fill(WORLD.stage.begin(), WORLD.stage.end(), Tile_Water);
 					}
+					if (ImGui::Selectable("N/A"))
+					{
+						std::fill(WORLD.stage.begin(), WORLD.stage.end(), Tile_NA);
+					}
 					ImGui::EndPopup();
 				}
 
@@ -945,7 +1081,7 @@ void window_draw()
 				WORLD.sceneIsTarget = false;
 				if (tilesInRow > 0)
 				{
-					for (int i = 0; i <= Tile_Portal1; i++)
+					for (int i = 0; i < Tile_Max; i++)
 					{
 						std::string id = std::format("##TILE_{}", i);
 						if (ImGui::Selectable(id.c_str(), tile == i, 0, uiTileSize))
@@ -978,7 +1114,144 @@ void window_draw()
 	}
 	ImGui::End();
 
+	ImGui::SetNextWindowDockID(1);
+	if (ImGui::Begin("Music Sheet", nullptr, ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoDecoration))
+	{
+		glm::vec2 size = ImGui::GetWindowSize();
+		if (ImGui::BeginTable("Table", 3, ImGuiTableFlags_SizingFixedFit))
+		{
+			ImGui::TableNextColumn();
+			//ImGui::SetColumnWidth(0, size.x* e.splitRatio);
+			glm::vec2 trackSize = size;
+			trackSize.x = size.x * e.trackSplitRatio;
+			ImDrawList* drawList = ImGui::GetWindowDrawList();
+			glm::vec2 pos = ImGui::GetCursorScreenPos();
+			glm::vec2 scroll = { ImGui::GetScrollX(), ImGui::GetScrollY() };
+			ImGui::InvisibleButton("Sheet", trackSize);
+			glm::vec2 min = ImGui::GetItemRectMin();
+			glm::vec2 max = ImGui::GetItemRectMax();
+			//if (ImGui::IsItemFocused())
 
+			ImGui::PushFont(e.font);
+			{
+				glm::vec2 clefFSize = ImGui::CalcTextSize(SYMBOL_CLEF_F);
+				auto rmin = min + 0.5f;
+				auto rmax = max - 0.5f;
+				auto color = IM_COL32(255, 255, 255, 255);
+				for (section_t& s : e.musicSheet.sections)
+				{
+					for (size_t c = 0; c < 2; c++)
+					{
+						rmin.y += 50;
+						auto next = rmin + glm::vec2(rmax.x - rmin.x, 100);
+						glm::vec2 textPos = { rmin.x + 0.5f, (next.y + rmin.y) * 0.5f - clefFSize.y };
+						drawList->AddText(textPos, color, SYMBOL_EIGHTH);
+						drawList->AddRect(rmin, next, color);
+						drawList->AddLine({ 50, rmin.y }, { 50, next.y }, color);
+						for (size_t l = 0; l < 3; ++l)
+						{
+							rmin.y += 25;
+							drawList->AddLine(rmin, ImVec2{ next.x, rmin.y}, color);
+						}
+					
+						for (measure_t& m : s.measures)
+						{
+
+						}
+						rmin.y += 50;
+					}
+				}
+			}
+			ImGui::PopFont();
+			
+			
+			ImGui::TableNextColumn();
+			ImGui::Button("Track Splitter", ImVec2(e.splitterWidth, size.y));
+			if (ImGui::IsItemActive())
+			{
+				int x, y;
+				glfwGetWindowPos(glfwGetCurrentContext(), &x, &y);
+				e.trackSplitRatio = (ImGui::GetMousePos().x - x) / size.x;
+				e.trackSplitRatio = std::min(std::max(e.trackSplitRatio, 0.01f), 0.99f);
+			}
+			//ImGui::SameLine();
+			ImGui::TableNextColumn();
+			ImGui::SetNextWindowSize({ size.x - trackSize.x - e.splitterWidth, size.y });
+			if (ImGui::BeginChild("Buttons and stuff..."))
+			{
+				static const char* beats[] = { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16" };
+				if (ImGui::BeginCombo("Beat", beats[e.beats - 1]))
+				{
+					for (int i = 0; i < IM_ARRAYSIZE(beats); ++i)
+					{
+						bool isSelected = i == (e.beats - 1);
+						if (ImGui::Selectable(beats[i]))
+							e.beats = i + 1;
+						if (isSelected)
+							ImGui::SetItemDefaultFocus();
+					}
+					ImGui::EndCombo();
+				}
+
+				static const char* units[] =
+				{
+					SYMBOL_FULL,
+					SYMBOL_HALF,
+					SYMBOL_QUARTER, // Quarter
+					SYMBOL_EIGHTH, 
+					SYMBOL_SIXTEENTH,
+				};
+				if (ImGui::BeginCombo("Unit", units[e.unitBit]))
+				{
+					for (int i = 0; i < 5; ++i)
+					{
+						bool isSelected = i == e.unitBit;
+						if (ImGui::Selectable(units[i]))
+							e.unitBit = i;
+						if (isSelected)
+							ImGui::SetItemDefaultFocus();
+					}
+					ImGui::EndCombo();
+				}
+				ImGui::NewLine();
+				ImGui::InputText("Name", e.musicSheet.trackName, IM_ARRAYSIZE(e.musicSheet.trackName));
+				
+				if (ImGui::Button("Export"))
+				{
+					std::string track = "const track_t ";
+					track += std::string(e.musicSheet.trackName) + "[] = \n{\n";
+					for (size_t y = 0, idx = 0; y < WORLD_EXTENT; ++y)
+					{
+						track += "\t";
+						for (size_t x = 0; x < WORLD_STRIDE; ++x, ++idx)
+						{
+							//stage += std::format("Tile_{}, ", tileStrings[WORLD.stage[idx]]);
+						}
+						track += "\n";
+					}
+					track += "};\n";
+					copy_to_clipboard(track);
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("Save"))
+				{
+					
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("Open..."))
+				{
+					
+				}
+
+				ImGui::NewLine();
+
+			}
+			ImGui::EndChild();
+
+			ImGui::EndTable();
+		}
+	}
+	ImGui::End();
 
 	// ImGui
 	ImGui::Render();
@@ -1140,6 +1413,14 @@ static GLFWwindow* window_create(const char* title, int w, int h)
 	style.GrabRounding = 6.0f;
 	style.TabRounding = 6.0f;
 
+	ImFont* defaultFont = io.Fonts->AddFontDefault();
+	ImFontConfig config;
+	config.MergeMode = false;
+	config.GlyphMinAdvanceX = 13.0f; 
+	static const ImWchar musical_symbol_ranges[] = { 0x1D100U, 0x1D1FFU, '\0', };
+	
+	e.font = io.Fonts->AddFontFromFileTTF(ASSETS_PATH "/fonts/bravura.ttf", 32.f, &config, musical_symbol_ranges);
+	
 	// Colors
 	ImVec4* colors                         = style.Colors;
 	colors[ImGuiCol_Text]                  = ImVec4(0.95f, 0.96f, 0.98f, 1.00f);
@@ -1254,7 +1535,10 @@ void open_sprite()
 		std::ifstream stream(result.front());
 		nlohmann::json json = nlohmann::json::parse(stream);
 		std::string name = json["name"];
-		std::strcpy(e.spriteName, name.c_str());
+		int i;
+		for (i = 0; name[i] != '\0'; i++)
+			e.spriteName[i] = name[i];
+		e.spriteName[i] = '\0';
 		e.sprite.clear();
 		std::vector<int> x = json["sprite_x"];
 		std::vector<int> y = json["sprite_y"];
@@ -1300,7 +1584,10 @@ void open_stage()
 		std::ifstream stream(result.front());
 		nlohmann::json json = nlohmann::json::parse(stream);
 		std::string name = json["name"];
-		std::strcpy(e.stageName, name.c_str());
+		int i;
+		for (i = 0; name[i] != '\0'; i++)
+			e.stageName[i] = name[i];
+		e.stageName[i] = '\0';
 		WORLD.stage = json["stage"].get<std::vector<Tile>>();
 	}
 }
@@ -1546,13 +1833,7 @@ void world_render_tile(Tile tile, i16 tileLeft, i16 tileRight, i16 tileTop, i16 
 	break;
 	case Tile_Spikes:
 	{
-		int startX, deltaX;
-		{
-			startX = (tileLeft);
-			deltaX = (TILE_WIDTH >> 2);
-		}
-		beam_set_position((tileBottom), startX);
-		Draw_Line_d(TILE_HEIGHT, deltaX);
+		beam_set_position(tileBottom, tileLeft);
 		Draw_VLc((void* const)spikes);
 	}
 
@@ -1608,7 +1889,7 @@ void world_render_tile(Tile tile, i16 tileLeft, i16 tileRight, i16 tileTop, i16 
 		{
 			idx_t idx = tile - Tile_E0;
 			std::string txt = std::format("E{}", idx);
-			print_txt(tileLeft + (tileRight - tileLeft) / 4, tileBottom + (tileTop - tileBottom) / 4, WORLD.tileIdx, txt);
+			print_txt(tileLeft + (tileRight - tileLeft) / 4, tileBottom + (tileTop - tileBottom) / 4, WORLD.tileIdx, txt, 0.35, 0.50);
 		}
 	}
 	break;
@@ -1626,6 +1907,28 @@ void world_render_tile(Tile tile, i16 tileLeft, i16 tileRight, i16 tileTop, i16 
 		}
 	}
 	break;
+	case Tile_GravitasUp:
+		beam_set_position(tileBottom, tileLeft + (TILE_WIDTH >> 1));
+		Draw_VLc((void* const)gravitasUp);
+		break;
+	case Tile_SpikesDown:
+		beam_set_position(tileTop, tileLeft);
+		Draw_VLc((void* const)spikesDown);
+		break;
+	case Tile_Warning:
+		beam_set_position(tileTop, tileLeft);
+		Draw_VLc((void* const)warning);
+		break;
+	case Tile_NA:
+		if (WORLD.sceneIsTarget)
+		{
+			print_txt(tileLeft + (tileRight - tileLeft) / 4, tileBottom + (tileTop - tileBottom) / 4, WORLD.tileIdx, "N/A", 0.35, 0.50);
+		}
+		break;
+	case Tile_GravitasDown:
+		beam_set_position(tileTop, tileLeft + (TILE_WIDTH >> 1));
+		Draw_VLc((void* const)gravitasDown);
+		break;
 	default:
 		break;
 	}
@@ -1861,7 +2164,7 @@ void load_font()
 	//std::ifstream(font, std::ios::binary | std::ios::ate).tellg();
 	
 	std::string fontBytes;
-	assert(!file_read(ASSETS_PATH "/fonts/SF_Distant_Galaxy.ttf", fontBytes));
+	assert(!file_read(ASSETS_PATH "/fonts/AncizarSans-Regular.ttf", fontBytes));
 
 	std::vector<uint8_t> atlasBytes;
 	atlasBytes.resize(e.atlasDim.x * e.atlasDim.y, 0);
@@ -1872,7 +2175,7 @@ void load_font()
 	int chars = '~' - ' ';
 	e.atlasChars.resize(chars);
 	stbtt_PackSetOversampling(&context, 2, 2);
-	assert(stbtt_PackFontRange(&context, (const unsigned char*)fontBytes.data(), 0, 40, ' ', chars, e.atlasChars.data()));
+	assert(stbtt_PackFontRange(&context, (const unsigned char*)fontBytes.data(), 0, 80, ' ', chars, e.atlasChars.data()));
 
 	stbtt_PackEnd(&context);
 

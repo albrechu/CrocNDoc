@@ -1,3 +1,6 @@
+/////////////////////////////////////////////////////////////////////////
+//	Includes
+//
 #include <cnd/entities.h>
 #include <cnd/world.h>
 #include <cnd/game.h>
@@ -5,6 +8,9 @@
 #include <cnd/mesh.h>
 #include <cnd/xutils.h>
 
+/////////////////////////////////////////////////////////////////////////
+//	Functions
+//
 void routine_barrel_thrown(entity e)
 {
     if (e->isGrounded)

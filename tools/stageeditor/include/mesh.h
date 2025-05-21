@@ -260,11 +260,30 @@ const i8 barrierHorizontal[] =
 
 const i8 spikes[] =
 {
-	LENGTH(3),
-	-64, 16,
-	64, 16,
-	-64, 16,
+	LENGTH(2),
+	64, 32,
+	-64, 32,
 };
+
+const i8 spikesDown[] =
+{
+	LENGTH(2),
+	-64, 32,
+	64, 32,
+};
+
+const i8 warning[15] =
+{
+	LENGTH(7),
+	-3, -2,
+	-2, 2,
+	2, 2,
+	3, -2,
+	14, -4,
+	0, 8,
+	-14, -4,
+};
+
 
 const i8 const halunke[] =
 {
@@ -570,3 +589,33 @@ const i8 const spikedBall[] =
 	4,  -2,
 	2, -4,
 };
+
+const i8 gravitasUp[19] =
+{
+	LENGTH(9),
+	-7, -8,
+	-14, 0,
+	-6, 8,
+	6, 7,
+	14, 0,
+	7, -7,
+	-21, 7,
+	0, -15,
+	21, 8,
+};
+
+const i8 gravitasDown[19] =
+{
+	LENGTH(9),
+	7, -8,
+	14, 0,
+	6, 8,
+	-6, 7,
+	-14, 0,
+	-7, -7,
+	21, 7,
+	0, -15,
+	-21, 8,
+};
+
+

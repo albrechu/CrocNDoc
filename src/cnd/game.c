@@ -53,7 +53,7 @@ void game_create(void)
 	Vec_Joy_Mux_2_X = 0;
 	Vec_Joy_Mux_2_Y = 0;
     Vec_Text_Height = -20;
-    Vec_Text_Width = 70;
+    Vec_Text_Width = 20;
     g_stage = Stage_Tutorial;
 }
 
@@ -72,7 +72,7 @@ void game_soft_reset(void)
     // Assign the initial player state 
     // Assign Game State
     
-    // plot_set_plot(Plot_WakeUp);
+    //plot_set_plot(Plot_Tutorial);
 }
 
 void game_enter_stage(Stage stage)
@@ -102,7 +102,7 @@ void game_enter_stage(Stage stage)
     WORLD.stageEntered       = game_enter_stage;
     WORLD.playerDamage       = routine_player_damage;
     WORLD.playerChangedFluid = routine_player_changed_fluid;
-
+    WORLD.gravity = 1;
     CAMERA.mesh      = croc_idle_right;
     CAMERA.routine   = routine_croc_air;
     CAMERA.isLocal   = true;
@@ -128,45 +128,6 @@ void game_update_gameover(void)
     
     GAME.finTxtPos.x = Vec_Joy_1_X >> 1;
     GAME.finTxtPos.y = Vec_Joy_1_Y >> 1;
-    /*switch (JOYS)
-    {
-    case Input_JoyLeft:
-        GAME.finTxtPos.x -= GAMEOVER_JOYSPEED;
-        break;
-    case Input_JoyRight:
-        GAME.finTxtPos.x += GAMEOVER_JOYSPEED;
-        break;
-    case Input_JoyUp:
-        GAME.finTxtPos.y -= GAMEOVER_JOYSPEED;
-        break;
-    case Input_JoyDown:
-        GAME.finTxtPos.y += GAMEOVER_JOYSPEED;
-        break;
-    case Input_JoyLeftDown:
-        GAME.finTxtPos.y += GAMEOVER_JOYSPEED;
-        GAME.finTxtPos.x -= GAMEOVER_JOYSPEED;
-        break;
-    case Input_JoyRightDown:
-        GAME.finTxtPos.y += GAMEOVER_JOYSPEED;
-        GAME.finTxtPos.x += GAMEOVER_JOYSPEED;
-        break;
-    case Input_JoyLeftUp:
-        GAME.finTxtPos.y -= GAMEOVER_JOYSPEED;
-        GAME.finTxtPos.x -= GAMEOVER_JOYSPEED;
-        break;
-    case Input_JoyRightUp:
-        GAME.finTxtPos.y -= GAMEOVER_JOYSPEED;
-        GAME.finTxtPos.x += GAMEOVER_JOYSPEED;
-        break;
-    default:
-        GAME.finTxtPos.y = 0;
-        GAME.finTxtPos.x = 0;
-        break;
-    }*/
-    /*GAME.finTxtPos.y = MIN8(GAMEOVER_JOYDIM, GAME.finTxtPos.y);
-    GAME.finTxtPos.y = MAX8(-GAMEOVER_JOYDIM, GAME.finTxtPos.y);
-    GAME.finTxtPos.x = MIN8(GAMEOVER_JOYDIM, GAME.finTxtPos.x);
-    GAME.finTxtPos.x = MAX8(-GAMEOVER_JOYDIM, GAME.finTxtPos.x);*/
     beam_set_position(GAME.finTxtPos.y, GAME.finTxtPos.x);
     Print_Str_d(-Vec_Text_Height, -60, "GAME OVER\x80");
     Vec_Text_Height >>= 1;
@@ -231,7 +192,8 @@ void game_update_plot(void)
             return;
         }
     }
-    plot_typewriter_next(WORLD.ticks++);
+    plot_typewriter_next();
+    WORLD.ticks++;
 }
 
 void game_entity_added(entity e)

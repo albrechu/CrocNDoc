@@ -1,9 +1,15 @@
+/////////////////////////////////////////////////////////////////////////
+//	Includes
+//
 #include <cnd/world.h>
 #include <cnd/entities.h>
 #include <cnd/globals.h>
 #include <cnd/mesh.h>
 #include <cnd/xutils.h>
 
+/////////////////////////////////////////////////////////////////////////
+//	Functions
+//
 void routine_tunichtgut_boom(entity e)
 {
 	if (e->isLocal)

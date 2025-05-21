@@ -1,9 +1,15 @@
+/////////////////////////////////////////////////////////////////////////
+//	Includes
+//
 #include <cnd/world.h>
 #include <cnd/entities.h>
 #include <cnd/globals.h>
 #include <cnd/xutils.h>
 #include <cnd/mesh.h>
 
+/////////////////////////////////////////////////////////////////////////
+//	Functions
+//
 void routine_marvin(entity e)
 {
     CAMERA.invisiblityFrames = 99;

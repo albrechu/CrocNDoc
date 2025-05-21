@@ -22,7 +22,7 @@ struct cartridge_t
 };
 
 /////////////////////////////////////////////////////////////////////////
-//	Globals
+//	Global Data
 //
 const struct cartridge_t game_header __attribute__((section(".cartridge"), used)) = 
 {

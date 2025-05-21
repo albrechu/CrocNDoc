@@ -18,7 +18,6 @@ extern int main(void);
 __attribute__((section(".boot")))
 void boot(void)
 {
-
 	__asm volatile (
 	"_crt0:							\n\t"
 #if __INIT_DATA

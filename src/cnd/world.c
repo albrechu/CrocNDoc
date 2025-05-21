@@ -1,6 +1,30 @@
-/**
-* DO NOT LOOK AT THIS FILE, IF AND ONLY IF YOU WANT TO KEEP YOUR EYES.
-*/
+/*
+ * MIT License
+ *
+ * Copyright (c) 2025 Julian Albrecht
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+/////////////////////////////////////////////////////////////////////////
+//	Includes
+//
 #include <cnd/world.h>
 #include <cnd/globals.h>
 #include <cnd/xutils.h>
@@ -13,6 +37,9 @@
 #include <cnd/levels.h>
 #include <cnd/entities.h>
 
+/////////////////////////////////////////////////////////////////////////
+//	Defines
+//
 #define POS(y, x) y, x // Starting position
 #define TILE(y, x) y, x
 #define METADATA_BYTES 4
@@ -20,6 +47,9 @@
 #define LBL(x) lbl_##x
 #define W WORLD
 
+/////////////////////////////////////////////////////////////////////////
+//	Functions
+//
 void __stub(void) {}
 
 #define relative_x(e) I8(e->position.x - tX)
@@ -32,7 +62,7 @@ void __stub(void) {}
 
 void check_tiles(entity e)
 {
-	e->velocity.y -= Velocity_Friction;
+	e->velocity.y -= WORLD.gravity;
     e->isGrounded = false;
     
     static const void* jump[] =
@@ -82,6 +112,11 @@ void check_tiles(entity e)
         &&end,
         &&LBL(Tile_Portal0),
         &&LBL(Tile_Portal0),
+        &&LBL(Tile_GravitasUp),
+        &&LBL(Tile_SpikesDown),
+        &&LBL(Tile_Warning),
+        &&end,
+        &&LBL(Tile_GravitasDown),
     };
     
     void* next = &&horizontal;
@@ -355,12 +390,64 @@ LBL(Tile_Portal0):
             (nextY >= ((TILE_HEIGHT >> 2) + (TILE_HEIGHT >> 3)) && nextY <= TILE_HEIGHT - ((TILE_HEIGHT >> 2) + (TILE_HEIGHT >> 3))))
             WORLD.stageEntered(WORLD.level->adjacentStages[tile - Tile_Portal0]);
     }
+    goto *next;
+LBL(Tile_GravitasUp):
+    if (e->id == 0 && e->substance < Substance_GravitasAir)
+    {
+        if (e->substance == Substance_Air)
+        {
+            e->routine = e->type == Character_Croc ? routine_croc_gravitas_air : routine_doc_gravitas_air;
+            e->substance = Substance_GravitasAir;
+        }
+        else // Substance_GravitasWater
+        {
+            e->routine = e->type == Character_Croc ? routine_croc_gravitas_water : routine_doc_gravitas_water;
+            e->substance = Substance_GravitasWater;
+        }
+        WORLD.gravity = -1;
+    }
+    goto* next;
+LBL(Tile_SpikesDown):
+    if (relative_y(e) - e->velocity.y < (TILE_HEIGHT >> 1))
+    {
+        set_ground(e);
+        if (e->id > 0)
+        {
+            entity_set_status(e, EntityState_Dead);
+        }
+        else if (!WORLD.gameIsOver)
+        {
+            WORLD.playerDamage();
+            CAMERA.invisiblityFrames = 0;
+            WORLD.playerDamage();
+            WORLD.gameIsOver = true;
+        }
+    }
+    goto *next;
+LBL(Tile_Warning):
+    goto *next;
+LBL(Tile_GravitasDown):
+    if (e->id == 0 && e->substance >= Substance_GravitasAir)
+    {
+        if (e->substance == Substance_GravitasAir)
+        {
+            e->routine = e->type == Character_Croc ? routine_croc_air : routine_doc_air;
+            e->substance = Substance_Air;
+        }
+        else
+        {
+            e->routine = e->type == Character_Croc ? routine_croc_water : routine_doc_water;
+            e->substance = Substance_Water;
+        }
+        WORLD.gravity = 1;
+    }
+    goto *next;
 end:
     goto *next;
 }
 
 
-#if 0
+#if 0 // This is the old routine. I kept it to change it back if things go south. (Even though I have version control)
 void world_progress(void)
 {
     ++WORLD.ticks;
@@ -1225,6 +1312,33 @@ end:
     } \
 }
 
+#define draw_gravitas_up() \
+{ \
+    if (tt > tb) \
+    { \
+        beam_set_position(tb, tl); \
+        Draw_VLc((void* const)gravitasUp); \
+    } \
+}
+
+#define draw_gravitas_down() \
+{ \
+    if (tt > tb) \
+    { \
+        beam_set_position(tt, tl); \
+        Draw_VLc((void* const)gravitasDown); \
+    } \
+}
+
+#define draw_spikes_down() \
+{ \
+    if (tt > tb) \
+    { \
+        beam_set_position(tt, tl); \
+        Draw_VLc((void* const)spikesDown); \
+    } \
+}
+
 void world_progress(void)
 {
     ++WORLD.ticks;
@@ -1247,11 +1361,16 @@ void world_progress(void)
     }
     print_signed_int(100, 50, WORLD.entityCount);*/
 
+    /*i8 overX = I8(CAMERA.position.x & (TILE_WIDTH - 1));
+    i8 overY = I8(CAMERA.position.y & (TILE_HEIGHT - 1));*/
+
     v2i selectedTile;
-    i8 xMin = I8((CAMERA.position.x - 128) >> TILE_SCALE_BITS);
+    i8 xMin = I8(CAMERA.position.x >> TILE_SCALE_BITS);
+    xMin -= 4;
     selectedTile.x = xMin;
-    i8 yMin = I8((CAMERA.position.y - 128) >> TILE_SCALE_BITS);
-    selectedTile.y = yMin + 7;
+    i8 yMin = I8(CAMERA.position.y >> TILE_SCALE_BITS);
+    yMin -= 4;
+    selectedTile.y = yMin + 8;
     yMin = MAX8(0, yMin);
     selectedTile.y = MIN8(selectedTile.y, (WORLD_EXTENT - 1));
 
@@ -1310,6 +1429,12 @@ void world_progress(void)
         &&LBL(Tile_E0),
         &&LBL(Tile_Portal0),
         &&LBL(Tile_Portal0),
+        &&LBL(Tile_GravitasUp),
+        &&LBL(Tile_SpikesDown),
+        &&LBL(Tile_Warning),
+        &&end,
+        &&end,
+        &&LBL(Tile_GravitasDown),
     };
 
     i8 idxDelta = (1 << STRIDE_BITS) + (xMax - xMin) - 1;
@@ -1415,7 +1540,18 @@ if (WORLD.entityCount < ENTITIES_ACTIVE_MAX)
     goto end;
 LBL(Tile_Portal0):
     draw_portal();
-
+    goto end;
+LBL(Tile_GravitasUp):
+    draw_gravitas_up()
+    goto end;
+LBL(Tile_SpikesDown) :
+    draw_spikes_down();
+    goto end;
+LBL(Tile_Warning):
+    goto end;
+LBL(Tile_GravitasDown):
+    draw_gravitas_down();
+    goto end;
 end:
     if ((++selectedTile.x) < xMax)
     {

@@ -1,9 +1,15 @@
+/////////////////////////////////////////////////////////////////////////
+//	Includes
+//
 #include <cnd/world.h>
 #include <cnd/entities.h>
 #include <cnd/mesh.h>
 #include <cnd/globals.h>
 #include <cnd/xutils.h>
 
+/////////////////////////////////////////////////////////////////////////
+//	Functions
+//
 void routine_schuft_follow(entity e)
 {
     if (e->isLocal)

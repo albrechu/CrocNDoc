@@ -279,6 +279,13 @@ enum Tile_
     // Portal
     Tile_Portal0,
     Tile_Portal1,
+    Tile_GravitasUp,
+    Tile_SpikesDown,
+    Tile_Warning,
+    Tile_NA,
+    Tile_GravitasDown,
+    // <Add New Tiles Here>
+    Tile_Max,
     // Wormhole
     // Tile_Wormhole0,
     // Tile_Wormhole1,
@@ -299,6 +306,8 @@ enum Material_
 {
     Substance_Air,
     Substance_Water,
+    Substance_GravitasAir,
+    Substance_GravitasWater,
 };
 typedef i8 Material;
 

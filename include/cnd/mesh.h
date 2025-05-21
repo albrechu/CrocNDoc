@@ -68,4 +68,8 @@ extern const i8 marvin[];
 extern const i8 heart[];
 extern const i8 doc_glide_left[][35];
 extern const i8 doc_glide_right[][35];
+extern const i8 gravitasUp[];
+extern const i8 gravitasDown[];
+extern const i8 spikesDown[];
+extern const i8 warning[];
 #endif /* MESH_H */

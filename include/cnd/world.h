@@ -25,16 +25,40 @@
 #ifndef WORLD_H
 #define WORLD_H
 
+/////////////////////////////////////////////////////////////////////////
+//	Includes
+//
 #include <cnd/types.h>
 
 /////////////////////////////////////////////////////////////////////////
 //	World functions
 //
+/**
+* @brief (Re-) Create the world according to the specified stage.
+*/
 void world_create(Stage const stage);
+
+/**
+* @brief The world 'update' function. Does the physics simulation and draws the world.
+*/
 void world_progress(void);
 
+/////////////////////////////////////////////////////////////////////////
+//	Entity-World functions
+//
+/**
+* @brief Removes the entity from the world. If it has a name it will be removed.
+*/
 void entity_set_status(entity e, EntityStatus status);
+
+/**
+* @brief Creates a named entity, meaning an object which is spawned from tiles.
+*/
 void entity_create_named(idx_t const globalId, v2i const tile);
+
+/**
+* @brief Creates a anonymous entity, meaning an object which was spawned from enemies
+*/
 void entity_create_anonymous(EntityType const type, v2i const tile);
 
 #endif /* WORLD_H */
