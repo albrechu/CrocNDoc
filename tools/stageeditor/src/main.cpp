@@ -62,6 +62,8 @@
 #include <portable-file-dialogs.h>
 #define STB_TRUETYPE_IMPLEMENTATION
 #include <stb_truetype.h>
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
 
 #undef min
 #undef max
@@ -75,6 +77,8 @@ typedef int idx_t;
 typedef int16_t i16;
 typedef int32_t i32;
 typedef uint32_t u32;
+using glm::vec2;
+using glm::vec3;
 struct frame_t { GLuint fbo = 0, tex = 0, rbo = 0; };
 struct line_t
 {
@@ -291,6 +295,8 @@ enum Unit_
 	Unit_DottedQuarter,
 	Unit_DottedEighth,
 	Unit_DottedSixteenth,
+
+	Unit_Max, // End of enum
 };
 typedef int Unit;
 
@@ -372,6 +378,8 @@ struct editor_t
 	std::vector<stbtt_packedchar> atlasChars;
 	std::map<idx_t, txt_t> txts;
 	double last = 0.0;
+
+	GLuint noteTextures[Unit_Max]{};
 };
 editor_t e;
 
@@ -414,6 +422,7 @@ void load_font();
 void print_txt(float x, float y, idx_t id, std::string txt, float scaleX = 0.6, float scaleY = 0.75);
 void window_size_callback(GLFWwindow* window, int width, int height);
 void window_draw();
+GLuint texture_read(const char* file);
 
 /////////////////////////////////////////////////////////////////////////
 //	Functions
@@ -453,6 +462,15 @@ int main()
 	{
 		// Load Font
 		load_font();
+
+		// Read notes
+		e.noteTextures[Unit_Full]          = texture_read(IMGS_PATH "/full.png");
+		e.noteTextures[Unit_Half]          = texture_read(IMGS_PATH "/half.png");
+		e.noteTextures[Unit_DottedHalf]    = texture_read(IMGS_PATH "/dotted_half.png");
+		e.noteTextures[Unit_Quarter]       = texture_read(IMGS_PATH "/quarter.png");
+		e.noteTextures[Unit_DottedQuarter] = texture_read(IMGS_PATH "/dotted_quarter.png");
+		e.noteTextures[Unit_Eighth]        = texture_read(IMGS_PATH "/eighth.png");
+		e.noteTextures[Unit_Sixteenth]     = texture_read(IMGS_PATH "/sixteenth.png");
 
 		// Create ubo buffer for camera
 		{
@@ -1138,19 +1156,28 @@ void window_draw()
 				auto rmin = min + 0.5f;
 				auto rmax = max - 0.5f;
 				auto color = IM_COL32(255, 255, 255, 255);
+				glm::vec2 mousePos = ImGui::GetMousePos();
+				glm::vec2 local = mousePos - min;
 				for (section_t& s : e.musicSheet.sections)
 				{
-					for (size_t c = 0; c < 2; c++)
+					for (size_t c = 0; c < 2; c++) // Clef F and G
 					{
 						rmin.y += 50;
 						auto next = rmin + glm::vec2(rmax.x - rmin.x, 100);
-						glm::vec2 textPos = { rmin.x + 0.5f, (next.y + rmin.y) * 0.5f - clefFSize.y };
+						vec2 textPos = { rmin.x + 0.5f, (next.y + rmin.y) * 0.5f - clefFSize.y };
 						drawList->AddText(textPos, color, SYMBOL_EIGHTH);
 						drawList->AddRect(rmin, next, color);
-						drawList->AddLine({ 50, rmin.y }, { 50, next.y }, color);
-						for (size_t l = 0; l < 3; ++l)
+						drawList->AddLine({ rmin.x + 50, rmin.y }, { rmin.x + 50, next.y }, color);
+						for (size_t l = 0; l < 4; ++l)
 						{
-							rmin.y += 25;
+							f32 nextY = rmin.y + 25;
+							if (local.y >= rmin.y && local.y < nextY)
+							{
+								vec2 min = rmin;
+								vec2 max = rmin + vec2{ 35, 50 };
+								drawList->AddImage(e.noteTextures[Unit_Sixteenth], min, max, { 0, 0 }, { 1, 1 }, IM_COL32(248, 248, 255, 255));
+							}
+							rmin.y = nextY;
 							drawList->AddLine(rmin, ImVec2{ next.x, rmin.y}, color);
 						}
 					
@@ -1245,6 +1272,15 @@ void window_draw()
 
 				ImGui::NewLine();
 
+				for (int s = 0; s < e.musicSheet.sections.size(); s++)
+				{
+					ImGui::Text("Section %d:\t", s);
+					ImGui::SameLine();
+					ImGui::Button("+");
+					ImGui::SameLine();
+					ImGui::Button("-");
+					ImGui::NewLine();
+				}
 			}
 			ImGui::EndChild();
 
@@ -2200,4 +2236,36 @@ void load_font()
 	assert(loc >= 0);
 	glUniform1i(loc, 0);
 	glUseProgram(0);
+}
+
+GLuint texture_read(const char* file)
+{
+	FILE* f = fopen(file, "rb");
+	if (f == NULL)
+		return false;
+	fseek(f, 0, SEEK_END);
+	size_t file_size = (size_t)ftell(f);
+	if (file_size == -1)
+		return false;
+	fseek(f, 0, SEEK_SET);
+	void* file_data = IM_ALLOC(file_size);
+	fread(file_data, 1, file_size, f);
+	fclose(f);
+
+	int x, y;
+	stbi_uc* img = stbi_load_from_memory((const unsigned char*)file_data, file_size, &x, &y, NULL, 4);
+	assert(img != nullptr);
+
+	GLuint tex = 0;
+	glGenTextures(1, &tex);
+	glBindTexture(GL_TEXTURE_2D, tex);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, x, y, 0, GL_RGBA, GL_UNSIGNED_BYTE, img);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	stbi_image_free(img);
+	IM_FREE(file_data);
+	return tex;
 }

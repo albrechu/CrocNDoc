@@ -58,3 +58,27 @@ void routine_death1(entity e)
         entity_set_status(e, EntityStatus_Dead);
     }
 }
+
+void routine_death2(entity e)
+{
+    if (e->stopwatch != 0) // Play Animation
+    {
+        e->velocity.y = 0;
+        e->velocity.x = 0;
+        if (WORLD.freq8_8)
+        {
+            --e->stopwatch;
+            if (e->isLocal)
+            {
+                i16 dy = CAMERA.position.y - e->position.y;
+                i16 dx = e->position.x - CAMERA.position.x;
+                beam_set_position((i8)dy, (i8)dx);
+                Draw_VLc((void* const)explosion2[WORLD.freq8_8]);
+            }
+        }
+    }
+    else // Kill it
+    {
+        entity_set_status(e, EntityStatus_Dead);
+    }
+}

@@ -54,7 +54,7 @@ void game_create(void)
 	Vec_Joy_Mux_2_Y = 0;
     Vec_Text_Height = -20;
     Vec_Text_Width = 20;
-    g_stage = Stage_Tutorial;
+    g_stage = Stage_JumpWorld;
 }
 
 void game_soft_reset(void) 
@@ -131,8 +131,6 @@ void game_update_gameover(void)
     Print_Str_d(-Vec_Text_Height, -60, "GAME OVER\x80");
     Vec_Text_Height >>= 1;
     Vec_Text_Width  >>= 1;
-    beam_set_position(GAME.finTxtPos.y, GAME.finTxtPos.x);
-    Print_Str_d((Vec_Text_Height * 3), -30, "HOLD ANY\x80");
     if (Vec_Btn_State)
     {
         if (--CAMERA.stopwatch == 0)

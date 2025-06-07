@@ -60,6 +60,7 @@ extern const i8 spider_right_up[];
 extern const i8 spider_left_down[];
 extern const i8 spider_right_down[];
 extern const i8 explosion[][33];
+extern const i8 explosion2[][15];
 extern const i8 gauner_left[][33];
 extern const i8 gauner_right[][33];
 extern const i8 tunichtgut[];
@@ -72,4 +73,5 @@ extern const i8 gravitasUp[];
 extern const i8 gravitasDown[];
 extern const i8 spikesDown[];
 extern const i8 warning[];
+extern const i8 diamond[];
 #endif /* MESH_H */

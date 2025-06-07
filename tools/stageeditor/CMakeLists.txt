@@ -8,7 +8,11 @@ include(external.cmake)
 add_executable(stageeditor src/main.cpp)
 target_link_libraries(stageeditor ${OPENGL_LIBRARIES} glad glfw imgui glm::glm nlohmann_json::nlohmann_json)
 target_include_directories(stageeditor PRIVATE include ${OPENGL_INCLUDE_DIRS})
-target_compile_definitions(stageeditor PRIVATE SHADERS_PATH="${CMAKE_SOURCE_DIR}/assets/shaders" ASSETS_PATH="${CMAKE_SOURCE_DIR}/assets")
+target_compile_definitions(stageeditor PRIVATE 
+	SHADERS_PATH="${CMAKE_SOURCE_DIR}/assets/shaders" 
+	ASSETS_PATH="${CMAKE_SOURCE_DIR}/assets"
+	IMGS_PATH="${CMAKE_SOURCE_DIR}/assets/imgs" 
+)
 set_target_properties(stageeditor PROPERTIES
 	CXX_STANDARD 20
 )

@@ -19,6 +19,7 @@ void routine_player_changed_fluid(void);
 */
 void routine_death0(entity e);
 void routine_death1(entity e);
+void routine_death2(entity e);
 
 /**
 * @brief Croc

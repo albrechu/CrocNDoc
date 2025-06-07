@@ -14,15 +14,18 @@ void routine_gauner_watching(entity e)
 {
     if (e->isLocal)
     {
-        if (WORLD.freq16)
+        if (--e->stopwatch < 0)
         {
-            if (e->isGrounded)
+            e->stopwatch = 70;
+            if (e->isAttacking)
             {
                 e->velocity.y += Velocity_Jump;
+                e->isAttacking = false;
             }
             else
             {
                 entity_create_anonymous(Enemy_Schelm, e->tile);
+                e->isAttacking = true;
             }
         }
 
@@ -33,7 +36,7 @@ void routine_gauner_watching(entity e)
             i8 localDx = (i8)dx;
             i8 localDy = (i8)dy;
             beam_set_position(localDy, localDx);
-            Draw_VLc((void* const)(localDx >= 0 ? gauner_right : gauner_left)[WORLD.freq16]);
+            Draw_VLc((void* const)(localDx >= 0 ? gauner_left : gauner_right)[WORLD.freq16]);
             if (manhattan(localDy, localDx) < 0x15)
             {
                 const i8 localDyMask = localDy >> 7;
@@ -44,7 +47,7 @@ void routine_gauner_watching(entity e)
                 if (localDy > localDxAbs)
                 {
                     e->stopwatch = 10;
-                    e->routine = routine_death0;
+                    e->routine = routine_death1;
                     CAMERA.velocity.y += Velocity_KillUpWind;
                 }
                 else if (CAMERA.isAttacking && (e->velocity.x ^ localDx) < 0)

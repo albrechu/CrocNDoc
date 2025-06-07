@@ -89,7 +89,7 @@ static const EntityType sewersEntities[] =
 const Tile tutorial[1024] =
 {
     Tile_Right, Tile_Top2, Tile_Top2, Tile_Top2, Tile_Top2, Tile_Top2, Tile_Top2, Tile_Top2, Tile_Top2, Tile_Top2, Tile_Top2, Tile_Top2, Tile_Top2, Tile_Top2, Tile_Top2, Tile_Top2, Tile_Top2, Tile_Top2, Tile_Top2, Tile_Top2, Tile_Top2, Tile_Top2, Tile_Top2, Tile_Top2, Tile_Top2, Tile_Top2, Tile_Top2, Tile_Top2, Tile_Top2, Tile_Top2, Tile_Top2, Tile_Left,
-    Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Bottom2, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Bottom2, Tile_NA, Tile_Bottom2, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left,
+    Tile_Right, Tile_NA, Tile_NA, Tile_E0, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Bottom2, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Bottom2, Tile_NA, Tile_Bottom2, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left,
     Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Bottom2, Tile_MiddleRightTop, Tile_NA, Tile_Left, Tile_Left2, Tile_NA, Tile_MiddleRightTop, Tile_NA, Tile_Left, Tile_Top, Tile_NA, Tile_Left, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_E0, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left,
     Tile_NA, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Right, Tile_Bottom2, Tile_NA, Tile_Left, Tile_Top, Tile_TopRight, Tile_Spikes, Tile_NA, Tile_Left, Tile_NA, Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Top, Tile_Top, Tile_NA, Tile_Top, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left,
     Tile_NA, Tile_Bottom, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Right, Tile_Right2, Tile_NA, Tile_NA, Tile_NA, Tile_Right, Tile_Spikes, Tile_Left, Tile_NA, Tile_NA, Tile_BottomLeft, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Top, Tile_Top, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_E1, Tile_NA, Tile_NA, Tile_NA, Tile_Left,
@@ -126,7 +126,7 @@ const Tile tutorial[1024] =
 
 static const EntityType tutorialEntities[] =
 {
-    Enemy_Halunke,
+    Enemy_Gauner,
     Enemy_Halunke,
     Enemy_Halunke,
     Enemy_Halunke,
