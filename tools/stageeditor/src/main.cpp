@@ -102,10 +102,10 @@ struct alignas(16) uniforms_t // Align with 16 because of ubo
 
 struct object_t
 {
-	GLuint vao = 0;
-	GLuint vbo = 0;
-	GLuint ebo = 0;
-	GLuint tex = 0;
+	GLuint vao     = 0;
+	GLuint vbo     = 0;
+	GLuint ebo     = 0;
+	GLuint tex     = 0;
 	GLuint program = 0;
 };
 
@@ -1537,9 +1537,8 @@ void target_texture_recreate(int width, int height, frame_t& frame)
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, frame.rbo);
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 	{
-
+		assert(false); // Oopsie...
 	}
-		//assert(false); // Oopsie...
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 

@@ -1027,9 +1027,9 @@ end:
 
 #define draw_left() \
 { \
-    if (tr > I8(U8(tr) - TILE_WIDTH)) \
+    if (tr > tl) \
     { \
-        if (96 > I8(U8(tt) - TILE_HEIGHT)) \
+        if (96 > (tt - TILE_HEIGHT)) \
         { \
             startY = I8(tt); \
             deltaY = -TILE_HEIGHT; \
@@ -1048,7 +1048,7 @@ end:
 { \
     if (tr > tl) \
     { \
-        if (tt > tb) \
+        if (96 > (tt - TILE_HEIGHT)) \
         { \
             startY = I8(tt); \
             deltaY = -TILE_HEIGHT; \
@@ -1056,7 +1056,7 @@ end:
         else \
         { \
             startY = 127; \
-            deltaY = -(I8(-128) - tt); \
+            deltaY = tt - I8(-128); \
         } \
         beam_set_position(startY, I8(tr)); \
         Draw_Line_d(deltaY, 0); \
@@ -1339,38 +1339,26 @@ end:
     } \
 }
 
+
 void world_progress(void)
 {
-    ++WORLD.ticks;
-    WORLD.freq2   = I8(WORLD.ticks & 1);
-    WORLD.freq16  = I8((WORLD.ticks >> 4) & 1);
-    WORLD.freq8_8 = I8((WORLD.ticks >> 3) & 7);
+    u16 ticks = ++WORLD.ticks;
+    WORLD.freq2 = I8(ticks & 1);
+    WORLD.freq16 = I8((ticks >> 4) & 1);
+    WORLD.freq8_8 = I8((ticks >> 3) & 7);
 
-    WORLD.entities[0].collision(&WORLD.entities[0]);
-    WORLD.entities[1].collision(&WORLD.entities[1]);
-    WORLD.entities[2].collision(&WORLD.entities[2]);
-    WORLD.entities[3].collision(&WORLD.entities[3]);
-    /*WORLD.entities[4].collision(&WORLD.entities[4]);
-    WORLD.entities[5].collision(&WORLD.entities[5]);*/
+#define COLLISION(i) WORLD.entities[i].collision(&WORLD.entities[i])
 
-
-   /* for (i8 id = 0; id < ENTITIES_ACTIVE_MAX; ++id)
-    {
-        WORLD.selectedEntity = &WORLD.entities[WORLD.entityIdxs[id]];
-        
-    }
-    print_signed_int(100, 50, WORLD.entityCount);*/
-
-    /*i8 overX = I8(CAMERA.position.x & (TILE_WIDTH - 1));
-    i8 overY = I8(CAMERA.position.y & (TILE_HEIGHT - 1));*/
-
+    COLLISION(0);
+    COLLISION(1);
+    COLLISION(2);
+    COLLISION(3);
+    
     v2i selectedTile;
-    i8 xMin = I8(CAMERA.position.x >> TILE_SCALE_BITS);
-    xMin -= 4;
+    i8 xMin = I8(CAMERA.position.x >> TILE_SCALE_BITS) - 4;
     selectedTile.x = xMin;
-    i8 yMin = I8(CAMERA.position.y >> TILE_SCALE_BITS);
-    yMin -= 4;
-    selectedTile.y = yMin + 8;
+    i8 yMin = I8(CAMERA.position.y >> TILE_SCALE_BITS) - 3;
+    selectedTile.y = yMin + 7;
     yMin = MAX8(0, yMin);
     selectedTile.y = MIN8(selectedTile.y, (WORLD_EXTENT - 1));
 
@@ -1446,16 +1434,15 @@ void world_progress(void)
     i8 startX = 0, deltaX = 0;
     i8 startY = 0, deltaY = 0;
 
-    tr = I8((I16(selectedTile.x) << TILE_SCALE_BITS) - CAMERA.position.x + TILE_WIDTH);
-    tl = tr - TILE_WIDTH;
+    const i8 firstTL = I8((I16(selectedTile.x) << TILE_SCALE_BITS) - CAMERA.position.x);
+    tl = firstTL;
+    tr = firstTL + TILE_WIDTH;
     tt = I8(CAMERA.position.y - (I16(selectedTile.y) << TILE_SCALE_BITS));
     tb = tt - TILE_HEIGHT;
 
-    i8 firstTL = tl;
-    i8 firstTR = tr;
-    //assert(tt < 0 && tb > 0)
-
-
+    //assert(!((tt > 0) && (tt > 0)));
+    /*monitor("TB", tb);
+    monitor("TT", tt);*/
 
     goto *jump[tile];
 
@@ -1565,7 +1552,7 @@ end:
         selectedTile.x = xMin; // Reset to start of row
         tile = *(tiles -= idxDelta);
         tl = firstTL;
-        tr = firstTR;
+        tr = firstTL + TILE_WIDTH;
         tb = tt;
         tt += TILE_HEIGHT;
         goto* jump[tile];
