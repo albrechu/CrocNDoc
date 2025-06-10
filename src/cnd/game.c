@@ -54,7 +54,7 @@ void game_create(void)
 	Vec_Joy_Mux_2_Y = 0;
     Vec_Text_Height = -20;
     Vec_Text_Width = 20;
-    g_stage = Stage_JumpWorld;
+    g_stage = Stage_Tutorial;
 }
 
 void game_soft_reset(void) 
@@ -128,7 +128,8 @@ void game_update_gameover(void)
     GAME.finTxtPos.x = Vec_Joy_1_X >> 1;
     GAME.finTxtPos.y = Vec_Joy_1_Y >> 1;
     beam_set_position(GAME.finTxtPos.y, GAME.finTxtPos.x);
-    Print_Str_d(-Vec_Text_Height, -60, "GAME OVER\x80");
+    //Print_Str_d(-Vec_Text_Height, -60, "GAME OVER\x80");
+    Draw_VLc((void* const)game_over);
     Vec_Text_Height >>= 1;
     Vec_Text_Width  >>= 1;
     if (Vec_Btn_State)
@@ -175,6 +176,17 @@ void game_update_play(void)
         beam_set_position(115, 100);
         Draw_VLc((void* const)heart);
     }
+
+    const u16 ticks     = ++WORLD.ticks;
+    WORLD.freq2   = I8(ticks & 1);
+    WORLD.freq16  = I8((ticks >> 4) & 1);
+    WORLD.freq8_8 = I8((ticks >> 3) & 7);
+
+#define COLLISION(i) WORLD.entities[i].collision(&WORLD.entities[i])
+    COLLISION(0);
+    COLLISION(1);
+    COLLISION(2);
+    COLLISION(3);
 
     world_progress();
 }

@@ -49,7 +49,7 @@ void routine_croc_gravitas_hit(entity e)
         }
 
         beam_set_position(0, 0);
-        Mov_Draw_VLc_a((void* const)(e->transform > 0 ? croc_idle_right : croc_idle_left)); // Draw body
+        Mov_Draw_VLc_a((void* const)(e->transform > 0 ? croc_idle_right_r : croc_idle_left_r)); // Draw body
         beam_set_position(10, 14 * e->transform - e->stopwatch * (e->transform << 1));
         //beam_set_position(10, e->velocity.x - e->stopwatch);
         Draw_VLc((void* const)cloud[e->stopwatch & 0x7]);
@@ -202,12 +202,14 @@ void routine_croc_gravitas_air(entity e)
         {
         case CharacterState_Idle: // Grab if one is close enough
         {
-            routine_player_grab();
-            if (e->isGrounded && e->stopwatch <= 0)
+            if (!routine_player_grab())
             {
-                e->isAttacking = true;
-                e->routine = routine_croc_hit;
-                e->stopwatch = 12;
+                if (e->isGrounded && e->stopwatch <= 0)
+                {
+                    e->isAttacking = true;
+                    e->routine     = routine_croc_gravitas_hit;
+                    e->stopwatch   = 12;
+                }
             }
         }
         break;
@@ -274,26 +276,26 @@ void routine_croc_gravitas_air(entity e)
     {
         if (e->transform & -128)
         {
-            Mov_Draw_VLc_a((void* const)croc_idle_left[WORLD.freq16]);
-            Mov_Draw_VLc_a((void* const)croc_arm[1]);
+            Mov_Draw_VLc_a((void* const)croc_idle_left_r[WORLD.freq16]);
+            //Mov_Draw_VLc_a((void* const)croc_arm[1]);
         }
         else
         {
-            Mov_Draw_VLc_a((void* const)croc_idle_right[WORLD.freq16]);
-            Mov_Draw_VLc_a((void* const)croc_arm[0]);
+            Mov_Draw_VLc_a((void* const)croc_idle_right_r[WORLD.freq16]);
+            //Mov_Draw_VLc_a((void* const)croc_arm[0]);
         }
     }
     else
     {
         if (e->transform & -128)
         {
-            Mov_Draw_VLc_a((void* const)croc_idle_left[0]);
-            Mov_Draw_VLc_a((void* const)croc_arm[1]);
+            Mov_Draw_VLc_a((void* const)croc_idle_left_r[0]);
+            //Mov_Draw_VLc_a((void* const)croc_arm[1]);
         }
         else
         {
-            Mov_Draw_VLc_a((void* const)croc_idle_right[0]);
-            Mov_Draw_VLc_a((void* const)croc_arm[0]);
+            Mov_Draw_VLc_a((void* const)croc_idle_right_r[0]);
+            //Mov_Draw_VLc_a((void* const)croc_arm[0]);
         }
     }
 }

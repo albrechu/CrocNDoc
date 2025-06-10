@@ -43,8 +43,10 @@ void* memset(void* dest, int val, long unsigned int len);
 
 force_inline void beam_set_position(const i8 y, const i8 x)
 {
-	Reset0Ref();
-	// dp_VIA_cntl      = 0xCC;
+	// Reset0Ref
+	VIA_cntl         = 0xCC;
+	VIA_shift_reg    = 0x00;
+
 	dp_VIA_t1_cnt_lo = 0x7F;
 	Moveto_d(y, x);
 }

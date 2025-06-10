@@ -18,6 +18,6 @@ void routine_halunke_follow(entity e)
         const i16 dy = CAMERA.position.y - e->position.y;
         if (dx < -2 || dx > 2)
             e->velocity.x = ((dx < 0) - (dx > 0)) << 1;
-        routine_enemy_collision(e, I8(dx), I8(dy), halunke_left, halunke_right);
+        routine_enemy_collision(e, I8(dx), I8(dy), halunke_left, halunke_right, Score_100);
     }
 }

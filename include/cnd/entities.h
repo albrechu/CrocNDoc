@@ -9,7 +9,7 @@
 /**
 * @brief General Player Functions
 */
-void routine_player_grab(void);
+bool routine_player_grab(void);
 void routine_player_throw(void);
 void routine_player_damage(void);
 void routine_player_changed_fluid(void);
@@ -89,7 +89,7 @@ void routine_bandit_stolen(entity e);
 /**
  * @brief Generic Enemy Functions
  */
-force_inline void routine_enemy_collision(entity e, const i8 dx, const i8 dy, const i8* meshLeft, const i8* meshRight)
+force_inline void routine_enemy_collision(entity e, const i8 dx, const i8 dy, const i8* meshLeft, const i8* meshRight, const u8 scoreAwarded)
 {
 	i8 localDy = I8(dy);
 	const i8 localDx = I8(dx);
@@ -107,6 +107,7 @@ force_inline void routine_enemy_collision(entity e, const i8 dx, const i8 dy, co
 		{
 			e->stopwatch = 10;
 			e->routine = routine_death1;
+			PLAYER.score += scoreAwarded;
 			CAMERA.velocity.y += Velocity_KillUpWind;
 			CAMERA.velocity.y = MIN8(CAMERA.velocity.y, Velocity_KillUpWind);
 			//GAME.explosion = &g_monsterPeng;

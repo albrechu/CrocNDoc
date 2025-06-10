@@ -22,8 +22,8 @@ void routine_bandit_stolen(entity e)
         const i8 dx8 = I8(dx);
         const i8 dy8 = I8(dy);
         if (dy >= 0)
-            routine_enemy_collision(e, dx8, dy8, spider_right_up, spider_left_up);
+            routine_enemy_collision(e, dx8, dy8, spider_right_up, spider_left_up, Score_200);
         else
-            routine_enemy_collision(e, dx8, dy8, spider_right_down, spider_left_down);
+            routine_enemy_collision(e, dx8, dy8, spider_right_down, spider_left_down, Score_200);
     }
 }

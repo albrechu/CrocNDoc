@@ -21,6 +21,6 @@ void routine_schuft_follow(entity e)
             e->velocity.x = ((dx < 0) - (dx > 0)) << 1;
             e->velocity.y = ((dy < 0) - (dy > 0)) << 1;
         }
-        routine_enemy_collision(e, I8(dx), I8(dy), schuft_left, schuft_right);
+        routine_enemy_collision(e, I8(dx), I8(dy), schuft_left, schuft_right, Score_200);
     }
 }

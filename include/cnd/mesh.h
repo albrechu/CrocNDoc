@@ -33,6 +33,8 @@
 
 extern const i8 croc_idle_right[][33];
 extern const i8 croc_idle_left[][33];
+extern const i8 croc_idle_left_r[][33];
+extern const i8 croc_idle_right_r[][33];
 extern const i8 croc_arm[2][15];
 extern const i8 portal[8][9];
 extern const i8 watertop[8][9];
@@ -74,4 +76,5 @@ extern const i8 gravitasDown[];
 extern const i8 spikesDown[];
 extern const i8 warning[];
 extern const i8 diamond[];
+extern const i8 game_over[];
 #endif /* MESH_H */

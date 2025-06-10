@@ -116,7 +116,7 @@ int main(int argc, const char* argv[])
         return 0;
     }
     
-    const char* file = "spark.frag"; // argv[1];
+    const char* file = "portal.frag"; // argv[1];
     int viewportX = 0, viewportY = 0, viewportW = 64, viewportH = 64;
 
     std::string content;

@@ -576,7 +576,7 @@ int main()
 		
 		window_draw();
 	}
-	// Im too lazy to clean up opengl stuff
+	// Im too lazy to clean up opengl stuff, but if the app crashes or theres a driver bug (memory leak), then just reboot at some point ;)
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();

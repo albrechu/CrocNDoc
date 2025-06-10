@@ -2,10 +2,12 @@
 # Croc & Doc
 This is Croc&Doc, a 2D platformer for the vector-based Vectrex gaming console.
 
-
 ## Build
-You can for example call `make` at root to compile and run the game. It just calls the batch file 
-with `make_c.bat` and `make_c.bat run`. You don't need make. The geany file, I have not tested.
+The game should be easy to build with the batch that were slightly changed. You can for example call `make` at root to compile 
+and run the game. It just calls the batch file with `make_c.bat` and `make_c.bat run`. You don't need make, but this would be 
+easier for testing without relying on geany. Note that the geany file was never tested, because I use Visual Studio as an editor 
+for development with a seperate terminal instance and Make to run the project. The root folder has to be inside the `projects` 
+folder as provided by the Vectrex course.
 
 ## Project Structure
 ### General Folder Structure
@@ -37,6 +39,13 @@ But the following diagram will still roughly map to how code interacts with each
              ├─ mesh.c 
              └─ levels.c # Contains all levels and their metadata (starting tile, entities, ...)
 </pre>
+The game works through a general entity type, which when created gets the appropriate procedure (behavior) function and a collision function, which 
+is a tile collision function. Collision is checked for the current tile, as well as potentially the tile in x- and one in y-direction depending on 
+the entities velocity. An entity (also the player) is always looked at as having a position in global (16-Bit) and in local space (visible). The 
+players local space position is fixed at (y=0, x=0). The player is also called `CAMERA` in the source because he is the anchor to other entities 
+local space. For bit width or performance reasons are other entities only drawn or updated if they are visible.
+The world is drawn in a N by N tile area around the player relying on 8-bit integer overflows. While it is bad practice, will it avoid some needless 
+clock cycles. 
 
 ## Build Tools
 To build the stage editor, you need cmake with version ≥3.14 and a c++ compiler that supports C++20. Then 

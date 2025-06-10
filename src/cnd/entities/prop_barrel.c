@@ -17,6 +17,7 @@ void routine_barrel_thrown(entity e)
     {
         e->stopwatch = 10;
         e->routine   = routine_death0;
+        PLAYER.score += Score_50;
     }
     else
     {

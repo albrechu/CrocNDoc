@@ -321,6 +321,14 @@ enum Stage_
 };
 typedef i8 Stage;
 
+enum Score_
+{
+    Score_50,
+    Score_100,
+    Score_200,
+    Score_500,
+};
+
 /////////////////////////////////////////////////////////////////////////
 //	Types
 //
@@ -330,29 +338,31 @@ typedef void (*normal_routine_t)(void);
 typedef void (*stage_routine_t)(Stage);
 struct entity_t
 {
-    const void* mesh;
-    routine_t routine;
-    routine_t collision;
-    v2l         position;
-    v2i         velocity;
-	v2i         tile;
-    v2i         tileCandidate;
-    i8          transform;  
-    EntityType  type;  
-    EntityState state;
-    bool        isLocal;
-    bool        isSameTile;
-    bool        isGrounded;
-    bool        isEnemy;
-    bool        isAttacking;
-    Material    substance;
-    idx_t       id;
-    idx_t       globalId;
+    const void* mesh;          // 0
+    routine_t   routine;       // 2
+    routine_t   collision;     // 4
+    v2l         position;      // 6
+    v2i         velocity;      // 10
+	v2i         tile;          // 12
+    v2i         tileCandidate; // 14
+    i8          transform;     // 16
+    EntityType  type;          // 17
+    EntityState state;         // 18
+    bool        isLocal;       // 19
+    bool        isSameTile;    // 20
+    bool        isGrounded;    // 21
+    bool        isEnemy;       // 22
+    bool        isAttacking;   // 23
+    Material    substance;     // 24
+    idx_t       id;            // 25
+    idx_t       globalId;      // 26
     // Animation
-    i8          stopwatch;
-    i8          invisiblityFrames;
-    i8          data[4];
+    i8          stopwatch;     // 27
+    i8          invisiblityFrames; // 28
+    i8          data[4]; // 29
+    // 33 + alignof(2) = 34
 };
+//static_assert(sizeof(entity_t) == 34);
 
 typedef struct player_t
 {
@@ -397,30 +407,31 @@ typedef struct level_t
 
 typedef struct world_t
 {
-    // Callbacks
-    routine_t        entityAdded;
-    stage_routine_t  stageEntered;
-    normal_routine_t playerDamage, playerChangedFluid;
-    // Entities
-    entity_t  entities[ENTITIES_ACTIVE_MAX];
-    idx_t     entityIdxs[ENTITIES_ACTIVE_MAX];
-    i8        entityCount;
-
-
-    last_sighting_t lastSeen[ENTITIES_MAX];
-    // State
-    bool gameIsOver;
-    bool tileFlags[4];
     // Stage information
-    const Tile*    tiles;
-    const level_t* level;
+    const Tile*    tiles; // 0
+    const level_t* level; // 2
+    // Callbacks
+    routine_t        entityAdded; // 4
+    stage_routine_t  stageEntered; // 6
+    normal_routine_t playerDamage; // 8
+    normal_routine_t playerChangedFluid; // 10
+    // Entities
+    entity_t        entities[ENTITIES_ACTIVE_MAX];  // 12
+    idx_t           entityIdxs[ENTITIES_ACTIVE_MAX]; // 148
+    last_sighting_t lastSeen[ENTITIES_MAX]; // 152
 
-    u8 ticks;
-    bool freq2;
-    bool freq8_8;
-    bool freq16;
+    // State
+    bool gameIsOver; // 156
+    bool tileFlags[4]; // 157
+    i8   entityCount; // 161
+
+    u8 ticks; // 162
+    bool freq2; // 163
+    bool freq8_8; // 164
+    bool freq16; // 165
     // Physics
-    i8 gravity;
+    i8 gravity; // 166
+    // 167 + padded = 168
 } world_t;
 
 #endif /* TYPES_H */

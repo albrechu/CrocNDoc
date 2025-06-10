@@ -10,7 +10,7 @@
 /////////////////////////////////////////////////////////////////////////
 //	Functions
 //
-void routine_player_grab(void)
+bool routine_player_grab(void)
 {
     for (idx_t pi = 1; pi < WORLD.entityCount; ++pi)
     {
@@ -34,10 +34,11 @@ void routine_player_grab(void)
                     WORLD.entities[WORLD.entityIdxs[pi]].id = pi;
                 }
                 CAMERA.isGrounded = false;
-                return;
+                return true;
             }
         }
     }
+    return false;
 }
 
 void routine_player_throw(void)

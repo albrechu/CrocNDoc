@@ -987,110 +987,32 @@ end:
 
 #else
 
-#define draw_top() \
-{ \
-    if (tt > tb) \
-    { \
-        if (tr > tl) \
-        { \
-            startX = tl; \
-            deltaX = TILE_WIDTH; \
-        } \
-        else \
-        { \
-            startX = -128; \
-            deltaX = I8(-128) - tr; \
-        } \
-        beam_set_position(tt, startX); \
-        Draw_Line_d(0, deltaX); \
-    }\
+force_inline void Draw_Line_d2(i8 a, i8 b)
+{
+    VIA_port_a = a;
+    VIA_port_b = 0;
+    // LEAX 2,X
+    //__asm__ volatile ("nop");
+    ++VIA_port_b;
+    VIA_port_a = b;
+    VIA_shift_reg = 0xFF; // Set solid line pattern
+    VIA_t1_cnt_hi = 0x00; // Set scale
+    while ((VIA_int_flags & 0x40) == 0) {} // Wait for Interrupt
+    //__asm__ volatile ("nop");
+    //VIA_shift_reg = 0x00;
+    Vec_Misc_Count = 0;
+    //if (!Vec_0Ref_Enable)
+    //{
+    //    // Reset0Ref
+    //    
+    //}
+
+    VIA_cntl = 0xCC;
+    VIA_shift_reg = 0x00; // Redundant
+    //Reset0Ref();
+    Reset_Pen();
 }
 
-#define draw_bottom() \
-{ \
-    if (tt > tb) \
-    { \
-        if (tr > tl) \
-        { \
-            startX = tl; \
-            deltaX = TILE_WIDTH; \
-        } \
-        else \
-        { \
-            startX = -128; \
-            deltaX = I8(-128) - tr; \
-        } \
-        beam_set_position(tb, startX); \
-        Draw_Line_d(0, deltaX); \
-    } \
-}
-
-#define draw_left() \
-{ \
-    if (tr > tl) \
-    { \
-        if (96 > (tt - TILE_HEIGHT)) \
-        { \
-            startY = I8(tt); \
-            deltaY = -TILE_HEIGHT; \
-        } \
-        else \
-        { \
-            startY = 127; \
-            deltaY = -(I8(-128) - tt); \
-        } \
-        beam_set_position(startY, I8(tl)); \
-        Draw_Line_d(deltaY, 0); \
-    } \
-}
-
-#define draw_right() \
-{ \
-    if (tr > tl) \
-    { \
-        if (96 > (tt - TILE_HEIGHT)) \
-        { \
-            startY = I8(tt); \
-            deltaY = -TILE_HEIGHT; \
-        } \
-        else \
-        { \
-            startY = 127; \
-            deltaY = tt - I8(-128); \
-        } \
-        beam_set_position(startY, I8(tr)); \
-        Draw_Line_d(deltaY, 0); \
-    } \
-}
-
-#define draw_middle_left_top() \
-{ \
-    if (tt > tb) \
-    { \
-        if (tr > tl) \
-        { \
-            startX = tl; \
-            deltaX = (TILE_WIDTH >> 1); \
-        } \
-        else \
-        { \
-            startX = -128; \
-            deltaX = I8(-128) - tr; \
-        } \
-        beam_set_position(tt, startX); \
-        Draw_Line_d(0, deltaX); \
-    } \
-} 
-
-
-#define draw_spikes() \
-{ \
-    if (tr > tl && tt > tb) \
-    { \
-        beam_set_position(tb, tl); \
-        Draw_VLc((void* const)spikes); \
-    } \
-}
 
 //#define draw_spikes() 
 //{ 
@@ -1140,220 +1062,9 @@ end:
 //    }
 //}
 
-#define draw_middle_left() \
-{ \
-    if (tr > tl) \
-    { \
-        i8 centerY = I8(U8(tt) - TILE_HEIGHT_2); \
-        if (tt > centerY) \
-        { \
-            startX = tl; \
-            deltaX = TILE_WIDTH_2; \
-            beam_set_position(centerY, startX); \
-            Draw_Line_d(0, deltaX); \
-        } \
-    } \
-}
-
-#define draw_middle_right() \
-{ \
-    i8 centerX = I8(U8(tl) + TILE_WIDTH_2); \
-    if (tr > centerX) \
-    { \
-        i8 centerY = I8(U8(tt) - TILE_HEIGHT_2); \
-        if (tt > centerY) \
-        { \
-            beam_set_position(centerY, centerX); \
-            Draw_Line_d(0, TILE_WIDTH_2); \
-        } \
-    }\
-}
-
-#define draw_middle() \
-{ \
-    i8 centerX = I8(U8(tl) + TILE_WIDTH_4); \
-    if (tr > centerX) \
-    { \
-        i8 centerY = I8(U8(tt) - TILE_HEIGHT_2); \
-        if (tt > centerY) \
-        { \
-            beam_set_position(centerY, centerX); \
-            Draw_Line_d(0, TILE_WIDTH_2); \
-        } \
-    }\
-}
-
-#define draw_middle_bottom() \
-{ \
-    i8 centerX = I8(U8(tl) + TILE_WIDTH_4); \
-    if (tr > centerX) \
-    { \
-        if (tt > tb) \
-        { \
-            beam_set_position(tb, centerX); \
-            Draw_Line_d(0, TILE_WIDTH_2); \
-        } \
-    }\
-}
-
-#define draw_middle_left_bottom() \
-{ \
-    if (tt > tb) \
-    { \
-        if (tr > tl) \
-        { \
-            startX = tl; \
-            deltaX = (TILE_WIDTH >> 1); \
-        } \
-        else  \
-        { \
-            startX = -128; \
-            deltaX = I8(-128) - tr; \
-        } \
-        beam_set_position(tb, startX); \
-        Draw_Line_d(0, deltaX); \
-    } \
-}
-
-#define draw_middle_right_top() \
-{ \
-    if (tt > tb) \
-    { \
-        if (tr > tl) \
-        { \
-            startX = tr - (TILE_WIDTH >> 1); \
-            deltaX = TILE_WIDTH >> 1; \
-        } \
-        else \
-        { \
-            startX = -128; \
-            deltaX = I8(-128) - tr; \
-        } \
-        beam_set_position(tt, startX); \
-        Draw_Line_d(0, deltaX); \
-    } \
-}
-
-#define draw_middle_top() \
-{ \
-    if (tt > tb) \
-    { \
-        if (tr > tl) \
-        { \
-            startX = tl + (TILE_WIDTH >> 2); \
-            deltaX = TILE_WIDTH >> 1; \
-        } \
-        else \
-        { \
-            startX = -128; \
-            deltaX = I8(-128) - tr; \
-        } \
-        beam_set_position(tt, startX); \
-        Draw_Line_d(0, deltaX); \
-    } \
-}
-
-#define draw_spiked_ball() \
-{ \
-    i8 centerY = tb + (TILE_HEIGHT >> 1); \
-    i8 centerX = tl + (TILE_WIDTH >> 1); \
-    if (centerY < tt && centerX < tr) \
-    { \
-        beam_set_position(centerY, centerX); \
-        Draw_VLc((void* const)spikedBall); \
-    } \
-}
-
-#define draw_jumper() \
-{ \
-    i8 x = tl + (TILE_WIDTH >> 2); \
-    if (tb < tt && x < tr) \
-    { \
-        beam_set_position(tb, x); \
-        Draw_VLc((void* const)jumper); \
-    } \
-}
-
-#define draw_barrier_vertical() \
-{ \
-    if (!TILE_FLAG(0) && tt > tb && tr > tl) \
-    { \
-        beam_set_position(tt, tr); \
-        Draw_VLc((void* const)barrierVertical); \
-    } \
-}
-
-#define draw_barrier_horizontal() \
-{ \
-    if (!TILE_FLAG(1) && tt > tb && tr > tl) \
-    { \
-        beam_set_position(tb, tr); \
-        Draw_VLc((void* const)barrierHorizontal); \
-    } \
-}
-
-#define draw_water_top() \
-{ \
-    if (tt > tb) \
-    { \
-        beam_set_position(tt, tl); \
-        Draw_VLc((void* const)watertop[WORLD.freq8_8]); \
-    } \
-}
-
-#define draw_portal() \
-{ \
-    i8 centerY = tb + (TILE_HEIGHT >> 1); \
-    i8 centerX = tl + (TILE_WIDTH >> 1); \
-    if (centerY < tt && centerX < tr) \
-    { \
-        beam_set_position(centerY, centerX); \
-        Draw_VLc((void* const)portal[WORLD.freq8_8]); \
-    } \
-}
-
-#define draw_gravitas_up() \
-{ \
-    if (tt > tb) \
-    { \
-        beam_set_position(tb, tl); \
-        Draw_VLc((void* const)gravitasUp); \
-    } \
-}
-
-#define draw_gravitas_down() \
-{ \
-    if (tt > tb) \
-    { \
-        beam_set_position(tt, tl); \
-        Draw_VLc((void* const)gravitasDown); \
-    } \
-}
-
-#define draw_spikes_down() \
-{ \
-    if (tt > tb) \
-    { \
-        beam_set_position(tt, tl); \
-        Draw_VLc((void* const)spikesDown); \
-    } \
-}
-
 
 void world_progress(void)
 {
-    u16 ticks = ++WORLD.ticks;
-    WORLD.freq2 = I8(ticks & 1);
-    WORLD.freq16 = I8((ticks >> 4) & 1);
-    WORLD.freq8_8 = I8((ticks >> 3) & 7);
-
-#define COLLISION(i) WORLD.entities[i].collision(&WORLD.entities[i])
-
-    COLLISION(0);
-    COLLISION(1);
-    COLLISION(2);
-    COLLISION(3);
-    
     v2i selectedTile;
     i8 xMin = I8(CAMERA.position.x >> TILE_SCALE_BITS) - 4;
     selectedTile.x = xMin;
@@ -1432,7 +1143,6 @@ void world_progress(void)
 
     i8 tt, tb, tl, tr;
     i8 startX = 0, deltaX = 0;
-    i8 startY = 0, deltaY = 0;
 
     const i8 firstTL = I8((I16(selectedTile.x) << TILE_SCALE_BITS) - CAMERA.position.x);
     tl = firstTL;
@@ -1447,97 +1157,256 @@ void world_progress(void)
     goto *jump[tile];
 
 LBL(Tile_Top):
-    draw_top();
+    if (tt > tb && tr > tl)
+    {
+        beam_set_position(tt, tl);
+        Draw_Line_d(0, TILE_WIDTH);
+    }
     goto end;
 LBL(Tile_TopLeft):
-    draw_top();
-    draw_left();
+    if (tt > tb && tr > tl)
+    {
+        beam_set_position(tt, tl);
+        Draw_Line_d(0, TILE_WIDTH);
+    }
+    if (tr > tl && (tt - TILE_HEIGHT) < 96)
+    {
+        beam_set_position(tt, tl);
+        Draw_Line_d(-TILE_HEIGHT, 0);
+    }
     goto end;
 LBL(Tile_TopRight):
-    draw_top();
-    draw_right();
+    if (tr > tl)
+    {
+        if (tt > tb)
+        {
+            beam_set_position(tt, tl);
+            Draw_Line_d(0, TILE_WIDTH);
+        }
+        if ((tt - TILE_HEIGHT) < 96)
+        {
+            beam_set_position(tt, tr);
+            Draw_Line_d(-TILE_HEIGHT, 0);
+        }
+    }
     goto end;
 LBL(Tile_Bottom):
-    draw_bottom();
+    if (tt > tb && tr > tl) 
+    {
+        beam_set_position(tb, tl); 
+        Draw_Line_d(0, TILE_WIDTH);
+    } 
     goto end;
 LBL(Tile_BottomLeft):
-    draw_bottom();
-    draw_left();
+    if (tr > tl)
+    {
+        if (tt > tb)
+        {
+            beam_set_position(tb, tl);
+            Draw_Line_d(0, TILE_WIDTH);
+        }
+        if ((tt - TILE_HEIGHT) < 96)
+        {
+            beam_set_position(tt, tl);
+            Draw_Line_d(-TILE_HEIGHT, 0);
+        }
+    }
     goto end;
 LBL(Tile_BottomRight):
-    draw_bottom();
-    draw_right();
+    if (tr > tl)
+    {
+        if (tt > tb)
+        {
+            beam_set_position(tb, tl);
+            Draw_Line_d(0, TILE_WIDTH);
+        }
+        if ((tt - TILE_HEIGHT) < 96)
+        {
+            beam_set_position(tt, tr);
+            Draw_Line_d(-TILE_HEIGHT, 0);
+        }
+    }
     goto end;
 LBL(Tile_Left):
-    draw_left();
+    if (tr > tl && (tt - TILE_HEIGHT) < 96) 
+    {
+        beam_set_position(tt, tl); 
+        Draw_Line_d(-TILE_HEIGHT, 0);
+    }
     goto end;
 LBL(Tile_Right):
-    draw_right();
+    if (tr > tl && (tt - TILE_HEIGHT) < 96) 
+    {
+        beam_set_position(tt, tr); 
+        Draw_Line_d(-TILE_HEIGHT, 0);
+    } 
     goto end;
 LBL(Tile_MiddleLeft):
-    draw_middle_left();
+    if (tr > tl) 
+    {
+        const i8 centerY = I8(U8(tt) - TILE_HEIGHT_2);
+        if (tt > centerY) 
+        {
+            beam_set_position(centerY, tl); 
+            Draw_Line_d2(0, TILE_WIDTH_2);
+        }
+    }
     goto end;
 LBL(Tile_MiddleRight):
-    draw_middle_right();
-    goto end;
-LBL(Tile_Middle):
-    draw_middle();
-    goto end;
-LBL(Tile_MiddleBottom) :
-    draw_middle_bottom();
-    goto end;
-LBL(Tile_MiddleRightTop) :
-    draw_middle_right_top();
-    goto end;
-LBL(Tile_MiddleTop) :
-    draw_middle_top();
-    goto end;
-LBL(Tile_MiddleLeftTop):
-    draw_middle_left_top();
-    goto end;
-LBL(Tile_Spikes):
-    draw_spikes();
-    goto end;
-LBL(Tile_SpikedBall):
-    draw_spiked_ball();
-    goto end;
-LBL(Tile_Jumper):
-    draw_jumper();
-    goto end;
-LBL(Tile_BarrierVertical):
-    draw_barrier_vertical();
-    goto end;
-LBL(Tile_BarrierHorizontal):
-    draw_barrier_horizontal();
-    goto end;
-LBL(Tile_WaterTop):
-    draw_water_top();
-    goto end;
-LBL(Tile_E0):
-if (WORLD.entityCount < ENTITIES_ACTIVE_MAX)
 {
-    tile -= Tile_E0;
-    last_sighting last = &WORLD.lastSeen[tile];
-    if (last->status == EntityStatus_Inactive)
-    {
-        last->status = EntityStatus_Active;
-        entity_create_named(tile, selectedTile);
+    const i8 centerX = I8(U8(tl) + TILE_WIDTH_2); 
+    if (tr > centerX) 
+    { 
+        const i8 centerY = I8(U8(tt) - TILE_HEIGHT_2); 
+        if (tt > centerY) 
+        { 
+            beam_set_position(centerY, centerX); 
+            Draw_Line_d2(0, TILE_WIDTH_2); 
+        } 
     }
 }
     goto end;
+LBL(Tile_Middle):
+{
+    const i8 centerX = I8(U8(tl) + TILE_WIDTH_4);
+    if (tr > centerX)
+    {
+        const i8 centerY = I8(U8(tt) - TILE_HEIGHT_2);
+        if (tt > centerY)
+        {
+            beam_set_position(centerY, centerX);
+            Draw_Line_d2(0, TILE_WIDTH_2);
+        }
+    }
+}
+    goto end;
+LBL(Tile_MiddleBottom) :
+{ 
+    const i8 centerX = I8(U8(tl) + TILE_WIDTH_4); 
+    if (tr > centerX && tt > tb) 
+    { 
+        beam_set_position(tb, centerX); 
+        Draw_Line_d2(0, TILE_WIDTH_2); 
+    }
+}
+    goto end;
+LBL(Tile_MiddleRightTop) :
+{ 
+    if (tt > tb && tr > tl) 
+    { 
+        beam_set_position(tt, tr - TILE_WIDTH_2); 
+        Draw_Line_d2(0, TILE_WIDTH_2); 
+    } 
+}
+    goto end;
+LBL(Tile_MiddleTop) :
+    if (tt > tb && tr > tl) 
+    {
+        beam_set_position(tt, tl + TILE_WIDTH_4); 
+        Draw_Line_d2(0, TILE_WIDTH_2);
+    } 
+    goto end;
+LBL(Tile_MiddleLeftTop):
+    if (tt > tb && tr > tl) 
+    {
+        beam_set_position(tt, tl); 
+        Draw_Line_d(0, TILE_WIDTH_2);
+    } 
+    goto end;
+LBL(Tile_Spikes):
+    if (tr > tl && tt > tb) 
+    {
+        beam_set_position(tb, tl); 
+        Draw_VLc((void* const)spikes);
+    } 
+    goto end;
+LBL(Tile_SpikedBall):
+{
+    const i8 centerY = tb + TILE_HEIGHT_2;
+    const i8 centerX = tl + TILE_WIDTH_2;
+    if (centerY < tt && centerX < tr)
+    {
+        beam_set_position(centerY, centerX);
+        Draw_VLc((void* const)spikedBall);
+    }
+}
+    goto end;
+LBL(Tile_Jumper):
+{
+    const i8 x = tl + TILE_WIDTH_4;
+    if (tb < tt && x < tr)
+    {
+        beam_set_position(tb, x);
+        Draw_VLc((void* const)jumper);
+    }
+}
+    goto end;
+LBL(Tile_BarrierVertical):
+    if (!WORLD.tileFlags[0] && tt > tb && tr > tl) 
+    {
+        beam_set_position(tt, tr); 
+        Draw_VLc((void* const)barrierVertical);
+    } 
+    goto end;
+LBL(Tile_BarrierHorizontal):
+    if (!WORLD.tileFlags[1] && tt > tb && tr > tl) 
+    {
+        beam_set_position(tb, tr); 
+        Draw_VLc((void* const)barrierHorizontal);
+    } 
+    goto end;
+LBL(Tile_WaterTop):
+    if (tt > tb) 
+    {
+        beam_set_position(tt, tl); 
+        Draw_VLc((void* const)watertop[WORLD.freq8_8]);
+    } 
+    goto end;
+LBL(Tile_E0):
+    if (WORLD.entityCount < ENTITIES_ACTIVE_MAX)
+    {
+        tile -= Tile_E0;
+        last_sighting last = &WORLD.lastSeen[tile];
+        if (last->status == EntityStatus_Inactive)
+        {
+            last->status = EntityStatus_Active;
+            entity_create_named(tile, selectedTile);
+        }
+    }
+    goto end;
 LBL(Tile_Portal0):
-    draw_portal();
+{ 
+    const i8 centerY = tb + TILE_HEIGHT_2;
+    const i8 centerX = tl + TILE_WIDTH_2;
+    if (centerY < tt && centerX < tr)
+    {
+        beam_set_position(centerY, centerX); 
+        Draw_VLc((void* const)portal[WORLD.freq8_8]);
+    }
+}
     goto end;
 LBL(Tile_GravitasUp):
-    draw_gravitas_up()
+    if (tt > tb) 
+    {
+        beam_set_position(tb, tl); 
+        Draw_VLc((void* const)gravitasUp);
+    }
     goto end;
 LBL(Tile_SpikesDown) :
-    draw_spikes_down();
+    if (tt > tb)
+    {
+        beam_set_position(tt, tl); 
+        Draw_VLc((void* const)spikesDown);
+    }
     goto end;
 LBL(Tile_Warning):
     goto end;
 LBL(Tile_GravitasDown):
-    draw_gravitas_down();
+    if (tt > tb)
+    {
+        beam_set_position(tt, tl); 
+        Draw_VLc((void* const)gravitasDown);
+    }
     goto end;
 end:
     if ((++selectedTile.x) < xMax)
