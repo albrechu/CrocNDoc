@@ -121,9 +121,11 @@ void game_set_gameover(void)
 
 void game_update_gameover(void)
 {
+
     Joy_Analog();
     Vec_Text_Height = -20;
     Vec_Text_Width  = 70;
+    dp_VIA_t1_cnt_lo = 0x80;
     
     GAME.finTxtPos.x = Vec_Joy_1_X >> 1;
     GAME.finTxtPos.y = Vec_Joy_1_Y >> 1;
@@ -157,6 +159,7 @@ void game_update_play(void)
     {
         WORLD.entities[i].routine(&WORLD.entities[i]);
     }*/
+    dp_VIA_t1_cnt_lo = 0x80;
 #if 1
     WORLD.entities[0].routine(&WORLD.entities[0]);
     // if (WORLD.freq2)
@@ -171,6 +174,7 @@ void game_update_play(void)
     }
 #endif
     
+
     if (!PLAYER.isOtherCharacterDead)
     {
         beam_set_position(115, 100);

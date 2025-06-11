@@ -77,4 +77,5 @@ extern const i8 spikesDown[];
 extern const i8 warning[];
 extern const i8 diamond[];
 extern const i8 game_over[];
+extern const i8 hole[];
 #endif /* MESH_H */

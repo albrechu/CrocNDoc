@@ -164,6 +164,10 @@ enum Tile_
 	Tile_Warning,
 	Tile_NA,
 	Tile_GravitasDown,
+	Tile_Hole0,
+	Tile_Hole1,
+	Tile_Hole2,
+	Tile_Hole3,
 	// <Add New Tiles Here>
 	Tile_Max,
 	// Wormhole
@@ -226,10 +230,10 @@ const char* tileStrings[] =
 	"Warning",
 	"NA",
 	"GravitasDown",
-	/*"Tile_Wormhole0",
-	"Tile_Wormhole1",
-	"Tile_Wormhole2",
-	"Tile_Wormhole3",*/
+	"Hole0",
+	"Hole1",
+	"Hole2",
+	"Hole3",
 };
 
 struct txt_t
@@ -1963,6 +1967,17 @@ void world_render_tile(Tile tile, i16 tileLeft, i16 tileRight, i16 tileTop, i16 
 	case Tile_GravitasDown:
 		beam_set_position(tileTop, tileLeft + (TILE_WIDTH >> 1));
 		Draw_VLc((void* const)gravitasDown);
+		break;
+	case Tile_Hole0:
+	case Tile_Hole1:
+	case Tile_Hole2:
+	case Tile_Hole3:
+		{
+			int tileCenterY = tileTop - (TILE_HEIGHT >> 1);
+			int tileCenterX = tileLeft + (TILE_WIDTH >> 1);
+			beam_set_position((tileCenterY), (tileCenterX));
+			Draw_VLc((void* const)hole);
+		}
 		break;
 	default:
 		break;

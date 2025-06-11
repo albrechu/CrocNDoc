@@ -284,6 +284,10 @@ enum Tile_
     Tile_Warning,
     Tile_NA,
     Tile_GravitasDown,
+    Tile_Hole0,
+    Tile_Hole1,
+    Tile_Hole2,
+    Tile_Hole3,
     // <Add New Tiles Here>
     Tile_Max,
     // Wormhole

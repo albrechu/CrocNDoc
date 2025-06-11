@@ -45,10 +45,18 @@ force_inline void beam_set_position(const i8 y, const i8 x)
 {
 	// Reset0Ref
 	VIA_cntl         = 0xCC;
-	VIA_shift_reg    = 0x00;
+	//VIA_shift_reg    = 0x01;
 
-	dp_VIA_t1_cnt_lo = 0x7F;
-	Moveto_d(y, x);
+	/*dp_VIA_t1_cnt_lo = 0x7F;*/
+	/*Moveto_d(y, x);*/
+	VIA_port_a    = y;		   // y pos to dac
+	VIA_cntl      = 0xCE; // disable zero, disable all blank
+	VIA_port_b    = 0;		   // mux enable, dac to -> integrator y (and x)
+	VIA_shift_reg = 0;		   // all output is BLANK
+	VIA_port_b++;			   // mux disable, dac only to x
+	VIA_port_a = x;			   // dac -> x
+	VIA_t1_cnt_hi = 0;		   // start timer
+	while ((VIA_int_flags & 0x40) == 0); // wait till timer finishes
 }
 
 //force_inline bool is_local(v2l const x)
@@ -60,7 +68,7 @@ force_inline void beam_set_position(const i8 y, const i8 x)
 //{
 //    return !is_local(x);
 //}
-force_inline u8 manhattan(i8 const a, i8 const b)
+u8 manhattan(i8 const a, i8 const b)
 {
     const i8 aMask = a >> 7;
     const i8 bMask = b >> 7;

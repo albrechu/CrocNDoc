@@ -22,7 +22,7 @@ set ENABLE_PREPROCESSING=no
 set ENABLE_C_DEBUGGING=yes
 set ENABLE_C_OPTIMIZATION=yes
 set ENABLE_ASSEMBLY_OPTIMIZATION=yes
-set C_OPTIMIZATION_LEVEL=-O3
+set C_OPTIMIZATION_LEVEL=-O2
 
 @REM ---------------------------------------------------------------------------------------------
 @REM chose emulator
@@ -78,7 +78,7 @@ if [%ENABLE_C_DEBUGGING%]==[no] (
 set GCC_FLAGS_GENERAL=-quiet -fno-time-report
 set GCC_FLAGS_6809=-fomit-frame-pointer -fno-toplevel-reorder -mint8 -msoft-reg-count=0 -funit-at-a-time
 set GCC_FLAGS_OPTIMIZE=-fno-ipa-reference -ftree-ter -fno-gcse
-set GCC_FLAGS_WARN=-W -Wall -Wextra -Wlogical-op -Wdisabled-optimization -Wmissing-noreturn -Wpadded -Wredundant-decls -Winline  -Wstrict-overflow=5 -Wconversion -Winit-self -Wswitch-default -Wswitch-enum -Wno-error=switch -Wstrict-aliasing=0 
+set GCC_FLAGS_WARN=-W -Wall -Wextra -Wlogical-op -Werror -Wdisabled-optimization -Wmissing-noreturn -Wpadded -Wredundant-decls -Winline  -Wstrict-overflow=5 -Wconversion -Winit-self -Wswitch-default -Wswitch-enum -Wno-error=switch -Wstrict-aliasing=0 
 set GCC_FLAGS= %GCC_FLAGS_GENERAL% %GCC_FLAGS_C% %GCC_FLAGS_6809% %GCC_FLAGS_WARN% %GCC_FLAGS_OPTIMIZE% 
 
 set GCC_INC= -I .\include -I %GCC_PATH%\vectrex\include\system -I %GCC_PATH%\vectrex\include\lib -I .\src -I .\src\lib

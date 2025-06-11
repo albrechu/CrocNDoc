@@ -18,7 +18,7 @@ detect_indent_width=false
 indent_mode=2
 
 [project]
-name=CrocNDoc
+name=crocndoc
 base_path=.\\
 description=
 file_patterns=*.c;*.h;*.vl;*.bat;*.cc;
@@ -28,7 +28,7 @@ long_line_behaviour=1
 long_line_column=72
 
 [files]
-current_page=-1
+current_page=0
 
 [build-menu]
 EX_00_LB=_Execute

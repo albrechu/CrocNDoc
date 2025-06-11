@@ -117,6 +117,10 @@ void check_tiles(entity e)
         &&LBL(Tile_Warning),
         &&end,
         &&LBL(Tile_GravitasDown),
+        &&LBL(Tile_Hole0),
+        &&LBL(Tile_Hole0),
+        &&LBL(Tile_Hole0),
+        &&LBL(Tile_Hole0),
     };
     
     void* next = &&horizontal;
@@ -175,7 +179,7 @@ adjust: // Adjust position and flags if necessary
     e->isLocal = dx < 4 && dy < 4;
     if (!e->isLocal)
     {
-        if (dx >= 6 || dy >= 6) // Possibly remove entity if too far away
+        if (dx >= 5 || dy >= 5) // Possibly remove entity if too far away
         {
             entity_set_status(e, EntityStatus_Inactive);
         }
@@ -442,6 +446,40 @@ LBL(Tile_GravitasDown):
         WORLD.gravity = 1;
     }
     goto *next;
+LBL(Tile_Hole0):
+{
+    i8 nextX = relative_x(e) + e->velocity.x;
+    i8 nextY = relative_y(e) + e->velocity.y;
+    if ((nextX >= ((TILE_WIDTH >> 2) + (TILE_WIDTH >> 3)) && nextX <= TILE_WIDTH - ((TILE_WIDTH >> 2) + (TILE_WIDTH >> 3))) ||
+        (nextY >= ((TILE_HEIGHT >> 2) + (TILE_HEIGHT >> 3)) && nextY <= TILE_HEIGHT - ((TILE_HEIGHT >> 2) + (TILE_HEIGHT >> 3))))
+    {
+        Tile const* it = WORLD.tiles;
+        if ((tile & 1) == 0)
+            ++tile;
+        else
+            --tile;
+
+        for (u16 i = 0; i < I16(WORLD_STRIDE) * I16(WORLD_EXTENT); ++i, ++it)
+        {
+            Tile t = *it;
+            if (t == tile)
+            {
+                e->tile.x     = I8(U8(i % U16(WORLD_STRIDE)));
+                e->tile.y     = I8(U8(i / U16(WORLD_STRIDE)) + 1u);
+                e->position.y = (I16(e->tile.y) << TILE_SCALE_BITS);
+                e->position.x = (I16(e->tile.x) << TILE_SCALE_BITS) + (TILE_WIDTH >> 1);
+                e->velocity.x = 0;
+                e->velocity.y = 0;
+                goto adjust;
+            }
+            //DP_to_C8();
+            //Wait_Recal(); // Synchronize to frame
+            //Do_Sound();
+            //world_progress();
+        }
+    }
+}
+    goto* next;
 end:
     goto *next;
 }
@@ -1066,11 +1104,11 @@ force_inline void Draw_Line_d2(i8 a, i8 b)
 void world_progress(void)
 {
     v2i selectedTile;
-    i8 xMin = I8(CAMERA.position.x >> TILE_SCALE_BITS) - 4;
+    i8 xMin        = I8(CAMERA.position.x >> TILE_SCALE_BITS) - 4;
     selectedTile.x = xMin;
-    i8 yMin = I8(CAMERA.position.y >> TILE_SCALE_BITS) - 3;
+    i8 yMin        = I8(CAMERA.position.y >> TILE_SCALE_BITS) - 3;
     selectedTile.y = yMin + 7;
-    yMin = MAX8(0, yMin);
+    yMin           = MAX8(0, yMin);
     selectedTile.y = MIN8(selectedTile.y, (WORLD_EXTENT - 1));
 
     xMin = MAX8(0, xMin);
@@ -1134,6 +1172,10 @@ void world_progress(void)
         &&end,
         &&end,
         &&LBL(Tile_GravitasDown),
+        &&LBL(Tile_Hole0),
+        &&LBL(Tile_Hole0),
+        &&LBL(Tile_Hole0),
+        &&LBL(Tile_Hole0),
     };
 
     i8 idxDelta = (1 << STRIDE_BITS) + (xMax - xMin) - 1;
@@ -1142,7 +1184,6 @@ void world_progress(void)
     Tile tile = *tiles;
 
     i8 tt, tb, tl, tr;
-    i8 startX = 0, deltaX = 0;
 
     const i8 firstTL = I8((I16(selectedTile.x) << TILE_SCALE_BITS) - CAMERA.position.x);
     tl = firstTL;
@@ -1160,85 +1201,67 @@ LBL(Tile_Top):
     if (tt > tb && tr > tl)
     {
         beam_set_position(tt, tl);
-        Draw_Line_d(0, TILE_WIDTH);
+        Draw_Line_d2(0, TILE_WIDTH);
     }
     goto end;
 LBL(Tile_TopLeft):
     if (tt > tb && tr > tl)
     {
         beam_set_position(tt, tl);
-        Draw_Line_d(0, TILE_WIDTH);
+        Draw_Line_d2(0, TILE_WIDTH);
     }
-    if (tr > tl && (tt - TILE_HEIGHT) < 96)
+    if (tr > tl && tt > tb)
     {
         beam_set_position(tt, tl);
-        Draw_Line_d(-TILE_HEIGHT, 0);
+        Draw_Line_d2(-TILE_HEIGHT, 0);
     }
     goto end;
 LBL(Tile_TopRight):
-    if (tr > tl)
+    if (tr > tl && tt > tb)
     {
-        if (tt > tb)
-        {
-            beam_set_position(tt, tl);
-            Draw_Line_d(0, TILE_WIDTH);
-        }
-        if ((tt - TILE_HEIGHT) < 96)
-        {
-            beam_set_position(tt, tr);
-            Draw_Line_d(-TILE_HEIGHT, 0);
-        }
+        beam_set_position(tt, tl);
+        Draw_Line_d2(0, TILE_WIDTH);
+        beam_set_position(tt, tr);
+        Draw_Line_d2(-TILE_HEIGHT, 0);
     }
     goto end;
 LBL(Tile_Bottom):
     if (tt > tb && tr > tl) 
     {
         beam_set_position(tb, tl); 
-        Draw_Line_d(0, TILE_WIDTH);
+        Draw_Line_d2(0, TILE_WIDTH);
     } 
     goto end;
 LBL(Tile_BottomLeft):
-    if (tr > tl)
+    if (tr > tl && tt > tb)
     {
-        if (tt > tb)
-        {
-            beam_set_position(tb, tl);
-            Draw_Line_d(0, TILE_WIDTH);
-        }
-        if ((tt - TILE_HEIGHT) < 96)
-        {
-            beam_set_position(tt, tl);
-            Draw_Line_d(-TILE_HEIGHT, 0);
-        }
+        beam_set_position(tb, tl);
+        Draw_Line_d2(0, TILE_WIDTH);
+        beam_set_position(tt, tl);
+        Draw_Line_d2(-TILE_HEIGHT, 0);
     }
     goto end;
 LBL(Tile_BottomRight):
-    if (tr > tl)
+    if (tr > tl && tt > tb)
     {
-        if (tt > tb)
-        {
-            beam_set_position(tb, tl);
-            Draw_Line_d(0, TILE_WIDTH);
-        }
-        if ((tt - TILE_HEIGHT) < 96)
-        {
-            beam_set_position(tt, tr);
-            Draw_Line_d(-TILE_HEIGHT, 0);
-        }
+        beam_set_position(tb, tl);
+        Draw_Line_d2(0, TILE_WIDTH);
+        beam_set_position(tt, tr);
+        Draw_Line_d2(-TILE_HEIGHT, 0);
     }
     goto end;
 LBL(Tile_Left):
-    if (tr > tl && (tt - TILE_HEIGHT) < 96) 
+    if (tr > tl && tt > tb) 
     {
         beam_set_position(tt, tl); 
-        Draw_Line_d(-TILE_HEIGHT, 0);
+        Draw_Line_d2(-TILE_HEIGHT, 0);
     }
     goto end;
 LBL(Tile_Right):
-    if (tr > tl && (tt - TILE_HEIGHT) < 96) 
+    if (tr > tl && tt > tb) 
     {
         beam_set_position(tt, tr); 
-        Draw_Line_d(-TILE_HEIGHT, 0);
+        Draw_Line_d2(-TILE_HEIGHT, 0);
     } 
     goto end;
 LBL(Tile_MiddleLeft):
@@ -1291,13 +1314,11 @@ LBL(Tile_MiddleBottom) :
 }
     goto end;
 LBL(Tile_MiddleRightTop) :
-{ 
     if (tt > tb && tr > tl) 
     { 
         beam_set_position(tt, tr - TILE_WIDTH_2); 
         Draw_Line_d2(0, TILE_WIDTH_2); 
     } 
-}
     goto end;
 LBL(Tile_MiddleTop) :
     if (tt > tb && tr > tl) 
@@ -1408,6 +1429,14 @@ LBL(Tile_GravitasDown):
         Draw_VLc((void* const)gravitasDown);
     }
     goto end;
+LBL(Tile_Hole0):
+{
+    if (tt > tb && tr > tl)
+    {
+        beam_set_position(tb + TILE_HEIGHT_2, tl + TILE_WIDTH_2);
+        Draw_VLc((void* const)hole);
+    }
+}
 end:
     if ((++selectedTile.x) < xMax)
     {
