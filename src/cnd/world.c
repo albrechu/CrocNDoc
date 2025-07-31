@@ -522,10 +522,6 @@ LBL(Tile_Hole0):
                 e->velocity.y = 0;
                 goto adjust;
             }
-            //DP_to_C8();
-            //Wait_Recal(); // Synchronize to frame
-            //Do_Sound();
-            //world_progress();
         }
     }
 }
@@ -541,7 +537,7 @@ void world_next()
     {
     case WorldState_Update:
     {
-        entity e = WORLD.entities + WORLD.entitySelected++;
+        entity e = WORLD.entities + WORLD.entityIdxs[WORLD.entitySelected++];
         e->update(e);
         if (WORLD.entitySelected >= WORLD.entityCount)
         {
@@ -551,7 +547,7 @@ void world_next()
     }
         break;
     case WorldState_CollisionDetection:
-        check_tiles(WORLD.entities + WORLD.entitySelected++);
+        check_tiles(WORLD.entities + WORLD.entityIdxs[WORLD.entitySelected++]);
         if (WORLD.entitySelected >= WORLD.entityCount)
         {
             WORLD.worldState     = WorldState_Next;
@@ -569,7 +565,7 @@ void Draw_Line_d2(i8 a, i8 b)
     VIA_port_a = a;
     VIA_port_b = 0;
     // LEAX 2,X
-    //__asm__ volatile ("nop");
+    __asm__ volatile ("nop");
     ++VIA_port_b;
     VIA_port_a = b;
     VIA_shift_reg = 0xFF; // Set solid line pattern
@@ -578,7 +574,7 @@ void Draw_Line_d2(i8 a, i8 b)
     world_next();
     while ((VIA_int_flags & 0x40) == 0) {} // Wait for Interrupt
 
-    //__asm__ volatile ("nop");
+    __asm__ volatile ("nop");
     VIA_shift_reg = 0x00;
     Vec_Misc_Count = 0;
     //if (!Vec_0Ref_Enable)
@@ -587,60 +583,10 @@ void Draw_Line_d2(i8 a, i8 b)
     //    
     //}
 
-    VIA_cntl = 0xCC;
-    VIA_shift_reg = 0x00; // Redundant
+    reset_0_ref();
     //Reset0Ref();
     Reset_Pen();
 }
-
-
-//#define draw_spikes() 
-//{ 
-//    i8 clippedTL = I8(U8(tr) - TILE_WIDTH_3_4); 
-//    if (tr > clippedTL) 
-//    { 
-//        i8 clippedTB = I8(U8(tt) - TILE_HEIGHT); 
-//        if (tt > clippedTB) 
-//        { 
-//            startX = tl; 
-//            deltaX = TILE_WIDTH_4; 
-//            startY = tb; 
-//            deltaY = TILE_HEIGHT; 
-//        } 
-//        else 
-//        { 
-//            clippedTB += I8(-128); 
-//            deltaY = TILE_HEIGHT + clippedTB; 
-//            startY = I8(-128); 
-//            clippedTB >>= 2; 
-//            deltaX = TILE_WIDTH_4 + clippedTB; 
-//            startX = tl - clippedTB; 
-//        } 
-//        beam_set_position(startY, startX); 
-//        draw_line(deltaY, deltaX); 
-//        Draw_VLc((void* const)spikes); 
-//    } 
-//    else 
-//    {
-//        i8 clippedTB = I8(U8(tt) - TILE_HEIGHT);
-//        if (tt > clippedTB)
-//        {
-//            clippedTL += I8(-128);
-//            startX = -128;
-//            deltaX = tr - clippedTL;
-//            clippedTL >>= 2;
-//            startY = tb - clippedTL;
-//            deltaY = TILE_HEIGHT + clippedTL;
-//        }
-//        else 
-//        {
-//            
-//        }
-//        beam_set_position(startY, startX);
-//        draw_line(deltaY, deltaX);
-//        Draw_VLc((void* const)spikes);
-//    }
-//}
 
 void world_freeze(void)
 {
@@ -939,7 +885,6 @@ LBL(Tile_E0):
     {
         tile -= Tile_E0;
         last_sighting last = &WORLD.lastSeen[tile];
-        print_signed_int(tt, tl, last->status);
         if (last->status == EntityStatus_Inactive)
         {
             last->status = EntityStatus_Active;
@@ -1030,6 +975,7 @@ void world_create(Stage const stage)
         WORLD.entities[idx].id       = idx;
         WORLD.entities[idx].globalId = ID_INVALID;
         WORLD.entities[idx].update   = update_stub;
+        WORLD.entities[idx].kill     = update_stub;
         WORLD.entityIdxs[idx]        = idx;
     }
 
@@ -1037,6 +983,6 @@ void world_create(Stage const stage)
     CAMERA.tile.x     = WORLD.level->startingTile.x;
     CAMERA.position.y = (I16(CAMERA.tile.y) << TILE_SCALE_BITS)  - (TILE_HEIGHT >> 1);
     CAMERA.position.x = (I16(CAMERA.tile.x) << TILE_SCALE_BITS)  + (TILE_WIDTH  >> 1);
-    CAMERA.id         =  0; // Player is always at 0
+    CAMERA.id         =  ID_CAMERA; // Player is always at 0
     CAMERA.globalId   = ID_INVALID; // Player does not have an id
 }

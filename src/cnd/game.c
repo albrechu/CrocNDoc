@@ -58,9 +58,9 @@ void game_soft_reset(void)
     Vec_Text_Width  = 20;
 
 	MEMZERO(GAME);
-    GAME.stage = Stage_JumpWorld;
+    GAME.stage = Stage_Tutorial;
     PLAYER.lives = 3;
-    //game_remove_live();
+    
     prefab_croc_prepare(&WORLD.entities[1]);
     GAME.ticksUntilNewGame = GAMEOVER_PRESSED_SPEED;
     GAME.progress          = game_update_prepare;

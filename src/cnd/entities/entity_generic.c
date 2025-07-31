@@ -52,7 +52,7 @@ void update_stub(entity e)
 
 void entity_set_status(entity e, EntityStatus status)
 {
-    if (e->globalId > ID_INVALID) // Is named entity
+    if (e->globalId >= 0) // Is named entity
     {
         WORLD.lastSeen[e->globalId].status = status;
     } // else Entity is unknown, so just destroy it. (e.g. projectiles)

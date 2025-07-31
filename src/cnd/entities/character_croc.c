@@ -249,7 +249,7 @@ void update_croc_prepare(entity e)
 void prefab_croc(entity e)
 {
     e->update       = update_croc_air;
-    e->kill         = update_kill;
+    e->kill         = update_stub;
     e->inLocalSpace = true;
     e->type         = Character_Croc;
     e->state        = CharacterState_Idle;
