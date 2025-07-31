@@ -22,20 +22,22 @@
  * SOFTWARE.
  */
 
-#ifndef MESH_H
-#define MESH_H
+#pragma once
 
 /////////////////////////////////////////////////////////////////////////
 //	Includes
 //
 #include <cnd/types.h>
-#include <cnd/defines.h>
 
-extern const i8 croc_idle_right[][33];
-extern const i8 croc_idle_left[][33];
-extern const i8 croc_idle_left_r[][33];
-extern const i8 croc_idle_right_r[][33];
+/////////////////////////////////////////////////////////////////////////
+//	Data
+//
+extern const i8 croc_idle_right[][31];
+extern const i8 croc_idle_left[][31];
+extern const i8 croc_idle_left_r[][31];
+extern const i8 croc_idle_right_r[][31];
 extern const i8 croc_arm[2][15];
+extern const i8 croc_arm_r[2][15];
 extern const i8 portal[8][9];
 extern const i8 watertop[8][9];
 extern const i8 cloud[8][17];
@@ -44,8 +46,10 @@ extern const i8 spikedBall[];
 extern const i8 jumper[];
 extern const i8 barrierVertical [];
 extern const i8 barrierHorizontal[];
-extern const i8 doc_idle_right[][35];
-extern const i8 doc_idle_left[][35];
+extern const i8 doc_idle_right[][33];
+extern const i8 doc_idle_left[][33];
+extern const i8 doc_idle_right_r[][33];
+extern const i8 doc_idle_left_r[][33];
 extern const i8 mantis_right[];
 extern const i8 mantis_left[];
 extern const i8 barrel_left[];
@@ -61,16 +65,18 @@ extern const i8 spider_left_up[];
 extern const i8 spider_right_up[];
 extern const i8 spider_left_down[];
 extern const i8 spider_right_down[];
-extern const i8 explosion[][33];
-extern const i8 explosion2[][15];
+extern const i8 explosion[8][33];
+extern const i8 explosion2[8][15];
 extern const i8 gauner_left[][33];
 extern const i8 gauner_right[][33];
 extern const i8 tunichtgut[];
 extern const i8 schelm[];
 extern const i8 marvin[];
 extern const i8 heart[];
-extern const i8 doc_glide_left[][35];
-extern const i8 doc_glide_right[][35];
+extern const i8 doc_glide_left[][33];
+extern const i8 doc_glide_right[][33];
+extern const i8 doc_glide_left_r[][33];
+extern const i8 doc_glide_right_r[][33];
 extern const i8 gravitasUp[];
 extern const i8 gravitasDown[];
 extern const i8 spikesDown[];
@@ -78,4 +84,3 @@ extern const i8 warning[];
 extern const i8 diamond[];
 extern const i8 game_over[];
 extern const i8 hole[];
-#endif /* MESH_H */

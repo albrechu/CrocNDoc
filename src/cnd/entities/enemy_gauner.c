@@ -1,22 +1,23 @@
 /////////////////////////////////////////////////////////////////////////
 //	Includes
 //
-#include <cnd/world.h>
 #include <cnd/entities.h>
+#include <cnd/world.h>
 #include <cnd/globals.h>
 #include <cnd/mesh.h>
 #include <cnd/xutils.h>
+#include <cnd/draw_queue.h>
 
 /////////////////////////////////////////////////////////////////////////
 //	Functions
 //
-void routine_gauner_watching(entity e)
+void update_gauner(entity e)
 {
-    if (e->isLocal)
+    if (e->inLocalSpace)
     {
-        if (--e->stopwatch < 0)
+        if (--e->data[0] < 0)
         {
-            e->stopwatch = 70;
+            e->data[0] = 70;
             if (e->isAttacking)
             {
                 e->velocity.y += Velocity_Jump;
@@ -35,8 +36,8 @@ void routine_gauner_watching(entity e)
         {
             i8 localDx = (i8)dx;
             i8 localDy = (i8)dy;
-            beam_set_position(localDy, localDx);
-            Draw_VLc((void* const)(localDx >= 0 ? gauner_left : gauner_right)[WORLD.freq16]);
+            draw_queue_push((localDx >= 0 ? gauner_left : gauner_right)[WORLD.freq16], localDy, localDx);
+
             if (manhattan(localDy, localDx) < 0x15)
             {
                 const i8 localDyMask = localDy >> 7;
@@ -46,19 +47,25 @@ void routine_gauner_watching(entity e)
 
                 if (localDy > localDxAbs)
                 {
-                    e->stopwatch = 10;
-                    e->routine = routine_death1;
+                    e->update = update_death;
                     CAMERA.velocity.y += Velocity_KillUpWind;
                 }
                 else if (CAMERA.isAttacking && (e->velocity.x ^ localDx) < 0)
                 {
-
+                    e->update = update_death;
                 }
                 else
                 {
-                    WORLD.playerDamage();
+                    character_damage();
                 }
             }
         }
     }
+}
+
+void prefab_gauner(entity e)
+{
+    e->update = update_gauner;
+    e->kill   = update_kill;
+    entity_set_animation(e, explosion, ELEMENT_SIZE(explosion), ARRAY_SIZE(explosion));
 }

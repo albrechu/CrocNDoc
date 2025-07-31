@@ -1,22 +1,29 @@
 /////////////////////////////////////////////////////////////////////////
 //	Includes
 //
-#include <cnd/world.h>
 #include <cnd/entities.h>
+#include <cnd/world.h>
 #include <cnd/globals.h>
 #include <cnd/mesh.h>
 #include <cnd/xutils.h>
+#include <cnd/draw_queue.h>
 
 /////////////////////////////////////////////////////////////////////////
 //	Functions
 //
-void routine_tunichtgut_boom(entity e)
+void update_tunichtgut(entity e)
 {
-	if (e->isLocal)
+	if (e->inLocalSpace)
     {
         i8 dy = I8(CAMERA.position.y - e->position.y);
         i8 dx = I8(e->position.x - CAMERA.position.x);
-        beam_set_position(dy, dx);
-        Draw_VLc((void* const)tunichtgut);
+        draw_queue_push(tunichtgut, dy, dx);
     }
+}
+
+void prefab_tunichtgut(entity e)
+{
+    e->update = update_tunichtgut;
+    e->kill   = update_kill;
+    entity_set_animation(e, explosion, ELEMENT_SIZE(explosion), ARRAY_SIZE(explosion));
 }

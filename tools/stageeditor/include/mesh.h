@@ -285,7 +285,7 @@ const i8 warning[15] =
 };
 
 
-const i8 const halunke[] =
+const i8 halunke[] =
 {
 	LENGTH(10),
 	0, -4,
@@ -300,7 +300,7 @@ const i8 const halunke[] =
 	0, -12,
 };
 
-const i8 const portal[8][17] =
+const i8 portal[8][17] =
 {
 	{
 		LENGTH(8),
@@ -392,7 +392,7 @@ const i8 const portal[8][17] =
 	},
 };
 
-const i8 const watertop[8][17] =
+const i8 watertop[8][17] =
 {
 	{
 		LENGTH(8),
@@ -484,7 +484,7 @@ const i8 const watertop[8][17] =
 	},
 };
 
-const i8 const cloud[8][17] =
+const i8 cloud[8][17] =
 {
 	{
 		LENGTH(8),
@@ -577,7 +577,7 @@ const i8 const cloud[8][17] =
 };
 
 
-const i8 const spikedBall[] =
+const i8 spikedBall[] =
 {
 	LENGTH(8),
 	2,   4,
@@ -627,4 +627,14 @@ const i8 hole[13] =
 	-11, -6,
 	0, -11,
 	11, -5,
+};
+
+const i8 diamond[11] =
+{
+	LENGTH(5),
+	7, 6,
+	5, -3,
+	0, -6,
+	-5, -3,
+	-7, 6,
 };

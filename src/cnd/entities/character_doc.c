@@ -6,38 +6,161 @@
 #include <cnd/globals.h>
 #include <cnd/xutils.h>
 #include <cnd/mesh.h>
+#include <cnd/draw_queue.h>
 
 /////////////////////////////////////////////////////////////////////////
 //	Functions
 //
-void routine_doc_air(entity e)
+void doc_draw_default(entity e)
+{
+    if (e->velocity.x)
+    {
+        i8 ad = (WORLD.freq16 << 1);
+        if (e->transform < 0)
+        {
+            draw_queue_push(doc_idle_left[WORLD.freq16], 0, -3);
+            WORLD.eyePosition = (v2i){ 12 - ad, -6 - ad };
+        }
+        else
+        {
+            draw_queue_push(doc_idle_right[WORLD.freq16], 0, 3);
+            WORLD.eyePosition = (v2i){ 12 - ad, 6 + ad };
+        }
+    }
+    else
+    {
+        if (e->transform < 0)
+        {
+            draw_queue_push(doc_idle_left[0], 0, -3);
+            WORLD.eyePosition = (v2i){ 12, -6 };
+        }
+        else
+        {
+            draw_queue_push(doc_idle_right[0], 0, 3);
+            WORLD.eyePosition = (v2i){ 12, 6 };
+        }
+    }
+}
+
+void doc_draw_mirrored(entity e)
+{
+    if (e->velocity.x)
+    {
+        i8 ad = (WORLD.freq16 << 1);
+        if (e->transform < 0)
+        {
+            draw_queue_push(doc_idle_left_r[WORLD.freq16], 0, -3);
+            WORLD.eyePosition = (v2i){ -12 + ad, -6 - ad };
+        }
+        else
+        {
+            draw_queue_push(doc_idle_right_r[WORLD.freq16], 0, 3);
+            WORLD.eyePosition = (v2i){ -12 + ad, 6 + ad };
+        }
+    }
+    else
+    {
+        if (e->transform < 0)
+        {
+            draw_queue_push(doc_idle_left_r[0], 0, -3);
+            WORLD.eyePosition = (v2i){ -12, -6 };
+        }
+        else
+        {
+            draw_queue_push(doc_idle_right_r[0], 0, 3);
+            WORLD.eyePosition = (v2i){ -12, 6 };
+        }
+    }
+}
+
+
+void doc_draw_glide(entity e)
+{
+    if (e->velocity.x)
+    {
+        if (e->transform < 0)
+        {
+            draw_queue_push(doc_glide_left[WORLD.freq16], -2, -1);
+            WORLD.eyePosition = (v2i){ 10, -8 };
+        }
+        else
+        {
+            draw_queue_push(doc_glide_right[WORLD.freq16], -2, 1);
+            WORLD.eyePosition = (v2i){ 10, 8 };
+        }
+    }
+    else
+    {
+        if (e->transform < 0)
+        {
+            draw_queue_push(doc_glide_left[0], -2, -1);
+            WORLD.eyePosition = (v2i){ 10, -8 };
+        }
+        else
+        {
+            draw_queue_push(doc_glide_right[0], -2, 1);
+            WORLD.eyePosition = (v2i){ 10, 8 };
+        }
+    }
+}
+
+void doc_draw_glide_mirrored(entity e)
+{
+    if (e->velocity.x)
+    {
+        if (e->transform < 0)
+        {
+            draw_queue_push(doc_glide_left_r[WORLD.freq16], 2, -1);
+            WORLD.eyePosition = (v2i){ -10, -8 };
+        }
+        else
+        {
+            draw_queue_push(doc_glide_right_r[WORLD.freq16], 2, 1);
+            WORLD.eyePosition = (v2i){ -10, 8 };
+        }
+    }
+    else
+    {
+        if (e->transform < 0)
+        {
+            draw_queue_push(doc_glide_left_r[0], -2, -1);
+            WORLD.eyePosition = (v2i){ -10, -8 };
+        }
+        else
+        {
+            draw_queue_push(doc_glide_right_r[0], -2, 1);
+            WORLD.eyePosition = (v2i){ -10, 8 };
+        }
+    }
+}
+
+void update_doc_air(entity e)
 {
     switch (BTNS)
     {
-    case Input_Button1: // Swap
+    case Input_Button1: // Marvin-Mode
+#ifdef NDEBUG
+        Vec_Joy_Mux_1_Y = 3;
+        e->type = Character_Marvin;
+        e->update = update_marvin;
+#endif
+        break;
+    case Input_Button2: // Swap
         if (e->isGrounded && !PLAYER.isOtherCharacterDead)
         {
             e->type = Character_Croc;
-            e->mesh = e->transform == 1 ? croc_idle_right[0] : croc_idle_left[0];
-            e->routine = routine_croc_air;
+            e->update = update_croc_air;
         }
-        break;
-    case Input_Button2: // Marvin-Mode
-//#ifdef NDEBUG
-        Vec_Joy_Mux_1_Y = 3;
-        e->type = Character_Marvin;
-        e->routine = routine_marvin;
-//#endif
         break;
     case Input_Button3: // Hit | Grab
     {
         switch (e->state)
         {
         case CharacterState_Idle: // Grab if one is close enough
-            routine_player_grab();
+            character_grab();
             break;
         case CharacterState_HoldsProp: // Throw
-            routine_player_throw();
+            character_throw();
             break;
         default:
             break;
@@ -52,7 +175,7 @@ void routine_doc_air(entity e)
         }
         else
         {
-            e->routine = routine_doc_glide;
+            e->update = update_doc_glide;
             e->velocity.y = 0;
         }
         break;
@@ -65,7 +188,6 @@ void routine_doc_air(entity e)
         if (e->transform == 1)
         {
             e->transform = -1;
-            e->mesh = e->type == Character_Croc ? croc_idle_left[0] : doc_idle_left[0];
             e->velocity.x = (-Velocity_Run) << (e->velocity.y == 0);
         }
         else if (e->velocity.x > -Velocity_Run)
@@ -78,7 +200,6 @@ void routine_doc_air(entity e)
         if (e->transform == -1)
         {
             e->transform = 1;
-            e->mesh = e->type == Character_Croc ? croc_idle_right[0] : doc_idle_right[0];
             e->velocity.x = Velocity_Run << (e->velocity.y == 0);
         }
         else if (e->velocity.x < Velocity_Run)
@@ -87,46 +208,23 @@ void routine_doc_air(entity e)
         }
     }
 
-    if (CAMERA.invisiblityFrames)
+    if (CAMERA.invincibilityTicks)
     {
-        --CAMERA.invisiblityFrames;
-        if (WORLD.ticks & 1)
+        --CAMERA.invincibilityTicks;
+        if (WORLD.freq2)
             return;
     }
 
-    beam_set_position(0, 0);
-    if (e->velocity.x)
-    {
-        if (e->transform & -128)
-        {
-            Mov_Draw_VLc_a((void* const)doc_idle_left[WORLD.freq16]);
-        }
-        else
-        {
-            Mov_Draw_VLc_a((void* const)doc_idle_right[WORLD.freq16]);
-        }
-    }
-    else
-    {
-        if (e->transform & -128)
-        {
-            Mov_Draw_VLc_a((void* const)doc_idle_left[0]);
-        }
-        else
-        {
-            Mov_Draw_VLc_a((void* const)doc_idle_right[0]);
-        }
-    }
+    doc_draw_default(e);
 }
 
-void routine_doc_glide(entity e)
+void update_doc_glide(entity e)
 {
     if (Vec_Joy_1_X < 0)
     {
         if (e->transform == 1)
         {
             e->transform  = -1;
-            e->mesh       = doc_idle_left[0];
             e->velocity.x = (-Velocity_Run) << (e->velocity.y == 0);
         }
         else if (e->velocity.x > -Velocity_Run)
@@ -139,7 +237,6 @@ void routine_doc_glide(entity e)
         if (e->transform == -1)
         {
             e->transform = 1;
-            e->mesh = doc_idle_right[0];
             e->velocity.x = Velocity_Run << (e->velocity.y == 0);
         }
         else if (e->velocity.x < Velocity_Run)
@@ -154,65 +251,36 @@ void routine_doc_glide(entity e)
     }
     else
     {
-        e->routine = routine_doc_air;
+        e->update = update_doc_air;
     }
 
-    if (CAMERA.invisiblityFrames)
+    if (CAMERA.invincibilityTicks)
     {
-        --CAMERA.invisiblityFrames;
-        if (WORLD.ticks & 1)
+        --CAMERA.invincibilityTicks;
+        if (WORLD.freq2)
             return;
     }
-
-    /*beam_set_position(0, 0);
-    Mov_Draw_VLc_a((void* const)CAMERA.mesh);*/
-
-    beam_set_position(0, 0);
-    if (e->velocity.x)
-    {
-        if (e->transform & -128)
-        {
-            Mov_Draw_VLc_a((void* const)doc_glide_left[WORLD.freq16]);
-        }
-        else
-        {
-            Mov_Draw_VLc_a((void* const)doc_glide_right[WORLD.freq16]);
-        }
-    }
-    else
-    {
-        if (e->transform & -128)
-        {
-            Mov_Draw_VLc_a((void* const)doc_glide_left[0]);
-        }
-        else
-        {
-            Mov_Draw_VLc_a((void* const)doc_glide_right[0]);
-        }
-    }
-
-    /*beam_set_position(10, -1 * e->transform);
-    Draw_Line_d(10, -CAMERA.transform * ((((i8)WORLD.ticks & 1) * -15) | 15)); */
+    
+    doc_draw_glide(e);
 }
 
-void routine_doc_water(entity e)
+void update_doc_water(entity e)
 {
     switch (BTNS)
     {
-    case Input_Button1: // Swap
+    case Input_Button1: // Marvin-Mode
+#ifdef NDEBUG
+        Vec_Joy_Mux_1_Y = 3;
+        e->type = Character_Marvin;
+        e->update = update_marvin;
+#endif
+        break;
+    case Input_Button2: // Swap
         if (!PLAYER.isOtherCharacterDead)
         {
             e->type = Character_Croc;
-            e->mesh = e->transform == 1 ? doc_idle_right[0] : doc_idle_left[0];
-            e->routine = routine_croc_water;
+            e->update = update_croc_water;
         }
-        break;
-    case Input_Button2: // Marvin-Mode
-//#ifdef NDEBUG
-        Vec_Joy_Mux_1_Y = 3;
-        e->type = Character_Marvin;
-        e->routine = routine_marvin;
-//#endif
         break;
     case Input_Button4: // Swim Up
         e->velocity.y += Velocity_SwimUp;
@@ -230,8 +298,7 @@ void routine_doc_water(entity e)
     {
         if (e->transform == 1)
         {
-            e->transform = -1;
-            e->mesh = croc_idle_left[0];
+            e->transform  = -1;
             e->velocity.x = (-Velocity_Run) << (e->velocity.y == 0);
         }
         else if (e->velocity.x > -Velocity_Run)
@@ -244,7 +311,6 @@ void routine_doc_water(entity e)
         if (e->transform == -1)
         {
             e->transform = 1;
-            e->mesh = croc_idle_right[0];
             e->velocity.x = Velocity_Run << (e->velocity.y == 0);
         }
         else if (e->velocity.x < Velocity_Run)
@@ -253,66 +319,43 @@ void routine_doc_water(entity e)
         }
     }
     
-    if (CAMERA.invisiblityFrames)
+    if (CAMERA.invincibilityTicks)
     {
-        --CAMERA.invisiblityFrames;
-        if (WORLD.ticks & 1)
+        --CAMERA.invincibilityTicks;
+        if (WORLD.freq2)
             return;
     }
 
-    beam_set_position(0, 0);
-    if (e->velocity.x)
-    {
-        if (e->transform & -128)
-        {
-            Mov_Draw_VLc_a((void* const)doc_idle_left[WORLD.freq16]);
-        }
-        else
-        {
-            Mov_Draw_VLc_a((void* const)doc_idle_right[WORLD.freq16]);
-        }
-    }
-    else
-    {
-        if (e->transform & -128)
-        {
-            Mov_Draw_VLc_a((void* const)doc_idle_left[0]);
-        }
-        else
-        {
-            Mov_Draw_VLc_a((void* const)doc_idle_right[0]);
-        }
-    }
+    doc_draw_default(e);
 }
 
-void routine_doc_gravitas_air(entity e)
+void update_doc_gravitas_air(entity e)
 {
     switch (BTNS)
     {
     case Input_Button1: // Swap
-        if (e->isGrounded && !PLAYER.isOtherCharacterDead)
-        {
-            e->type = Character_Croc;
-            e->mesh = e->transform == 1 ? croc_idle_right[0] : croc_idle_left[0];
-            e->routine = routine_croc_gravitas_air;
-        }
-        break;
-    case Input_Button2: // Marvin-Mode
-        //#ifdef NDEBUG
+#ifdef NDEBUG
         Vec_Joy_Mux_1_Y = 3;
         e->type = Character_Marvin;
-        e->routine = routine_marvin;
-        //#endif
+        e->update = update_marvin;
+#endif
+        break;
+    case Input_Button2: // Marvin-Mode
+        if (e->isGrounded && !PLAYER.isOtherCharacterDead)
+        {
+            e->type   = Character_Croc;
+            e->update = update_croc_gravitas_air;
+        }
         break;
     case Input_Button3: // Hit | Grab
     {
         switch (e->state)
         {
         case CharacterState_Idle: // Grab if one is close enough
-            routine_player_grab();
+            character_grab();
             break;
         case CharacterState_HoldsProp: // Throw
-            routine_player_throw();
+            character_throw();
             break;
         default:
             break;
@@ -327,7 +370,7 @@ void routine_doc_gravitas_air(entity e)
         }
         else
         {
-            e->routine = routine_doc_gravitas_glide;
+            e->update     = update_doc_gravitas_glide;
             e->velocity.y = 0;
         }
         break;
@@ -340,7 +383,6 @@ void routine_doc_gravitas_air(entity e)
         if (e->transform == 1)
         {
             e->transform = -1;
-            e->mesh = e->type == Character_Croc ? croc_idle_left[0] : doc_idle_left[0];
             e->velocity.x = (-Velocity_Run) << (e->velocity.y == 0);
         }
         else if (e->velocity.x > -Velocity_Run)
@@ -353,7 +395,6 @@ void routine_doc_gravitas_air(entity e)
         if (e->transform == -1)
         {
             e->transform = 1;
-            e->mesh = e->type == Character_Croc ? croc_idle_right[0] : doc_idle_right[0];
             e->velocity.x = Velocity_Run << (e->velocity.y == 0);
         }
         else if (e->velocity.x < Velocity_Run)
@@ -362,46 +403,23 @@ void routine_doc_gravitas_air(entity e)
         }
     }
 
-    if (CAMERA.invisiblityFrames)
+    if (CAMERA.invincibilityTicks)
     {
-        --CAMERA.invisiblityFrames;
-        if (WORLD.ticks & 1)
+        --CAMERA.invincibilityTicks;
+        if (WORLD.freq2)
             return;
     }
 
-    beam_set_position(0, 0);
-    if (e->velocity.x)
-    {
-        if (e->transform & -128)
-        {
-            Mov_Draw_VLc_a((void* const)doc_idle_left[WORLD.freq16]);
-        }
-        else
-        {
-            Mov_Draw_VLc_a((void* const)doc_idle_right[WORLD.freq16]);
-        }
-    }
-    else
-    {
-        if (e->transform & -128)
-        {
-            Mov_Draw_VLc_a((void* const)doc_idle_left[0]);
-        }
-        else
-        {
-            Mov_Draw_VLc_a((void* const)doc_idle_right[0]);
-        }
-    }
+    doc_draw_mirrored(e);
 }
 
-void routine_doc_gravitas_glide(entity e)
+void update_doc_gravitas_glide(entity e)
 {
     if (Vec_Joy_1_X < 0)
     {
         if (e->transform == 1)
         {
             e->transform = -1;
-            e->mesh = doc_idle_left[0];
             e->velocity.x = (-Velocity_Run) << (e->velocity.y == 0);
         }
         else if (e->velocity.x > -Velocity_Run)
@@ -414,7 +432,6 @@ void routine_doc_gravitas_glide(entity e)
         if (e->transform == -1)
         {
             e->transform = 1;
-            e->mesh = doc_idle_right[0];
             e->velocity.x = Velocity_Run << (e->velocity.y == 0);
         }
         else if (e->velocity.x < Velocity_Run)
@@ -429,51 +446,28 @@ void routine_doc_gravitas_glide(entity e)
     }
     else
     {
-        e->routine = routine_doc_gravitas_air;
+        e->update = update_doc_gravitas_air;
     }
 
-    if (CAMERA.invisiblityFrames)
+    if (CAMERA.invincibilityTicks)
     {
-        --CAMERA.invisiblityFrames;
-        if (WORLD.ticks & 1)
+        --CAMERA.invincibilityTicks;
+        if (WORLD.freq2)
             return;
     }
 
-    beam_set_position(0, 0);
-    if (e->velocity.x)
-    {
-        if (e->transform & -128)
-        {
-            Mov_Draw_VLc_a((void* const)doc_glide_left[WORLD.freq16]);
-        }
-        else
-        {
-            Mov_Draw_VLc_a((void* const)doc_glide_right[WORLD.freq16]);
-        }
-    }
-    else
-    {
-        if (e->transform & -128)
-        {
-            Mov_Draw_VLc_a((void* const)doc_glide_left[0]);
-        }
-        else
-        {
-            Mov_Draw_VLc_a((void* const)doc_glide_right[0]);
-        }
-    }
+    doc_draw_glide_mirrored(e);
 }
 
-void routine_doc_gravitas_water(entity e)
+void update_doc_gravitas_water(entity e)
 {
     switch (BTNS)
     {
     case Input_Button1: // Swap
         if (!PLAYER.isOtherCharacterDead)
         {
-            e->type = Character_Croc;
-            e->mesh = e->transform == 1 ? doc_idle_right[0] : doc_idle_left[0];
-            e->routine = routine_croc_gravitas_water;
+            e->type   = Character_Croc;
+            e->update = update_croc_gravitas_water;
         }
         break;
     case Input_Button2: // Marvin-Mode
@@ -483,10 +477,8 @@ void routine_doc_gravitas_water(entity e)
         e->velocity.y = MAX8(e->velocity.y, (-Velocity_SwimUp));
         break;
     default:
-        if (e->velocity.y < -2)
-        {
-            e->velocity.y = -2;
-        }
+        if (e->velocity.y > 2)
+            e->velocity.y = 2;
         break;
     }
 
@@ -495,7 +487,6 @@ void routine_doc_gravitas_water(entity e)
         if (e->transform == 1)
         {
             e->transform = -1;
-            e->mesh = croc_idle_left[0];
             e->velocity.x = (-Velocity_Run) << (e->velocity.y == 0);
         }
         else if (e->velocity.x > -Velocity_Run)
@@ -508,7 +499,6 @@ void routine_doc_gravitas_water(entity e)
         if (e->transform == -1)
         {
             e->transform = 1;
-            e->mesh = croc_idle_right[0];
             e->velocity.x = Velocity_Run << (e->velocity.y == 0);
         }
         else if (e->velocity.x < Velocity_Run)
@@ -517,34 +507,12 @@ void routine_doc_gravitas_water(entity e)
         }
     }
 
-    if (CAMERA.invisiblityFrames)
+    if (CAMERA.invincibilityTicks)
     {
-        --CAMERA.invisiblityFrames;
-        if (WORLD.ticks & 1)
+        --CAMERA.invincibilityTicks;
+        if (WORLD.freq2)
             return;
     }
 
-    beam_set_position(0, 0);
-    if (e->velocity.x)
-    {
-        if (e->transform & -128)
-        {
-            Mov_Draw_VLc_a((void* const)doc_idle_left[WORLD.freq16]);
-        }
-        else
-        {
-            Mov_Draw_VLc_a((void* const)doc_idle_right[WORLD.freq16]);
-        }
-    }
-    else
-    {
-        if (e->transform & -128)
-        {
-            Mov_Draw_VLc_a((void* const)doc_idle_left[0]);
-        }
-        else
-        {
-            Mov_Draw_VLc_a((void* const)doc_idle_right[0]);
-        }
-    }
+    doc_draw_mirrored(e);
 }

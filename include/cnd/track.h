@@ -22,11 +22,16 @@
  * SOFTWARE.
  */
 
-#ifndef TRACK_H
-#define TRACK_H
+#pragma once
 
+/////////////////////////////////////////////////////////////////////////
+//	Includes
+//
 #include <cnd/types.h>
 
+/////////////////////////////////////////////////////////////////////////
+//	Types
+//
 enum Note_
 {
     G2 = 0x00U, GS2 = 0x01U, AB2 = 0x01U,
@@ -95,6 +100,9 @@ typedef struct track_t
     Note notes[];
 } track_t, *track;
 
+/////////////////////////////////////////////////////////////////////////
+//	Data
+//
 extern const track_t g_yellow;
 extern const track_t g_level0;
 extern const track_t g_corneria;
@@ -104,5 +112,3 @@ extern const track_t g_champion;
 extern const explosion_t g_monsterPeng;
 
 extern const track_t musicOff;
-
-#endif /* TRACK_H */

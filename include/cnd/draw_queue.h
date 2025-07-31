@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
- #pragma once
+#pragma once
 
 /////////////////////////////////////////////////////////////////////////
 //	Includes
@@ -30,8 +30,38 @@
 #include <cnd/types.h>
 
 /////////////////////////////////////////////////////////////////////////
+//	Types
+//
+typedef struct element_t
+{
+    void* data;
+    i8 y;
+    i8 x;
+} element_t, *element;
+
+typedef union queue_pointer_t
+{
+    element_t* element;
+    struct
+    {
+        u8 page;
+        u8 idx;
+    };
+} queue_pointer_t;
+
+/////////////////////////////////////////////////////////////////////////
 //	Globals
 //
-extern Stage   g_stage;
-extern game_t  g_game;
-extern world_t g_world;
+extern queue_pointer_t drawQueue;
+
+/////////////////////////////////////////////////////////////////////////
+//	Functions
+//
+void draw_stack_clear(void);
+void draw_stack_draw(void);
+
+inline void draw_queue_push(void const* mesh, i8 y, i8 x)
+{
+    *drawQueue.element = (element_t){ (void*)mesh, y, x };
+    drawQueue.idx     += (u8)sizeof(element_t);
+}

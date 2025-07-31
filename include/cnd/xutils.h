@@ -22,8 +22,7 @@
  * SOFTWARE.
  */
 
-#ifndef XUTILS_H
-#define XUTILS_H
+#pragma once
 
 /////////////////////////////////////////////////////////////////////////
 //	Defines
@@ -41,33 +40,64 @@
 //
 void* memset(void* dest, int val, long unsigned int len);
 
-force_inline void beam_set_position(const i8 y, const i8 x)
+force_inline void reset_pen(void)
 {
-	// Reset0Ref
-	VIA_cntl         = 0xCC;
-	//VIA_shift_reg    = 0x01;
+	VIA_port_a = 0;    // clear D/A register
+	VIA_port_b = 0x03; // mux=1, disable mux
+	VIA_port_b = 0x02; // mux=1, enable mux
+	VIA_port_b = 0x02; // do it again
+	VIA_port_b = 0x01; // disable mux
+}
+force_inline void reset_0_ref(void)
+{
+	VIA_cntl      = 0xCC;
+	VIA_shift_reg = 0x00;
 
-	/*dp_VIA_t1_cnt_lo = 0x7F;*/
-	/*Moveto_d(y, x);*/
-	VIA_port_a    = y;		   // y pos to dac
-	VIA_cntl      = 0xCE; // disable zero, disable all blank
-	VIA_port_b    = 0;		   // mux enable, dac to -> integrator y (and x)
-	VIA_shift_reg = 0;		   // all output is BLANK
-	VIA_port_b++;			   // mux disable, dac only to x
-	VIA_port_a = x;			   // dac -> x
-	VIA_t1_cnt_hi = 0;		   // start timer
-	while ((VIA_int_flags & 0x40) == 0); // wait till timer finishes
+	reset_pen();
 }
 
-//force_inline bool is_local(v2l const x)
-//{
-//    return x.x < 128 && x.y < 128 && x.x > -129 && x.y > -129;
-//}
+force_inline i8 abs_a(const i8 x)
+{
+	const i8 mask = x >> ((sizeof(i8) * 8) - 1);
+	return (x + mask) ^ mask;
+}
 
-//force_inline bool is_global(v2l const x)
-//{
-//    return !is_local(x);
-//}
+force_inline void moveto_d(const i8 y, const i8 x)
+{
+	VIA_port_a    = y;
+	VIA_port_b    = 0;
+	VIA_cntl      = 0xCE;
+	VIA_shift_reg = 0x00;
+	VIA_port_b    = 0x01;
+	VIA_port_a    = x;
+	VIA_t1_cnt_hi = 0x00;
+	i8 xAbs = abs_a(x);
+	i8 yAbs = abs_a(y);
+	xAbs = xAbs > yAbs ? xAbs : yAbs;
+	if (xAbs <= 0x40)
+	{
+		while ((VIA_int_flags & 0x40) == 0);
+	}
+	else if (xAbs <= 0x64)
+	{
+		while ((VIA_int_flags & 0x40) == 0);
+		i8 nop = 4;
+		while (nop--);
+	}
+	else
+	{
+		i8 nop = 8;
+		while ((VIA_int_flags & 0x40) == 0);
+		while (nop--);
+	}
+}
+
+force_inline void beam_set_position(const i8 y, const i8 x)
+{
+	reset_0_ref();
+	Moveto_d(y, x);
+}
+
 u8 manhattan(i8 const a, i8 const b)
 {
     const i8 aMask = a >> 7;
@@ -75,14 +105,3 @@ u8 manhattan(i8 const a, i8 const b)
     return U8((a ^ aMask) - aMask) + U8((b ^ bMask) - bMask);
 }
 
-//force_inline i8 max(i8 const x, i8 const y)
-//{
-//    return x - ((x - y) & ((x - y) >> 7));
-//}
-//
-//force_inline i8 min(i8 const x, i8 const y)
-//{
-//    return y + ((x - y) & ((x - y) >> 7));
-//}
-
-#endif /* XUTILS */

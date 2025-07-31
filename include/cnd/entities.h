@@ -1,127 +1,261 @@
-#ifndef ENTITIES_H
-#define ENTITIES_H
+/*
+ * MIT License
+ *
+ * Copyright (c) 2025 Julian Albrecht
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 
+#pragma once
+
+/////////////////////////////////////////////////////////////////////////
+//	Includes
+//
 #include <cnd/types.h>
-#include <cnd/xutils.h>
-#include <cnd/globals.h>
-#include <cnd/track.h>
 
+/////////////////////////////////////////////////////////////////////////
+//	General Player Functions
+//
 /**
-* @brief General Player Functions
+* @brief  Tries to find an object to grab in close proximity. 
+* 
+* Iterates over all objects and finds props to check if they are close enough to be grabbed.
+* It returns wheter an object was grabbed and if true saves the objects id at index 1 in the 
+* entity id list. The grabbed entity therefore is at WORLD.entities[WORLD.entityIdxs[1]].
+* 
+* @return Returns true if an object was grabbed.
 */
-bool routine_player_grab(void);
-void routine_player_throw(void);
-void routine_player_damage(void);
-void routine_player_changed_fluid(void);
-
+bool character_grab(void);
 /**
-* @brief Death Routines
+* @brief 
 */
-void routine_death0(entity e);
-void routine_death1(entity e);
-void routine_death2(entity e);
-
+void character_throw(void);
 /**
-* @brief Croc
+* @brief 
 */
-void routine_croc_air(entity e);
-void routine_croc_gravitas_air(entity e);
-void routine_croc_water(entity e);
-void routine_croc_gravitas_water(entity e);
-void routine_croc_hit(entity e);
-void routine_croc_gravitas_hit(entity e);
+void character_damage(void);
 
+/////////////////////////////////////////////////////////////////////////
+//	Generic Entity functions
+//
 /**
-* @brief Doc
+* @brief Removes the entity from the world. If it has a name it will be removed.
 */
-void routine_doc_air(entity e);
-void routine_doc_water(entity e);
-void routine_doc_glide(entity e);
-void routine_doc_gravitas_air(entity e);
-void routine_doc_gravitas_water(entity e);
-void routine_doc_gravitas_glide(entity e);
+void entity_set_status(entity e, EntityStatus status);
 
 /**
-* @brief Marvin-Mode
+* @brief Creates a named entity, meaning an object which is spawned from tiles.
 */
-void routine_marvin(entity e);
+void entity_create_named(idx_t const globalId, v2i const tile);
 
 /**
- * @brief Barrel
- */
-void routine_barrel_thrown(entity e);
-void routine_barrel_idle(entity e);
-void routine_barrel_held(entity e);
-void barrel_create_prefab(entity e);
+* @brief Creates a anonymous entity, meaning an object which was spawned from enemies
+*/
+void entity_create_anonymous(EntityType const type, v2i const tile);
 
 /**
- * @brief Gauner
- */
-void routine_gauner_watching(entity e);
+* @brief 
+*/
+void entity_set_animation(entity e, void const* keyframes, i8 keyframeSize, i8 keyframeCount);
 
 /**
- * @brief Tunichtgut
+ * @brief Kills the entity e and tries to revives the players other character
  */
-void routine_tunichtgut_boom(entity e);
-
+void update_kill_revive(entity e);
 /**
- * @brief Halunke
- */
-void routine_halunke_follow(entity e);
-
+* @brief Kills the entity e
+*/
+void update_kill(entity e);
 /**
- * @brief Schuft
- */
-void routine_schuft_follow(entity e);
+* @brief Runs the death animation and later calls the selected kill function.
+*/
+void update_death(entity e);
+/**
+* @brief Stub. Does nothing. 
+*/
+void update_stub(entity e);
 
+/////////////////////////////////////////////////////////////////////////
+//	Croc
+//
+/**
+* @brief 
+*/
+void update_croc_air(entity e);
+/**
+* @brief 
+*/
+void update_croc_gravitas_air(entity e);
+/**
+* @brief 
+*/
+void update_croc_water(entity e);
+/**
+* @brief 
+*/
+void update_croc_gravitas_water(entity e);
+/**
+* @brief 
+*/
+void update_croc_hit(entity e);
+/**
+* @brief 
+*/
+void update_croc_gravitas_hit(entity e);
+/**
+ * @brief
+ */
+void prefab_croc(entity e);
+/**
+ * @brief
+ */
+void prefab_croc_prepare(entity e);
+
+/////////////////////////////////////////////////////////////////////////
+//	Doc
+//
+/**
+* @brief 
+*/
+void update_doc_air(entity e);
+/**
+* @brief 
+*/
+void update_doc_water(entity e);
+/**
+* @brief 
+*/
+void update_doc_glide(entity e);
+/**
+* @brief 
+*/
+void update_doc_gravitas_air(entity e);
+/**
+* @brief 
+*/
+void update_doc_gravitas_water(entity e);
+/**
+* @brief 
+*/
+void update_doc_gravitas_glide(entity e);
+
+/////////////////////////////////////////////////////////////////////////
+// Marvin-Mode
+//
+/**
+* @brief 
+*/
+void update_marvin(entity e);
+
+/////////////////////////////////////////////////////////////////////////
+// Crate
+//
+void update_crate(entity e);
+void prefab_crate(entity e);
+
+/////////////////////////////////////////////////////////////////////////
+// Barrel
+//
+/**
+ * @brief 
+ */
+void update_barrel_thrown(entity e);
+/**
+ * @brief
+ */
+void update_barrel(entity e);
+/**
+ * @brief
+ */
+void update_barrel_held(entity e);
+/**
+ * @brief
+ */
+void prefab_barrel(entity e);
+/**
+ * @brief
+ */
+void prefab_barrel_throw(entity e);
+
+/////////////////////////////////////////////////////////////////////////
+// Gauner
+//
+/**
+ * @brief  
+ */
+void update_gauner(entity e);
+void prefab_gauner(entity e);
+
+/////////////////////////////////////////////////////////////////////////
+// Tunichtgut
+//
+/**
+ * @brief 
+ */
+void update_tunichtgut(entity e);
+void prefab_tunichtgut(entity e);
+
+/////////////////////////////////////////////////////////////////////////
+// Halunke
+//
+/**
+ * @brief Halunke follows the player on the horizontal axis
+ */
+void update_halunke(entity e);
+void prefab_halunke(entity e);
+
+/////////////////////////////////////////////////////////////////////////
+// Schuft
+//
+/**
+ * @brief Schuft follows the player horizontally and vertically 
+ */
+void update_schuft(entity e);
+void prefab_schuft(entity e);
+
+
+/////////////////////////////////////////////////////////////////////////
+// Schelm
+//
 /**
  * @brief Schelm
  */
-void routine_schelm_waiting(entity e);
-void routine_schelm_thrown(entity e);
-void schelm_create_prefab(entity e);
+void update_schelm_waiting(entity e);
+void update_schelm_thrown(entity e);
+void prefab_schelm(entity e);
 
+/////////////////////////////////////////////////////////////////////////
+// Bandit
+//
 /**
  * @brief Bandit
  */
-void routine_bandit_stolen(entity e);
+void update_bandit(entity e);
+void prefab_bandit(entity e);
+
 
 /**
- * @brief Generic Enemy Functions
+ * @brief 
  */
-force_inline void routine_enemy_collision(entity e, const i8 dx, const i8 dy, const i8* meshLeft, const i8* meshRight, const u8 scoreAwarded)
-{
-	i8 localDy = I8(dy);
-	const i8 localDx = I8(dx);
+void prefab_coin(entity e);
 
-	beam_set_position(localDy, localDx);
-	Draw_VLc((void* const)(e->velocity.x < 0 ? meshLeft : meshRight));
-	if (e->isSameTile && manhattan(localDy, localDx) < 0xA)
-	{
-		//const i8 localDyMask = localDy >> 7;
-		//const i8 localDyAbs = (localDy ^ localDyMask) - localDyMask;
-		const i8 localDxMask = localDx >> 7;
-		const i8 localDxAbs = (localDx ^ localDxMask) - localDxMask;
-
-		if ((CAMERA.velocity.y <= -2 && localDxAbs < 6) || (CAMERA.isAttacking && (CAMERA.velocity.x ^ localDx) >= 0))
-		{
-			e->stopwatch = 10;
-			e->routine = routine_death1;
-			PLAYER.score += scoreAwarded;
-			CAMERA.velocity.y += Velocity_KillUpWind;
-			CAMERA.velocity.y = MIN8(CAMERA.velocity.y, Velocity_KillUpWind);
-			//GAME.explosion = &g_monsterPeng;
-			/*Stop_Sound();
-			Vec_Music_Flag = 0;
-			Clear_Sound();*/
-			//GAME.track = &musicOff;
-			//Vec_Expl_Flag = 128;
-		}
-		else
-		{
-			WORLD.playerDamage();
-		}
-	}
-}
-
-#endif /* ENTITIES_H */
+/////////////////////////////////////////////////////////////////////////
+//	Function Table
+//
+extern const prefab_t prefabs[EntityType_Max];

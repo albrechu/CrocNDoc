@@ -22,8 +22,7 @@
  * SOFTWARE.
  */
 
-#ifndef DEFINES_H
-#define DEFINES_H
+#pragma once
 
 /////////////////////////////////////////////////////////////////////////
 //	Attributes
@@ -64,15 +63,18 @@
 #define TILE_HEIGHT_3_4     (TILE_HEIGHT - TILE_HEIGHT_4) 
 #define PLATFORM_TOLERANCE   8
 #define PLATFORM_TOLERANCE_2 (PLATFORM_TOLERANCE >> 1)
-#define ENTITIES_ACTIVE_MAX 4  // Maximum of entities that can be active.
+#define ENTITIES_ACTIVE_MAX 8  // Maximum of entities that can be active.
 #define ENTITIES_MAX        16 // Maximum of entities that can be in a level.
+
+#define ID_INVALID -1
+#define ID_CAMERA   0
 
 /////////////////////////////////////////////////////////////////////////
 //	Macro References
 //
 #define WORLD  g_world
 #define GAME   g_game
-#define CAMERA WORLD.entities[0]
+#define CAMERA WORLD.entities[ID_CAMERA]
 #define PLAYER GAME.player
 #define BTNS   Vec_Buttons
 
@@ -93,9 +95,10 @@
 #define MAX8(x, y) x - ((x - y) & ((x - y) >> 7))
 #define MOD2(x, y) ((x) & (y - 1))
 
-#define U8(x) ((u8)(x))
-#define I8(x) ((i8)(x))
+#define U8(x)  ((u8)(x))
+#define I8(x)  ((i8)(x))
 #define U16(x) ((u16)(x))
 #define I16(x) ((i16)(x))
 
-#endif /* DEFINES_H */
+#define ARRAY_SIZE(arr)   (sizeof(arr) / sizeof((arr)[0]))
+#define ELEMENT_SIZE(arr) (sizeof((arr)[0]))

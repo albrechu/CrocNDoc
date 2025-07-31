@@ -22,27 +22,22 @@
  * SOFTWARE.
  */
 
-#ifndef GAME_H
-#define GAME_H
+ #pragma once
 
 /////////////////////////////////////////////////////////////////////////
 //	Includes
 //
-#include <cnd/defines.h>
 #include <cnd/types.h>
-#include <cnd/world.h>
 
 /////////////////////////////////////////////////////////////////////////
 //	Game Functions
 //
-void game_create(void);
 void game_soft_reset(void);
-void game_set_gameover(void);
+void game_next_attempt(void);
+void game_update_prepare(void);
+void game_remove_live(void);
 void game_update_play(void);
 void game_update_plot(void);
 void game_update_gameover(void);
+void game_set_frequencies(void);
 void game_enter_stage(Stage stage);
-void game_entity_added(entity e);
-
-
-#endif /* GAME_H */

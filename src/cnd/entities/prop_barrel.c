@@ -7,16 +7,16 @@
 #include <cnd/globals.h>
 #include <cnd/mesh.h>
 #include <cnd/xutils.h>
+#include <cnd/draw_queue.h>
 
 /////////////////////////////////////////////////////////////////////////
 //	Functions
 //
-void routine_barrel_thrown(entity e)
+void update_barrel_thrown(entity e)
 {
     if (e->isGrounded)
     {
-        e->stopwatch = 10;
-        e->routine   = routine_death0;
+        e->update    = update_death;
         PLAYER.score += Score_50;
     }
     else
@@ -24,47 +24,51 @@ void routine_barrel_thrown(entity e)
         e->velocity.x = e->data[0];
     }
 
-    if (e->isLocal)
+    if (e->inLocalSpace)
     {
         i8 dy = I8(CAMERA.position.y - e->position.y);
         i8 dx = I8(e->position.x - CAMERA.position.x);
-        beam_set_position(dy, dx);
-        Draw_VLc((void* const)(e->transform == 1 ? barrel_right : barrel_left));
+        draw_queue_push(e->transform == 1 ? barrel_right : barrel_left, dy, dx);
     }
 }
 
-void routine_barrel_idle(entity e)
+void update_barrel(entity e)
 {
-    if (e->isLocal)
+    if (e->inLocalSpace)
     {
         i8 dy = I8(CAMERA.position.y - e->position.y);
         i8 dx = I8(e->position.x - CAMERA.position.x);
-        beam_set_position(dy, dx);
-        Draw_VLc((void* const)barrel);
+        draw_queue_push(barrel, dy, dx);
     }
 }
 
-void routine_barrel_held(entity e)
+void update_barrel_held(entity e)
 {
     e->position = CAMERA.position;
     (void)e;
-    beam_set_position(0, 0);
-    Draw_VLc((void* const)(CAMERA.transform == 1 ? barrel_right : barrel_left));
+    draw_queue_push(CAMERA.transform == 1 ? barrel_right : barrel_left, 0, 0);
 }
 
-void barrel_create_prefab(entity e)
+void prefab_barrel(entity e)
 {
-    e->state = PropState_Thrown;
-    e->routine = routine_barrel_thrown;
+    e->update = update_barrel;
+    e->kill   = update_kill_revive;
+    entity_set_animation(e, explosion2, ELEMENT_SIZE(explosion2), ARRAY_SIZE(explosion2));
+}
+
+void prefab_barrel_throw(entity e)
+{
+    e->update    = update_barrel_thrown;
     e->transform = CAMERA.transform;
     if (Vec_Joy_1_Y < 0)
     {
-        e->velocity.y = -Velocity_ThrowY;
+        e->velocity.y = WORLD.gravity * -Velocity_ThrowY;
     }
     else
     {
         e->velocity.x = CAMERA.transform * Velocity_ThrowX;
-        e->velocity.y = Velocity_ThrowY;
+        e->velocity.y = WORLD.gravity * Velocity_ThrowY;
         e->data[0] = e->velocity.x;
     }
+    entity_set_animation(e, explosion2, ELEMENT_SIZE(explosion2), ARRAY_SIZE(explosion2));
 }

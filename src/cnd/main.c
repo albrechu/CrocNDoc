@@ -35,8 +35,6 @@
 //	
 int main()
 {
-	// Init
-	game_create();
 	// (Re-)Configure game 
 soft_reset:
 	game_soft_reset();
@@ -61,7 +59,7 @@ soft_reset:
         /**
         * Read Input
         */
-        Intensity_5F(); // Joy_Digital disables the intensity for ✨✨MAGICAL✨✨ reasons when second controller is enabled.
+        Intensity_5F(); 
         Read_Btns();    // Read buttons of controller
 
 		/**	

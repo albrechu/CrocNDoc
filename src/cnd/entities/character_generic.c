@@ -6,25 +6,27 @@
 #include <cnd/game.h>
 #include <cnd/globals.h>
 #include <cnd/xutils.h>
+#include <lib/assert.h>
+#include <cnd/draw_queue.h>
 
 /////////////////////////////////////////////////////////////////////////
 //	Functions
 //
-bool routine_player_grab(void)
+bool character_grab(void)
 {
     for (idx_t pi = 1; pi < WORLD.entityCount; ++pi)
     {
         entity e = &WORLD.entities[WORLD.entityIdxs[pi]];
-        if (e->isSameTile && !e->isEnemy && e->state == PropState_Idle)
+        if (e->isSameTile && !e->isEnemy)
         {
             v2i delta;
             delta.y = I8(e->position.y - CAMERA.position.y);
             delta.x = I8(e->position.x - CAMERA.position.x);
-            if (manhattan(delta.x, delta.y) < 0x15) // Manhattan
+            if (manhattan(delta.x, delta.y) < 0x15) // Manhattan Distance
             {
                 CAMERA.state = CharacterState_HoldsProp;
-                e->state = PropState_Held;
-                e->routine = routine_barrel_held;
+                e->state     = PropState_Held;
+                e->update    = update_barrel_held;
                 if (pi != 1) // Game needs to ensure that a hold prop is always at idx 1
                 {
                     idx_t tmpIdx = WORLD.entityIdxs[1];
@@ -41,38 +43,50 @@ bool routine_player_grab(void)
     return false;
 }
 
-void routine_player_throw(void)
+void character_throw(void)
 {
     CAMERA.state = CharacterState_Idle;
-    barrel_create_prefab(&WORLD.entities[WORLD.entityIdxs[1]]);
+    prefab_barrel_throw(&WORLD.entities[WORLD.entityIdxs[1]]);
 }
 
-void routine_player_changed_fluid(void)
+void character_damage(void)
 {
-
-}
-
-void routine_player_damage(void)
-{
-    if (!CAMERA.invisiblityFrames)
+    if (!CAMERA.invincibilityTicks && !GAME.isFinished)
     {
         if (PLAYER.isOtherCharacterDead)
         {
-            game_set_gameover();
+            game_remove_live();
         }
         else
         {
             CAMERA.type ^= Character_Doc;
-            if (CAMERA.type == Character_Croc)
+            switch (CAMERA.substance)
             {
-                CAMERA.routine = CAMERA.substance == Substance_Air ? routine_croc_air : routine_croc_water;
-            }
-            else
-            {
-                CAMERA.routine = CAMERA.substance == Substance_Air ? routine_doc_air : routine_doc_water;
+            case Substance_Water:
+                CAMERA.isAttacking = false;
+                CAMERA.velocity.y = 0;
+                CAMERA.update      = CAMERA.type == Character_Croc ? update_croc_water : update_doc_water;
+                break;
+            case Substance_Air:
+                CAMERA.isAttacking = false;
+                CAMERA.velocity.y  = 0;
+                CAMERA.update      = CAMERA.type == Character_Croc ? update_croc_air : update_doc_air;
+                break;
+            case Substance_GravitasAir:
+                CAMERA.isAttacking = false;
+                CAMERA.velocity.y = 0;
+                CAMERA.update      = CAMERA.type == Character_Croc ? update_croc_gravitas_air : update_doc_gravitas_air;
+                break;
+            case Substance_GravitasWater:
+                CAMERA.isAttacking = false;
+                CAMERA.velocity.y = 0;
+                CAMERA.update      = CAMERA.type == Character_Croc ? update_croc_gravitas_water : update_doc_gravitas_water;
+                break;
+            default:
+                break;
             }
             PLAYER.isOtherCharacterDead = true;
-            CAMERA.invisiblityFrames = 30;
+            CAMERA.invincibilityTicks = 30;
         }
     }
 }

@@ -22,8 +22,7 @@
  * SOFTWARE.
  */
 
-#ifndef TYPES_H
-#define TYPES_H
+#pragma once
 
 /////////////////////////////////////////////////////////////////////////
 //	Includes
@@ -33,15 +32,15 @@
 /////////////////////////////////////////////////////////////////////////
 //	Integral Types
 //
-typedef unsigned int  u8;
-typedef signed   int  i8;
+typedef unsigned int      u8;
+typedef signed   int      i8;
 typedef unsigned long int u16;
-typedef signed long int   i16;
-typedef u8            event_t;
-typedef u8            result_t;
-typedef u8            tick_t;
-typedef i8            bool;
-typedef i8            idx_t;
+typedef signed   long int i16;
+typedef u8                event_t;
+typedef u8                result_t;
+typedef u8                tick_t;
+typedef i8                bool;
+typedef i8                idx_t;
 
 enum /* Generic */
 {
@@ -49,7 +48,6 @@ enum /* Generic */
 	false = 0,
 	null  = 0,
 };
-
 
 /////////////////////////////////////////////////////////////////////////
 //	Function Pointers
@@ -112,29 +110,20 @@ typedef union rect_t
 /////////////////////////////////////////////////////////////////////////
 //	Enumerations
 //
-enum Player_
-{
-    Player_ArmEdges = 4,
-    // [[Position]]
-    Player_XMax     = 90,
-	Player_YMax     = 100,
-	Player_XMin     = -100,
-	Player_YMin     = 0,
-};
-
 enum Velocity_
 {
-    Velocity_Run      = 2,
-    Velocity_Hit      = 7,
-	Velocity_Friction = 1,
-    Velocity_Jump     = 10,
-    Velocity_Breaching = 12,
-    Velocity_SwimUp   = 9,
+    Velocity_Gravity    = 1,
+    Velocity_Run        = 2,
+    Velocity_Hit        = 7,
+	Velocity_Friction   = 1,
+    Velocity_Jump       = 10,
+    Velocity_Breaching  = 12,
+    Velocity_SwimUp     = 10,
     Velocity_KillUpWind = 12,
-    Velocity_JumpX    = 0,
-    Velocity_ThrowX   = 5,
-    Velocity_ThrowY   = 8,
-    Velocity_Jumper   = 12,
+    Velocity_JumpX      = 0,
+    Velocity_ThrowX     = 5,
+    Velocity_ThrowY     = 8,
+    Velocity_Jumper     = 12,
 };
 typedef i8 Velocity;
 
@@ -207,7 +196,10 @@ enum Enemy_
 {
     Prop_Crate,
     Prop_Barrel,
-    Prop_Max = Prop_Barrel,
+    Prop_Coin,
+    // <add new props here>
+
+    Prop_Max = Prop_Coin,
     Enemy_Tunichtgut,
     Enemy_Halunke,
     Enemy_Gauner,
@@ -226,6 +218,7 @@ enum Enemy_
     // Enemy_Dieb
     // Enemy_Schlawiner
     // Enemy_Gaunerkönig
+    EntityType_Max,
 };
 typedef u8 EntityType;
 
@@ -276,9 +269,8 @@ enum Tile_
     Tile_E13,
     Tile_E14,
     Tile_E15,
-    // Portal
-    Tile_Portal0,
-    Tile_Portal1,
+    Tile_Portal,
+    Tile_Coin,
     Tile_GravitasUp,
     Tile_SpikesDown,
     Tile_Warning,
@@ -298,6 +290,14 @@ enum Tile_
 };
 typedef i8 Tile;
 
+enum WorldState_
+{
+    WorldState_Update,             // Entities are updated.
+    WorldState_CollisionDetection, // Entities collision detection.
+    WorldState_Next,               // World progression finished.
+};
+typedef i8 WorldState;
+
 enum EntityStatus_
 {
     EntityStatus_Inactive, // The entity is alive and well but takes not part in any calculations.
@@ -308,10 +308,10 @@ typedef i8 EntityStatus;
 
 enum Material_
 {
-    Substance_Air,
-    Substance_Water,
-    Substance_GravitasAir,
-    Substance_GravitasWater,
+    Substance_Air           = 0, // Surrounded by air
+    Substance_Water         = 1, // Surrounded by water
+    Substance_GravitasAir   = 2, // Surrounded by gravitation inverting air
+    Substance_GravitasWater = 3, // Surrounded by gravitation inverting water
 };
 typedef i8 Material;
 
@@ -327,115 +327,129 @@ typedef i8 Stage;
 
 enum Score_
 {
-    Score_50,
-    Score_100,
-    Score_200,
-    Score_500,
+    Score_50  = 1,
+    Score_100 = 2,
+    Score_200 = 4,
+    Score_500 = 10,
 };
+
+enum GameState_
+{
+    GameState_Play,
+    GameState_InGame,
+    GameState_Died,
+    GameState_DeathAnimation,
+};
+typedef i8 GameState;
+
+
+typedef struct animation_t
+{
+    i8* keyframe;  // Current keyframe data of the animation played.
+    i8  size;      // Size in bytes of a keyframe
+    i8  remainder; // Remainder keyframes 
+} animation_t;
 
 /////////////////////////////////////////////////////////////////////////
 //	Types
 //
 typedef struct entity_t entity_t, *entity;
-typedef void (*routine_t)(entity);
+typedef void (*update_t)(entity);
+typedef void (*prefab_t)(entity);
 typedef void (*normal_routine_t)(void);
 typedef void (*stage_routine_t)(Stage);
 struct entity_t
 {
-    const void* mesh;          // 0
-    routine_t   routine;       // 2
-    routine_t   collision;     // 4
-    v2l         position;      // 6
-    v2i         velocity;      // 10
-	v2i         tile;          // 12
-    v2i         tileCandidate; // 14
-    i8          transform;     // 16
-    EntityType  type;          // 17
-    EntityState state;         // 18
-    bool        isLocal;       // 19
-    bool        isSameTile;    // 20
-    bool        isGrounded;    // 21
-    bool        isEnemy;       // 22
-    bool        isAttacking;   // 23
-    Material    substance;     // 24
-    idx_t       id;            // 25
-    idx_t       globalId;      // 26
-    // Animation
-    i8          stopwatch;     // 27
-    i8          invisiblityFrames; // 28
-    i8          data[4]; // 29
-    // 33 + alignof(2) = 34
+    // [[ Mandatory ]]
+    // Hooks
+    update_t    update; // Behavior and drawing function 
+    update_t    kill;   // Kills the entity
+
+    // Pose
+    animation_t animation; 
+    v2l         position;     // Position in world space.
+    v2i         velocity;     // Speed measured in dots/tick.
+	v2i         tile;         // Last calculated tile.
+    bool        inLocalSpace; // Local space here refers to screen space.
+    bool        isGrounded;   // On ground?
+    bool        isSameTile;   // Same tile as the player?
+
+    // Entity info
+    idx_t       id;
+    idx_t       globalId;      
+    bool        isEnemy;       
+
+    // [[ Optional ]]
+    i8          transform;   // x-direction the entity is facing. 1 for right, -1 for left
+    EntityType  type;        // May store the entity type 
+    EntityState state;       // May store its state
+    bool        isAttacking; 
+    Material    substance;     
+    i8          invincibilityTicks;
+    i8          data[4]; 
 };
 //static_assert(sizeof(entity_t) == 34);
 
 typedef struct player_t
 {
-    Input    joystick;
-    Action   action;
-    u16      score;
-    bool     isOtherCharacterDead;
+    Input    joystick;             // Last read joystick value.
+    Action   action;   
+    u16      score;                // Current player score (attempt).
+    bool     isOtherCharacterDead; // Croc or Doc dead?
+    i8       lives;                // Lives available
 } player_t, *player;
 
 typedef struct game_t
 {
-    procedure_t progress;
-    void const* explosion;
-    void const* track;
+    procedure_t progress;  // Selected game procedure progressing the game.
+    void const* explosion; // Sound effect - Unused
+    void const* track;     // Music
     // Entities
-    player_t player;
+    player_t player; // Attempt information
     // Game State
-    bool  isFinished;
-    union
-    {
-        struct 
-        {
-            v2i finTxtPos; // Position of the Game Over text.
-        };
-        i8  data[4];
-    };
+    Stage     stage;             // Selected stage
+    GameState state;             // Selected state
+    bool      isFinished;        // No lives left.
+    i8        ticksUntilNewGame; // Ticks for game over timing.
 } game_t, *game;
 
 typedef struct last_sighting_t
 {
-    // v2l       position; // Last known position. Probably impossible to do without wasting a bunch of cycles by searching a "look aside" list. Though I could do this every cycles or so. But not here.
+    // v2l       position; // Last known position. Could have been implemented with a "look aside" list search while drawing. Got tossed.
     EntityStatus status;   // Last known state. Initially is EntityStatus_Alive.
 } last_sighting_t, * last_sighting;
 
 typedef struct level_t
 {
-    EntityType const* entities;
-    Tile       const* level;
-    v2i        const  startingTile;
-    Stage      const  adjacentStages[2];
+    EntityType const* entities;      // Enemies and Props of the level.
+    Tile       const* level;         // Tiles 
+    v2i        const  startingTile;  // Tile the player starts at.
+    Stage      const  adjacentStage; // Stage reachable through the portal.
 } level_t, *level;
 
 typedef struct world_t
 {
-    // Stage information
-    const Tile*    tiles; // 0
-    const level_t* level; // 2
-    // Callbacks
-    routine_t        entityAdded; // 4
-    stage_routine_t  stageEntered; // 6
-    normal_routine_t playerDamage; // 8
-    normal_routine_t playerChangedFluid; // 10
+    // Level information
+    const Tile*    tiles; // Tiles of the selected level
+    const level_t* level; // Selected Level
     // Entities
-    entity_t        entities[ENTITIES_ACTIVE_MAX];  // 12
-    idx_t           entityIdxs[ENTITIES_ACTIVE_MAX]; // 148
-    last_sighting_t lastSeen[ENTITIES_MAX]; // 152
-
+    entity_t        entities[ENTITIES_ACTIVE_MAX];   // Contains active entities in the scene.
+    idx_t           entityIdxs[ENTITIES_ACTIVE_MAX]; // Contains indices into entities for easier swapping.
+    last_sighting_t lastSeen[ENTITIES_MAX];          // Information about all entities in the scene.
+    
     // State
-    bool gameIsOver; // 156
-    bool tileFlags[4]; // 157
-    i8   entityCount; // 161
+    bool       gameIsOver;     // Game over flag to stop damaging hit collision.
+    bool       tileFlags[4];   // Tile state flags. [0] = BarrierVertical, [1] = BarrierHorizontal, [2] = Coin, [3] = Reserved.
+    i8         entityCount;    // Active entities
+    i8         entitySelected; // Selected entity index
+    WorldState worldState;     // World state while drawing or post tile iteration.
+    v2i        eyePosition;    // Position of the player characters eye. Yes its really done here! 
 
-    u8 ticks; // 162
-    bool freq2; // 163
-    bool freq8_8; // 164
-    bool freq16; // 165
+    u8   ticks;   // Iteration
+    bool freq2;   // Impulse function at frequency 2 measured in 1/tick
+    bool freq16;  // Impulse function at frequency 16 measured in 1/tick
+    i8   freq8_8; // Impulse response at frequency 8 with a 3-bit value linearily increasing. Useful for animations.
+
     // Physics
-    i8 gravity; // 166
-    // 167 + padded = 168
+    i8 gravity; // Earth attraction
 } world_t;
-
-#endif /* TYPES_H */

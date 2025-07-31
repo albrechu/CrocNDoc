@@ -1,9 +1,16 @@
-🔧⚠️ HERE BE DRAGONS - UNDER CONSTRUCTION ⚠️🔧
 # Croc & Doc
 This is Croc&Doc, a 2D platformer for the vector-based Vectrex gaming console.
 
+Dangerous creatures roam the levels.    | Understand the gravitas of the situation.
+:--------------------------------------:|:-----------------------------------------:
+![](assets/images/jump.png?raw=true "") | ![](assets/images/gravity.png?raw=true "")
+
+| Beware of deadly spikes. | You only have 3 lives. Don't lose them all and get the highest score!
+:-------------------------:|:-------------------------:
+![](assets/images/water.png?raw=true "") | ![](assets/images/lives.png?raw=true "")
+
 ## Build
-The game should be easy to build with the batch that were slightly changed. You can for example call `make` at root to compile 
+The game should be easy to build with the batch file that was slightly changed. You can for example call `make` at root to compile 
 and run the game. It just calls the batch file with `make_c.bat` and `make_c.bat run`. You don't need make, but this would be 
 easier for testing without relying on geany. Note that the geany file was never tested, because I use Visual Studio as an editor 
 for development with a seperate terminal instance and Make to run the project. The root folder has to be inside the `projects` 
@@ -52,4 +59,11 @@ To build the stage editor, you need cmake with version ≥3.14 and a c++ compile
 generate the buildsystem with your favorite generator. Inside the stageeditor folder run for example
 `cmake -S . -B build`,  `cmake -S . -B build -G "Visual Studio 17 2022"` or `cmake -S . -B build -G "Ninja"`, etc.
 Inside roots assets/levels folder, you can find the levels of the game as well as meshes.
+
+The most important one of the tools implemented for this project is the stage editor, which features full level creation (save, load, export ...) 
+and a sprite tab for a vector list for easy drawing of sprites. Both can be exported, which automatically copies the C-code to clipboard.
+
+ Stage Editor | Sprite Editor
+ :-----------:|:-------------:
+![](assets/images/stageeditor.png?raw=true "Stage Editor") | ![](assets/images/spriteeditor.png?raw=true "Sprite Editor")
 
