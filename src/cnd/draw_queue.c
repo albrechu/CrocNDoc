@@ -5,7 +5,7 @@ __asm__(
 	".area .text\n\t"
 	".bndry 256\n\t"
 );
-element_t       drawList[24];
+element_t       drawList[32];
 queue_pointer_t drawQueue;
 
 typedef union pos_t
@@ -25,7 +25,6 @@ void draw_stack_clear(void)
 
 void draw_stack_draw(void)
 {
-    pos_t* p, *end;
     queue_pointer_t it;
     it.element = drawList;
 
@@ -34,33 +33,78 @@ void draw_stack_draw(void)
         reset_0_ref();
         moveto_d(it.element->y, it.element->x);
 
-        const i8 length = 1 + *(i8*)it.element->data++;
-        p   = (pos)it.element->data;
-        end = p + length;
-
-        Vec_Misc_Count = (u8)length;
-
+        Vec_Misc_Count = U8(1 + *(i8*)it.element->data++);
         do
         {
-            pos_t q;
-            q.value = p->value;
-            VIA_port_a = q.y; // Send Y to A/D
+            VIA_port_a = ((pos_t*)it.element->data)->y; // Send Y to A/D
             VIA_port_b = 0;   // Enable mux
-            ++p;
             __asm__ volatile ("nop");
             ++VIA_port_b;
-            VIA_port_a = q.x;
+            VIA_port_a = ((pos_t*)it.element->data)->x;
             VIA_shift_reg = 0xFF; // Set solid line pattern
             VIA_t1_cnt_hi = 0x00; // Set scale
             
-            while ((VIA_int_flags & 0x40) == 0) {} // Wait for Interrupt
+            it.element->data += sizeof(pos_t);
 
+            while ((VIA_int_flags & 0x40) == 0) {} // Wait for Interrupt
             __asm__ volatile ("nop");
             VIA_shift_reg = 0x00;
-
-            //VIA_cntl      = 0xCC;
-            //VIA_shift_reg = 0x00; // Redundant
         } while (--Vec_Misc_Count != 0);
         it.idx += (u8)sizeof(element_t);
     }
 }
+
+force_inline void wait_for_interrupt()
+{
+    while ((VIA_int_flags & 0x40) == 0) {} // Wait for Interrupt
+
+    __asm__ volatile ("nop");
+    VIA_shift_reg = 0x00;
+}
+
+//void draw_stack_draw(void)
+//{
+//    queue_pointer_t it;
+//    it.element = drawList;
+//
+//   Vec_Misc_Count = U8(1 + *(i8*)it.element->data++);
+//next_strip:
+//   reset_0_ref();
+//   moveto_d(it.element->y, it.element->x);
+//
+//next_line:
+//   // Output Y
+//   VIA_port_a = ((pos)it.element->data)->y; // Send Y to A/D
+//   VIA_port_b = 0;   // Enable mux
+//   __asm__ volatile ("nop");
+//   ++VIA_port_b;
+//
+//   // Output X
+//   VIA_port_a = ((pos)it.element->data)->x;
+//   VIA_shift_reg = 0xFF; // Set solid line pattern
+//   VIA_t1_cnt_hi = 0x00; // Set scale
+//
+//   // Calculate stuff for the next cycle
+//   if (--Vec_Misc_Count == 0)
+//   {
+//        it.idx += (u8)sizeof(element_t);
+//        if (it.idx != drawQueue.idx)
+//        {
+//            Vec_Misc_Count = U8(1 + *(i8*)it.element->data++);
+//            wait_for_interrupt();
+//            goto next_strip;
+//        }
+//        else
+//        {
+//            wait_for_interrupt();
+//            return;
+//        }
+//   }
+//   else
+//   {
+//       it.element->data += sizeof(pos_t);
+//       wait_for_interrupt();
+//       goto next_line;
+//   }
+//
+//}

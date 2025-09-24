@@ -25,15 +25,24 @@ bool character_grab(void)
             if (manhattan(delta.x, delta.y) < 0x15) // Manhattan Distance
             {
                 CAMERA.state = CharacterState_HoldsProp;
-                e->state     = PropState_Held;
-                e->update    = update_barrel_held;
-                if (pi != 1) // Game needs to ensure that a hold prop is always at idx 1
+                if (CAMERA.substance & Substance_Water)
                 {
-                    idx_t tmpIdx = WORLD.entityIdxs[1];
-                    WORLD.entityIdxs[1] = WORLD.entityIdxs[pi];
-                    WORLD.entityIdxs[pi] = tmpIdx;
-                    WORLD.entities[WORLD.entityIdxs[1]].id = 1;
-                    WORLD.entities[WORLD.entityIdxs[pi]].id = pi;
+                    e->update = update_death;
+                    add_score(Score_50);
+                }
+                else
+                {
+                    e->state     = PropState_Held;
+                    e->update    = update_barrel_held;
+
+                    if (pi != 1) // Game needs to ensure that a hold prop is always at idx 1
+                    {
+                        idx_t tmpIdx = WORLD.entityIdxs[1];
+                        WORLD.entityIdxs[1] = WORLD.entityIdxs[pi];
+                        WORLD.entityIdxs[pi] = tmpIdx;
+                        WORLD.entities[WORLD.entityIdxs[1]].id = 1;
+                        WORLD.entities[WORLD.entityIdxs[pi]].id = pi;
+                    }
                 }
                 CAMERA.isGrounded = false;
                 return true;
@@ -55,7 +64,7 @@ void character_damage(void)
     {
         if (PLAYER.isOtherCharacterDead)
         {
-            game_remove_live();
+            GAME.progress = game_remove_live;
         }
         else
         {

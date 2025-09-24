@@ -103,12 +103,8 @@ typedef struct track_t
 /////////////////////////////////////////////////////////////////////////
 //	Data
 //
-extern const track_t g_yellow;
-extern const track_t g_level0;
 extern const track_t g_corneria;
-extern const track_t g_jibjig;
 extern const track_t g_crocodileCacophony;
 extern const track_t g_champion;
-extern const explosion_t g_monsterPeng;
 
 extern const track_t musicOff;

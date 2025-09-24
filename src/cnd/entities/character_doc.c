@@ -15,16 +15,16 @@ void doc_draw_default(entity e)
 {
     if (e->velocity.x)
     {
-        i8 ad = (WORLD.freq16 << 1);
+        i8 ad = WORLD.freq16 << 1;
         if (e->transform < 0)
         {
-            draw_queue_push(doc_idle_left[WORLD.freq16], 0, -3);
-            WORLD.eyePosition = (v2i){ 12 - ad, -6 - ad };
+            draw_queue_push(doc_idle_left[WORLD.freq16], WORLD.freq16, -3);
+            WORLD.eyePosition = (v2i){ 12 - WORLD.freq16, -6 - ad };
         }
         else
         {
-            draw_queue_push(doc_idle_right[WORLD.freq16], 0, 3);
-            WORLD.eyePosition = (v2i){ 12 - ad, 6 + ad };
+            draw_queue_push(doc_idle_right[WORLD.freq16], WORLD.freq16, 3);
+            WORLD.eyePosition = (v2i){ 12 - WORLD.freq16, 6 + ad };
         }
     }
     else
@@ -49,13 +49,13 @@ void doc_draw_mirrored(entity e)
         i8 ad = (WORLD.freq16 << 1);
         if (e->transform < 0)
         {
-            draw_queue_push(doc_idle_left_r[WORLD.freq16], 0, -3);
-            WORLD.eyePosition = (v2i){ -12 + ad, -6 - ad };
+            draw_queue_push(doc_idle_left_r[WORLD.freq16], -WORLD.freq16, -3);
+            WORLD.eyePosition = (v2i){ -12 + WORLD.freq16, -6 - ad };
         }
         else
         {
-            draw_queue_push(doc_idle_right_r[WORLD.freq16], 0, 3);
-            WORLD.eyePosition = (v2i){ -12 + ad, 6 + ad };
+            draw_queue_push(doc_idle_right_r[WORLD.freq16], -WORLD.freq16, 3);
+            WORLD.eyePosition = (v2i){ -12 + WORLD.freq16, 6 + ad };
         }
     }
     else
@@ -81,12 +81,12 @@ void doc_draw_glide(entity e)
         if (e->transform < 0)
         {
             draw_queue_push(doc_glide_left[WORLD.freq16], -2, -1);
-            WORLD.eyePosition = (v2i){ 10, -8 };
+            WORLD.eyePosition = (v2i){ 9, -9 };
         }
         else
         {
             draw_queue_push(doc_glide_right[WORLD.freq16], -2, 1);
-            WORLD.eyePosition = (v2i){ 10, 8 };
+            WORLD.eyePosition = (v2i){ 9, 9 };
         }
     }
     else
@@ -94,12 +94,12 @@ void doc_draw_glide(entity e)
         if (e->transform < 0)
         {
             draw_queue_push(doc_glide_left[0], -2, -1);
-            WORLD.eyePosition = (v2i){ 10, -8 };
+            WORLD.eyePosition = (v2i){ 9, -9 };
         }
         else
         {
             draw_queue_push(doc_glide_right[0], -2, 1);
-            WORLD.eyePosition = (v2i){ 10, 8 };
+            WORLD.eyePosition = (v2i){ 9, 9 };
         }
     }
 }
@@ -111,25 +111,25 @@ void doc_draw_glide_mirrored(entity e)
         if (e->transform < 0)
         {
             draw_queue_push(doc_glide_left_r[WORLD.freq16], 2, -1);
-            WORLD.eyePosition = (v2i){ -10, -8 };
+            WORLD.eyePosition = (v2i){ -9, -9 };
         }
         else
         {
             draw_queue_push(doc_glide_right_r[WORLD.freq16], 2, 1);
-            WORLD.eyePosition = (v2i){ -10, 8 };
+            WORLD.eyePosition = (v2i){ -9, 9 };
         }
     }
     else
     {
         if (e->transform < 0)
         {
-            draw_queue_push(doc_glide_left_r[0], -2, -1);
-            WORLD.eyePosition = (v2i){ -10, -8 };
+            draw_queue_push(doc_glide_left_r[0], 2, -1);
+            WORLD.eyePosition = (v2i){ -9, -9 };
         }
         else
         {
-            draw_queue_push(doc_glide_right_r[0], -2, 1);
-            WORLD.eyePosition = (v2i){ -10, 8 };
+            draw_queue_push(doc_glide_right_r[0], 2, 1);
+            WORLD.eyePosition = (v2i){ -9, 9 };
         }
     }
 }

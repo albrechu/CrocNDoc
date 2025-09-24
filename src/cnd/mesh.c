@@ -283,10 +283,10 @@ const i8 croc_arm_r[2][15] =
 	},
 };
 
-const i8 doc_idle_right[][33] =
+const i8 doc_idle_right[][35] =
 {
 	{
-		LENGTH(16),
+		LENGTH(17),
 		1, -2,
 		2, 0,
 		3, 4,
@@ -303,9 +303,10 @@ const i8 doc_idle_right[][33] =
 		-5, 2,
 		0, 2,
 		-2, 0,
+		0, 3,
 	},
 	{
-		LENGTH(16),
+		LENGTH(17),
 		1, -2,
 		2, 0,
 		4, 4,
@@ -322,13 +323,14 @@ const i8 doc_idle_right[][33] =
 		-7, 2,
 		0, 2,
 		-2, 0,
+		0, 3,
 	},
 };
 
-const i8 doc_idle_left[][33] =
+const i8 doc_idle_left[][35] =
 {
 	{
-		LENGTH(16),
+		LENGTH(17),
 		1, 2,
 		2, 0,
 		3, -4,
@@ -345,9 +347,10 @@ const i8 doc_idle_left[][33] =
 		-5, -2,
 		0, -2,
 		-2, 0,
+		0, -3,
 	},
 	{
-		LENGTH(16),
+		LENGTH(17),
 		1, 2,
 		2, 0,
 		4, -4,
@@ -364,13 +367,14 @@ const i8 doc_idle_left[][33] =
 		-7, -2,
 		0, -2,
 		-2, 0,
+		0, -3,
 	},
 };
 
-const i8 doc_idle_right_r[][33] =
+const i8 doc_idle_right_r[][35] =
 {
 	{
-		LENGTH(16),
+		LENGTH(17),
 		-1, -2,
 		-2, 0,
 		-3, 4,
@@ -387,9 +391,10 @@ const i8 doc_idle_right_r[][33] =
 		5, 2,
 		0, 2,
 		2, 0,
+		0, 3,
 	},
 	{
-		LENGTH(16),
+		LENGTH(17),
 		-1, -2,
 		-2, 0,
 		-4, 4,
@@ -406,13 +411,14 @@ const i8 doc_idle_right_r[][33] =
 		7, 2,
 		0, 2,
 		2, 0,
+		0, 3,
 	},
 };
 
-const i8 doc_idle_left_r[][33] =
+const i8 doc_idle_left_r[][35] =
 {
 	{
-		LENGTH(16),
+		LENGTH(17),
 		-1, 2,
 		-2, 0,
 		-3, -4,
@@ -429,9 +435,10 @@ const i8 doc_idle_left_r[][33] =
 		5, -2,
 		0, -2,
 		2, 0,
+		0, -3,
 	},
 	{
-		LENGTH(16),
+		LENGTH(17),
 		-1, 2,
 		-2, 0,
 		-4, -4,
@@ -448,6 +455,7 @@ const i8 doc_idle_left_r[][33] =
 		7, -2,
 		0, -2,
 		2, 0,
+		0, -3,
 	},
 };
 
@@ -478,6 +486,33 @@ const i8 barrel_left[] =
 	-5, 15,
 };
 
+const i8 barrel_r[] =
+{
+	LENGTH(4),
+	-20, 0,
+	0, 15,
+	20, 0,
+	0, -15,
+};
+
+const i8 barrel_right_r[] =
+{
+	LENGTH(4),
+	-20, -10,
+	-5, 15,
+	20, 10,
+	5, -15,
+};
+
+const i8 barrel_left_r[] =
+{
+	LENGTH(4),
+	-20, 10,
+	-5, -15,
+	20, -10,
+	5, 15,
+};
+
 const i8 crate[] =
 {
 	LENGTH(5),
@@ -496,34 +531,6 @@ const i8 crate_right[] =
 	-7, -7,
 	7, -7,
 	0, 14,
-};
-
-const i8 mantis_right[] =
-{
-	LENGTH(9),
-	-8,   1, // Body
-	-6,  -8, // Body
-	-10,  1, // Lower Body
-	-4, -20, // Lower Body
-	14,  19, // Upper Line - Lower Body
-	14,   8, // Upper Line - Body
-	 3,   6, // Upper Line - Head
-	-5,   4, // Head
-	 2, -10, // Head
-};
-
-const i8 mantis_left[] =
-{
-	LENGTH(9),
-	-8,  -1, // Body
-	-6,   8, // Body
-	-10, -1, // Lower Body
-	-4,  20, // Lower Body
-	14, -19, // Upper Line - Lower Body
-	14,  -8, // Upper Line - Body
-	 3,  -6, // Upper Line - Head
-	-5,  -4, // Head
-	 2,  10, // Head
 };
 
 const i8 jumper[] =
@@ -1532,53 +1539,6 @@ const i8 diamond[11] =
 	-5, -3,
 	-7, 6,
 };
-
-const i8 game_over[83] =
-{
-	LENGTH(41),
-	10, -12,
-	4, 0,
-	0, -8,
-	-14, 0,
-	0, 8,
-	6, 0,
-	0, -4,
-	0, 12,
-	-6, 0,
-	0, -6,
-	6, 2,
-	0, 4,
-	-6, 2,
-	8, 0,
-	-4, 4,
-	4, 4,
-	-8, 0,
-	0, 8,
-	0, -6,
-	4, 4,
-	4, -4,
-	0, 6,
-	18, -20,
-	-6, -4,
-	-2, 6,
-	8, 4,
-	-6, 4,
-	8, 4,
-	-8, 2,
-	2, 6,
-	0, -6,
-	2, 4,
-	0, -4,
-	4, 4,
-	-2, -6,
-	4, 10,
-	-8, 2,
-	8, -2,
-	2, 4,
-	-8, -2,
-	-4, 8,
-};
-
 
 const i8 hole[13] =
 {

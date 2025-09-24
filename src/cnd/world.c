@@ -370,7 +370,10 @@ LBL(Tile_Jumper):
     const i8 relativeX = relative_x(e);
     const i8 relativeY = relative_y(e);
     if (relativeY - e->velocity.y >= TILE_HEIGHT_2 && relativeY < TILE_HEIGHT && relativeX >= (TILE_WIDTH_4 - PLATFORM_TOLERANCE) && relativeX <= (TILE_WIDTH_3_4 + PLATFORM_TOLERANCE))
+    {
+        e->position.y = tY + 10;
         e->velocity.y = Velocity_Jumper;
+    }
 }
     goto *next;
 LBL(Tile_BarrierVertical):
@@ -420,9 +423,12 @@ LBL(Tile_Portal):
         (nextY >= (TILE_HEIGHT_4 + (TILE_HEIGHT >> 3)) && nextY <= TILE_HEIGHT - (TILE_HEIGHT_4 + (TILE_HEIGHT >> 3))))
     {
         PLAYER.lives = 3; // Reset lives
-        PLAYER.score += U8(GAME.stage + 1) * Score_500;
+        ++PLAYER.stagesDone;
+        PLAYER.score += PLAYER.stagesDone * Score_1000;
         GAME.state = GameState_Play;
-        game_enter_stage(WORLD.level->adjacentStage);
+        
+        GAME.stage = WORLD.level->adjacentStage;
+        game_prepare_next_stage(GameState_Play);
     }
 }
     goto *next;
@@ -531,13 +537,15 @@ end:
 }
 
 
-void world_next()
+force_inline void world_next()
 {
+    const i8    idx = WORLD.entitySelected++;
+    entity e   = WORLD.entities + WORLD.entityIdxs[idx];
+
     switch (WORLD.worldState)
     {
     case WorldState_Update:
     {
-        entity e = WORLD.entities + WORLD.entityIdxs[WORLD.entitySelected++];
         e->update(e);
         if (WORLD.entitySelected >= WORLD.entityCount)
         {
@@ -547,7 +555,7 @@ void world_next()
     }
         break;
     case WorldState_CollisionDetection:
-        check_tiles(WORLD.entities + WORLD.entityIdxs[WORLD.entitySelected++]);
+        check_tiles(e);
         if (WORLD.entitySelected >= WORLD.entityCount)
         {
             WORLD.worldState     = WorldState_Next;
@@ -577,11 +585,6 @@ void Draw_Line_d2(i8 a, i8 b)
     __asm__ volatile ("nop");
     VIA_shift_reg = 0x00;
     Vec_Misc_Count = 0;
-    //if (!Vec_0Ref_Enable)
-    //{
-    //    // Reset0Ref
-    //    
-    //}
 
     reset_0_ref();
     //Reset0Ref();
@@ -800,7 +803,7 @@ LBL(Tile_Middle):
     }
 }
     goto end;
-LBL(Tile_MiddleBottom) :
+LBL(Tile_MiddleBottom):
 { 
     const i8 centerX = I8(U8(tl) + TILE_WIDTH_4); 
     if (tr > centerX && tt > tb) 
@@ -834,8 +837,7 @@ LBL(Tile_MiddleLeftTop):
 LBL(Tile_Spikes):
     if (tr > tl && tt > tb) 
     {
-        beam_set_position(tb, tl); 
-        Draw_VLc((void* const)spikes);
+        draw_queue_push(spikes, tb, tl)
     } 
     goto end;
 LBL(Tile_SpikedBall):
@@ -844,8 +846,7 @@ LBL(Tile_SpikedBall):
     const i8 centerX = tl + TILE_WIDTH_2;
     if (centerY < tt && centerX < tr)
     {
-        beam_set_position(centerY, centerX);
-        Draw_VLc((void* const)spikedBall);
+        draw_queue_push(spikedBall, centerY, centerX)
     }
 }
     goto end;
@@ -876,8 +877,7 @@ LBL(Tile_BarrierHorizontal):
 LBL(Tile_WaterTop):
     if (tt > tb) 
     {
-        beam_set_position(tt, tl); 
-        Draw_VLc((void* const)watertop[WORLD.freq8_8]);
+        draw_queue_push(watertop[WORLD.freq8_8], tt, tl)
     } 
     goto end;
 LBL(Tile_E0):

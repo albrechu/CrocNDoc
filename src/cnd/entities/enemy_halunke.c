@@ -17,13 +17,15 @@ void update_halunke(entity e)
     {
         const i16 dx = e->position.x - CAMERA.position.x;
         const i16 dy = CAMERA.position.y - e->position.y;
-        if (dx < -2 || dx > 2)
-            e->velocity.x = ((dx < 0) - (dx > 0)) << 1;
+		if (dx < -2 || dx > 2)
+			e->velocity.x = ((dx < 0) - (dx > 0)) << 1;
+		else
+			e->velocity.x = 0;
 
 		i8 localDy = I8(dy);
 		const i8 localDx = I8(dx);
 
-		draw_queue_push(localDx >= 0 ? halunke_left : halunke_right, localDy, localDx);
+		draw_queue_push(localDx >= 0 ? halunke_left : halunke_right, localDy + 3, localDx);
 
 		if (e->isSameTile && manhattan(localDy, localDx) < 0xA)
 		{
@@ -33,9 +35,8 @@ void update_halunke(entity e)
 			if ((CAMERA.velocity.y <= -2 && localDxAbs < 6) || (CAMERA.isAttacking && (CAMERA.velocity.x ^ localDx) >= 0))
 			{
 				e->update = update_death;
-				PLAYER.score      += Score_50;
-				CAMERA.velocity.y += Velocity_KillUpWind;
-				CAMERA.velocity.y = MIN8(CAMERA.velocity.y, Velocity_KillUpWind);
+				add_score(Score_50);
+				CAMERA.velocity.y = Velocity_KillUpWind;
 			}
 			else
 			{

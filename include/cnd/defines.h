@@ -63,8 +63,13 @@
 #define TILE_HEIGHT_3_4     (TILE_HEIGHT - TILE_HEIGHT_4) 
 #define PLATFORM_TOLERANCE   8
 #define PLATFORM_TOLERANCE_2 (PLATFORM_TOLERANCE >> 1)
-#define ENTITIES_ACTIVE_MAX 8  // Maximum of entities that can be active.
+#define ENTITIES_ACTIVE_MAX 6  // Maximum of entities that can be active.
 #define ENTITIES_MAX        16 // Maximum of entities that can be in a level.
+#define TEXT_BIG_HEIGHT     -8
+#define TEXT_BIG_WIDTH      80
+#define TEXT_SMALL_HEIGHT   -4
+#define TEXT_SMALL_WIDTH    60
+
 
 #define ID_INVALID -1
 #define ID_CAMERA   0

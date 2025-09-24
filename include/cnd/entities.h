@@ -91,6 +91,8 @@ void update_death(entity e);
 */
 void update_stub(entity e);
 
+void add_score(u8 score);
+
 /////////////////////////////////////////////////////////////////////////
 //	Croc
 //

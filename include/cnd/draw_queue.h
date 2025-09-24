@@ -60,8 +60,8 @@ extern queue_pointer_t drawQueue;
 void draw_stack_clear(void);
 void draw_stack_draw(void);
 
-inline void draw_queue_push(void const* mesh, i8 y, i8 x)
-{
-    *drawQueue.element = (element_t){ (void*)mesh, y, x };
-    drawQueue.idx     += (u8)sizeof(element_t);
+#define draw_queue_push(mesh, y, x)\
+{\
+    *drawQueue.element = (element_t){ (void*)(mesh), (y), (x) };\
+    drawQueue.idx     += (u8)sizeof(element_t);\
 }

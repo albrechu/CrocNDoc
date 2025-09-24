@@ -24,9 +24,13 @@ void update_bandit(entity e)
 		const i8 localDx = I8(dx);
 
 		if (dy >= 0)
+		{
 			draw_queue_push(localDx >= 0 ? spider_left_up : spider_right_up, localDy, localDx);
+		}
 		else
+		{
 			draw_queue_push(localDx >= 0 ? spider_left_down : spider_right_down, localDy, localDx);
+		}
 		
 		if (e->isSameTile && manhattan(localDy, localDx) < 0xA)
 		{
@@ -35,10 +39,9 @@ void update_bandit(entity e)
 
 			if ((CAMERA.velocity.y <= -2 && localDxAbs < 6) || (CAMERA.isAttacking && (CAMERA.velocity.x ^ localDx) >= 0))
 			{
-				e->update         = update_death;
-				PLAYER.score      += Score_100;
-				CAMERA.velocity.y += Velocity_KillUpWind;
-				CAMERA.velocity.y = MIN8(CAMERA.velocity.y, Velocity_KillUpWind);
+				e->update = update_death;
+				add_score(Score_100);
+				CAMERA.velocity.y = Velocity_KillUpWind;
 			}
 			else
 			{

@@ -41,8 +41,9 @@
 #include <lib/print.h>
 #include <lib/monitor.h>
 
-#define GAMEOVER_JOYSPEED      3
-#define GAMEOVER_JOYDIM        50
+/////////////////////////////////////////////////////////////////////////
+// Defines
+//
 #define GAMEOVER_PRESSED_SPEED 60
 
 /////////////////////////////////////////////////////////////////////////
@@ -54,8 +55,8 @@ void game_soft_reset(void)
     Vec_Joy_Mux_1_Y = 0;
     Vec_Joy_Mux_2_X = 0;
     Vec_Joy_Mux_2_Y = 0;
-    Vec_Text_Height = -20;
-    Vec_Text_Width  = 20;
+    Vec_Text_Height = TEXT_BIG_HEIGHT;
+    Vec_Text_Width  = TEXT_BIG_WIDTH;
 
 	MEMZERO(GAME);
     GAME.stage = Stage_Tutorial;
@@ -85,7 +86,7 @@ void game_enter_stage(Stage stage)
     case Stage_Tutorial:
         GAME.track = &g_corneria;
         break;
-    case Stage_JumpWorld:
+    case Stage_Sewers:
         GAME.track = &g_crocodileCacophony;
         break;
     case Stage_Water:
@@ -102,13 +103,12 @@ void game_enter_stage(Stage stage)
     Clear_Sound();
     world_create(stage);
     PLAYER.isOtherCharacterDead = true;
-    // Install callbacks
     WORLD.gravity = Velocity_Gravity;
     prefab_croc(&CAMERA);
     
 }
 
-void game_draw_eye()
+force_inline void game_draw_eye()
 {
     beam_set_position(WORLD.eyePosition.y, WORLD.eyePosition.x);
     Dot_here();
@@ -139,6 +139,18 @@ void game_visualize_hearts(void)
     }
 }
 
+void game_prepare_next_stage(GameState state)
+{
+    WORLD.ticks = 0;
+    CAMERA.position.x = 0;
+    CAMERA.position.y = 0;
+    GAME.track = &musicOff;
+    prefab_croc_prepare(&WORLD.entities[1]);
+    GAME.ticksUntilNewGame = GAMEOVER_PRESSED_SPEED;
+    GAME.progress = game_update_prepare;
+    GAME.state = state;
+}
+
 void game_update_prepare(void)
 {
     Joy_Digital();
@@ -149,10 +161,9 @@ void game_update_prepare(void)
     
     WORLD.entities[1].update(&WORLD.entities[1]);
     game_visualize_hearts();
-    
 
-    Vec_Text_Height = -15;
-    Vec_Text_Width  = 80;
+    Vec_Text_Height = TEXT_BIG_HEIGHT;
+    Vec_Text_Width  = TEXT_BIG_WIDTH;
     print_long_unsigned_int(80, -40, PLAYER.score);
 
     switch (GAME.state)
@@ -183,19 +194,11 @@ void game_remove_live(void)
         WORLD.ticks = 7;
         CAMERA.transform = 1;
         GAME.ticksUntilNewGame = GAMEOVER_PRESSED_SPEED;
-        //Vec_Joy_Mux_1_Y  = 3;
         world_freeze();
     }   
     else // Play lost live animation
     {
-        WORLD.ticks = 0;
-        CAMERA.position.x = 0;
-        CAMERA.position.y = 0;
-        GAME.track = &musicOff;
-        prefab_croc_prepare(&WORLD.entities[1]);
-        GAME.ticksUntilNewGame = GAMEOVER_PRESSED_SPEED;
-        GAME.progress          = game_update_prepare;
-        GAME.state             = GameState_Died;
+        game_prepare_next_stage(GameState_Died);
     }
 }
 
@@ -205,21 +208,30 @@ void game_update_gameover(void)
     draw_stack_clear();
 
     Joy_Analog();
-    Vec_Text_Height = -16;
-    Vec_Text_Width  = 80;
+    Vec_Text_Height = TEXT_BIG_HEIGHT;
+    Vec_Text_Width = TEXT_BIG_WIDTH;
     
     beam_set_position(-(Vec_Text_Height << 1), Vec_Joy_1_X >> 1);
     Print_Str_d(0, -60, "GAME OVER\x80");
+    if (WORLD.freq16)
+    {
+        Vec_Text_Height = TEXT_SMALL_HEIGHT;
+        Vec_Text_Width  = TEXT_SMALL_WIDTH;
+        Print_Str_d(-30, -TEXT_SMALL_WIDTH, "HOLD BUTTON 4\x80");
+        Vec_Text_Height = TEXT_BIG_HEIGHT;
+        Vec_Text_Width  = TEXT_BIG_WIDTH;
+    }
     print_long_unsigned_int(100, -40, PLAYER.score);
 
-    Vec_Text_Height >>= 1;
-    Vec_Text_Width  >>= 1;
     if (Vec_Btn_State)
     {
         if (--GAME.ticksUntilNewGame == 0)
         {
             GAME.isFinished = true;
             Vec_Joy_Mux_1_Y = 0;
+            Stop_Sound();
+            Vec_Music_Flag = 0;
+            Clear_Sound();
         }
         beam_set_position(-100, -(GAMEOVER_PRESSED_SPEED));
         Draw_Line_d(0, (GAMEOVER_PRESSED_SPEED << 1) - (GAME.ticksUntilNewGame << 1));
@@ -257,7 +269,23 @@ void game_update_play(void)
     world_progress();
 
     draw_stack_draw();
+    if (GAME.ticksScoreGainedVisible > 0)
+    {
+        Vec_Text_Height = TEXT_SMALL_HEIGHT;
+        Vec_Text_Width  = TEXT_SMALL_WIDTH;
+        beam_set_position(115, -10);
+        switch (PLAYER.scoreGained)
+        {
+        case Score_50:  Print_Str("+1\x80"); break;
+        case Score_100: Print_Str("+2\x80"); break;
+        case Score_200: Print_Str("+4\x80"); break;
+        case Score_500: Print_Str("+10\x80"); break;
+        default: break;
+        }
+        --GAME.ticksScoreGainedVisible;
+    }
     game_draw_eye();
+
 }
 
 void game_update_plot(void)

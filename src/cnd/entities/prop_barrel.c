@@ -8,6 +8,7 @@
 #include <cnd/mesh.h>
 #include <cnd/xutils.h>
 #include <cnd/draw_queue.h>
+#include <lib/assert.h>
 
 /////////////////////////////////////////////////////////////////////////
 //	Functions
@@ -17,7 +18,7 @@ void update_barrel_thrown(entity e)
     if (e->isGrounded)
     {
         e->update    = update_death;
-        PLAYER.score += Score_50;
+        add_score(Score_50);
     }
     else
     {
@@ -38,15 +39,31 @@ void update_barrel(entity e)
     {
         i8 dy = I8(CAMERA.position.y - e->position.y);
         i8 dx = I8(e->position.x - CAMERA.position.x);
-        draw_queue_push(barrel, dy, dx);
+        if (WORLD.gravity > 0)
+        {
+            draw_queue_push(barrel, dy, dx);
+        }
+        else
+        {
+            draw_queue_push(barrel_r, dy, dx);
+        }
     }
 }
 
 void update_barrel_held(entity e)
 {
     e->position = CAMERA.position;
-    (void)e;
-    draw_queue_push(CAMERA.transform == 1 ? barrel_right : barrel_left, 0, 0);
+    e->tile = CAMERA.tile;
+    e->velocity.x = 0;
+    e->velocity.y = 0;
+    if (WORLD.gravity > 0)
+    {
+        draw_queue_push(CAMERA.transform == 1 ? barrel_right : barrel_left, 0, 0);
+    }
+    else
+    {
+        draw_queue_push(CAMERA.transform == 1 ? barrel_right_r : barrel_left_r, 0, 0);
+    }
 }
 
 void prefab_barrel(entity e)
@@ -60,15 +77,11 @@ void prefab_barrel_throw(entity e)
 {
     e->update    = update_barrel_thrown;
     e->transform = CAMERA.transform;
-    if (Vec_Joy_1_Y < 0)
-    {
-        e->velocity.y = WORLD.gravity * -Velocity_ThrowY;
-    }
-    else
-    {
-        e->velocity.x = CAMERA.transform * Velocity_ThrowX;
-        e->velocity.y = WORLD.gravity * Velocity_ThrowY;
-        e->data[0] = e->velocity.x;
-    }
+    
+    e->position.y += 2;
+    e->isGrounded = false;
+    e->velocity.x = CAMERA.transform * Velocity_ThrowX;
+    e->velocity.y = WORLD.gravity * Velocity_ThrowY;
+    e->data[0] = e->velocity.x;
     entity_set_animation(e, explosion2, ELEMENT_SIZE(explosion2), ARRAY_SIZE(explosion2));
 }

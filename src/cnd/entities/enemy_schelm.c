@@ -60,7 +60,7 @@ void update_schelm_thrown(entity e)
     e->velocity.y += WORLD.freq16;
     if (e->inLocalSpace)
     {
-        e->data[1] -= WORLD.freq8_8;
+        e->data[1] -= WORLD.freq16;
         if (e->data[1] <= 0)
         {
             e->update = update_death;
@@ -91,12 +91,12 @@ void prefab_schelm(entity e)
     e->kill   = update_kill;
 
     const i16 dx = e->position.x - CAMERA.position.x;
-#define PROJECTILE_SPEED_BITS 4 // It then takes 16 frames to hit
+#define PROJECTILE_SPEED_BITS 1 
     e->position.y += TILE_HEIGHT_2;
     e->velocity.y = 0;
-    e->velocity.x = ((dx < 0) - (dx > 0)) << 3;
+    e->velocity.x = ((dx < 0) - (dx > 0)) << PROJECTILE_SPEED_BITS;
 	e->data[0] = e->velocity.x; // For next frames until it hits the target
-    e->data[1] = 20;
+    e->data[1] = 15;
 
     entity_set_animation(e, explosion, ELEMENT_SIZE(explosion), ARRAY_SIZE(explosion));
 }

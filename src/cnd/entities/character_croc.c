@@ -261,8 +261,10 @@ void prefab_croc_prepare(entity e)
 {
     prefab_croc(e);
     e->data[0] = 80;
-    CAMERA.position.x = 0;
-    CAMERA.position.y = 0;
+    e->position.x = 0;
+    e->position.y = 80;
+    //CAMERA.position.x = 0;
+    //CAMERA.position.y = 0;
     e->update = update_croc_prepare;
     e->kill = update_stub;
 }

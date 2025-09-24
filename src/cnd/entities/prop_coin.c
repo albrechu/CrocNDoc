@@ -31,14 +31,14 @@ void update_coin(entity e)
         {
             e->update    = update_coin_achieved;
             e->animation.remainder = 20;
-            PLAYER.score += Score_500;       
+            add_score(Score_500);
         }
     }
 }
 
 void prefab_coin(entity e)
 {
-    PLAYER.score += Score_500;
+    add_score(Score_500);
     e->update = update_coin_achieved;
     e->animation.remainder = 20;
     e->kill   = update_kill_revive;

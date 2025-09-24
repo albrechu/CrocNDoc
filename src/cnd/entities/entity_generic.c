@@ -50,6 +50,13 @@ void update_stub(entity e)
     (void)e;
 }
 
+void add_score(u8 score)
+{
+    PLAYER.score      += score;
+    PLAYER.scoreGained = score;
+    GAME.ticksScoreGainedVisible = 16;
+}
+
 void entity_set_status(entity e, EntityStatus status)
 {
     if (e->globalId >= 0) // Is named entity

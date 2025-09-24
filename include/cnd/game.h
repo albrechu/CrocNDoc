@@ -35,6 +35,7 @@
 void game_soft_reset(void);
 void game_next_attempt(void);
 void game_update_prepare(void);
+void game_prepare_next_stage(GameState state);
 void game_remove_live(void);
 void game_update_play(void);
 void game_update_plot(void);

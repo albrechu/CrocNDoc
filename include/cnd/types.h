@@ -119,7 +119,7 @@ enum Velocity_
     Velocity_Jump       = 10,
     Velocity_Breaching  = 12,
     Velocity_SwimUp     = 10,
-    Velocity_KillUpWind = 12,
+    Velocity_KillUpWind = 10,
     Velocity_JumpX      = 0,
     Velocity_ThrowX     = 5,
     Velocity_ThrowY     = 8,
@@ -318,7 +318,7 @@ typedef i8 Material;
 enum Stage_
 {
     Stage_Tutorial,
-    Stage_JumpWorld,   
+    Stage_Sewers,   
     Stage_Water,
     Stage_Gravitas,
     Stage_Bonus,
@@ -327,10 +327,11 @@ typedef i8 Stage;
 
 enum Score_
 {
-    Score_50  = 1,
-    Score_100 = 2,
-    Score_200 = 4,
-    Score_500 = 10,
+    Score_50   = 1,
+    Score_100  = 2,
+    Score_200  = 4,
+    Score_500  = 10,
+    Score_1000 = 20,
 };
 
 enum GameState_
@@ -395,6 +396,8 @@ typedef struct player_t
     Input    joystick;             // Last read joystick value.
     Action   action;   
     u16      score;                // Current player score (attempt).
+    u8       stagesDone;
+    u8       scoreGained;
     bool     isOtherCharacterDead; // Croc or Doc dead?
     i8       lives;                // Lives available
 } player_t, *player;
@@ -411,6 +414,7 @@ typedef struct game_t
     GameState state;             // Selected state
     bool      isFinished;        // No lives left.
     i8        ticksUntilNewGame; // Ticks for game over timing.
+    u8        ticksScoreGainedVisible;
 } game_t, *game;
 
 typedef struct last_sighting_t
