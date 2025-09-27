@@ -40,21 +40,7 @@ void update_gauner(entity e)
 
             if (e->isSameTile && manhattan(localDy, localDx) < 0x15)
             {
-                const i8 localDyMask = localDy >> 7;
-                localDy = (localDy ^ localDyMask) - localDyMask;
-                const i8 localDxMask = localDx >> 7;
-                const i8 localDxAbs = (localDx ^ localDxMask) - localDxMask;
-
-                if ((CAMERA.velocity.y <= -2 && localDxAbs < 6) || (CAMERA.isAttacking && (CAMERA.velocity.x ^ localDx) >= 0))
-                {
-                    e->update = update_death;
-                    add_score(Score_200);
-                    CAMERA.velocity.y = Velocity_KillUpWind;
-                }
-                else
-                {
-                    character_damage();
-                }
+                entity_camera_hit_detection(e, localDx);
             }
         }
     }
@@ -64,5 +50,6 @@ void prefab_gauner(entity e)
 {
     e->update = update_gauner;
     e->kill   = update_kill;
+    e->score  = Score_200;
     entity_set_animation(e, explosion, ELEMENT_SIZE(explosion), ARRAY_SIZE(explosion));
 }

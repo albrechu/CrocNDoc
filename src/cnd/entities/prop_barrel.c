@@ -17,8 +17,7 @@ void update_barrel_thrown(entity e)
 {
     if (e->isGrounded)
     {
-        e->update    = update_death;
-        add_score(Score_50);
+        e->update = update_death;
     }
     else
     {
@@ -70,6 +69,7 @@ void prefab_barrel(entity e)
 {
     e->update = update_barrel;
     e->kill   = update_kill_revive;
+    e->score  = Score_50;
     entity_set_animation(e, explosion2, ELEMENT_SIZE(explosion2), ARRAY_SIZE(explosion2));
 }
 

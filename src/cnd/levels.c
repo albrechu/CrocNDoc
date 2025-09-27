@@ -123,12 +123,6 @@ const Tile tutorial[1024] =
     Tile_NA, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_TopRight, Tile_Spikes, Tile_TopLeft, Tile_TopRight, Tile_Spikes, Tile_TopLeft, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_NA, Tile_Top, Tile_Top, Tile_NA, Tile_NA, Tile_Air,
 };
 
-
-
-
-
-
-
 static const EntityType tutorialEntities[] =
 {
     Enemy_Halunke,
@@ -151,11 +145,11 @@ static const EntityType tutorialEntities[] =
 
 const Tile water[1024] =
 {
-    Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA,
+    Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left, Tile_Left, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_BottomLeft, Tile_Bottom, Tile_Bottom, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA,
     Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left, Tile_Left2, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Bottom2, Tile_Air, Tile_Air, Tile_Left, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA,
     Tile_Right, Tile_NA, Tile_NA, Tile_Air, Tile_Air, Tile_Left, Tile_Left2, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Right2, Tile_Right, Tile_WaterTop, Tile_WaterTop, Tile_Left, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA,
     Tile_Right, Tile_Top2, Tile_Top2, Tile_WaterTop, Tile_WaterTop, Tile_Left, Tile_Left2, Tile_Jumper, Tile_Spikes, Tile_Jumper, Tile_Spikes, Tile_Jumper, Tile_Spikes, Tile_TopLeft, Tile_Top, Tile_Top, Tile_Right, Tile_Water, Tile_Water, Tile_Top2, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_SpikesDown, Tile_SpikesDown, Tile_SpikesDown, Tile_SpikesDown, Tile_SpikesDown, Tile_SpikesDown, Tile_SpikesDown, Tile_Left,
-    Tile_Right, Tile_Water, Tile_Water, Tile_Water, Tile_Water, Tile_Left, Tile_Left2, Tile_MiddleBottom, Tile_Left, Tile_Top, Tile_NA, Tile_Top, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Left2, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left,
+    Tile_Right, Tile_Water, Tile_Water, Tile_Water, Tile_Water, Tile_Left, Tile_Left2, Tile_MiddleBottom, Tile_Left, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Left2, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left,
     Tile_Right, Tile_NA, Tile_Spikes, Tile_NA, Tile_MiddleRight, Tile_Left, Tile_Left2, Tile_MiddleBottom, Tile_Left, Tile_NA, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_NA, Tile_Right, Tile_Top2, Tile_Top2, Tile_Top2, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left,
     Tile_Right, Tile_NA, Tile_NA, Tile_Spikes, Tile_Spikes, Tile_Right, Tile_MiddleBottom, Tile_Hole1, Tile_Left, Tile_Right, Tile_SpikedBall, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left, Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Bottom2, Tile_Bottom2, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_E6, Tile_Left,
     Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_Right2, Tile_Right, Tile_MiddleBottom, Tile_Air, Tile_Left, Tile_Right, Tile_NA, Tile_Right2, Tile_Top, Tile_Top, Tile_Left2, Tile_NA, Tile_Left, Tile_Right, Tile_NA, Tile_E4, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left, Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left,
@@ -163,13 +157,13 @@ const Tile water[1024] =
     Tile_Right, Tile_NA, Tile_SpikedBall, Tile_NA, Tile_NA, Tile_SpikesDown, Tile_NA, Tile_SpikedBall, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left, Tile_NA, Tile_Left2, Tile_NA, Tile_Left, Tile_Right, Tile_Hole2, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left, Tile_Right, Tile_SpikedBall, Tile_SpikedBall, Tile_NA, Tile_SpikedBall, Tile_SpikedBall, Tile_Left,
     Tile_Right, Tile_Spikes, Tile_Spikes, Tile_Spikes, Tile_NA, Tile_NA, Tile_SpikedBall, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left, Tile_NA, Tile_Left2, Tile_E0, Tile_Left, Tile_NA, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_NA, Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left,
     Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_Left2, Tile_NA, Tile_NA, Tile_NA, Tile_Spikes, Tile_Spikes, Tile_Spikes, Tile_Spikes, Tile_Left, Tile_NA, Tile_Left2, Tile_Top, Tile_Left, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left,
-    Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_Left2, Tile_NA, Tile_NA, Tile_Spikes, Tile_NA, Tile_NA, Tile_Hole0, Tile_Bottom2, Tile_Left, Tile_NA, Tile_Left2, Tile_NA, Tile_Left, Tile_Right, Tile_Top2, Tile_Top2, Tile_Top2, Tile_Top2, Tile_Top2, Tile_Top2, Tile_Left, Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left,
-    Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_Left2, Tile_NA, Tile_Spikes, Tile_NA, Tile_NA, Tile_NA, Tile_Bottom2, Tile_Left, Tile_NA, Tile_Bottom, Tile_Left2, Tile_NA, Tile_Left, Tile_Right, Tile_SpikedBall, Tile_SpikedBall, Tile_NA, Tile_NA, Tile_Hole3, Tile_NA, Tile_Left, Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left,
-    Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_Spikes, Tile_Spikes, Tile_NA, Tile_NA, Tile_NA, Tile_Bottom2, Tile_Left, Tile_NA, Tile_Bottom, Tile_Left2, Tile_NA, Tile_NA, Tile_Left, Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left, Tile_Right, Tile_NA, Tile_NA, Tile_Coin, Tile_NA, Tile_NA, Tile_Left,
+    Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_Left2, Tile_NA, Tile_NA, Tile_Spikes, Tile_NA, Tile_NA, Tile_Hole0, Tile_Bottom2, Tile_Left, Tile_NA, Tile_Left2, Tile_NA, Tile_Left, Tile_Right, Tile_Top2, Tile_Top2, Tile_Top2, Tile_Top2, Tile_Top2, Tile_Top2, Tile_Left, Tile_Right, Tile_NA, Tile_SpikedBall, Tile_SpikedBall, Tile_SpikedBall, Tile_NA, Tile_Left,
+    Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_Left2, Tile_NA, Tile_Spikes, Tile_NA, Tile_NA, Tile_NA, Tile_Bottom2, Tile_Left, Tile_NA, Tile_Bottom, Tile_Left2, Tile_NA, Tile_Left, Tile_Right, Tile_SpikedBall, Tile_SpikedBall, Tile_NA, Tile_NA, Tile_Hole3, Tile_NA, Tile_Left, Tile_Right, Tile_NA, Tile_SpikedBall, Tile_Coin, Tile_SpikedBall, Tile_NA, Tile_Left,
+    Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_Spikes, Tile_Spikes, Tile_NA, Tile_NA, Tile_NA, Tile_Bottom2, Tile_Left, Tile_NA, Tile_Bottom, Tile_Left2, Tile_NA, Tile_NA, Tile_Left, Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left, Tile_Right, Tile_NA, Tile_SpikedBall, Tile_NA, Tile_SpikedBall, Tile_NA, Tile_Left,
     Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Bottom2, Tile_Left, Tile_NA, Tile_Bottom, Tile_Left2, Tile_NA, Tile_NA, Tile_NA, Tile_Left, Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left, Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left,
-    Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left, Tile_NA, Tile_Bottom, Tile_Left2, Tile_NA, Tile_NA, Tile_Spikes, Tile_NA, Tile_Left, Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left, Tile_Right, Tile_Spikes, Tile_Spikes, Tile_Spikes, Tile_Spikes, Tile_Spikes, Tile_Left,
-    Tile_Right, Tile_NA, Tile_SpikedBall, Tile_MiddleBottom, Tile_TopLeft, Tile_Top, Tile_Top, Tile_Top, Tile_NA, Tile_Bottom, Tile_Left2, Tile_NA, Tile_NA, Tile_NA, Tile_Left, Tile_Left2, Tile_Left, Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left,
-    Tile_Right, Tile_Jumper, Tile_NA, Tile_Right2, Tile_NA, Tile_NA, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Left2, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left, Tile_Top, Tile_Right, Tile_Top2, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left, Tile_NA, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_NA,
+    Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left, Tile_NA, Tile_Bottom, Tile_Left2, Tile_NA, Tile_SpikedBall, Tile_Spikes, Tile_NA, Tile_Left, Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left, Tile_Right, Tile_Spikes, Tile_Spikes, Tile_Spikes, Tile_Spikes, Tile_Spikes, Tile_Left,
+    Tile_Right, Tile_NA, Tile_SpikedBall, Tile_MiddleBottom, Tile_TopLeft, Tile_Top, Tile_Top, Tile_Top, Tile_NA, Tile_Bottom, Tile_Left2, Tile_SpikedBall, Tile_NA, Tile_NA, Tile_Left, Tile_Left2, Tile_Left, Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left,
+    Tile_Right, Tile_Jumper, Tile_NA, Tile_Right2, Tile_NA, Tile_NA, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Left2, Tile_NA, Tile_SpikedBall, Tile_NA, Tile_NA, Tile_Left, Tile_Top, Tile_Right, Tile_Top2, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left, Tile_NA, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_NA,
     Tile_Right, Tile_NA, Tile_SpikedBall, Tile_Right2, Tile_NA, Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_E1, Tile_NA, Tile_Right2, Tile_Top, Tile_Right, Tile_Top2, Tile_Top2, Tile_NA, Tile_E7, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left, Tile_Right, Tile_Portal, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left,
     Tile_Right, Tile_Jumper, Tile_NA, Tile_Right2, Tile_NA, Tile_Right, Tile_NA, Tile_NA, Tile_SpikedBall, Tile_NA, Tile_NA, Tile_NA, Tile_Right2, Tile_NA, Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left, Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left,
     Tile_Right, Tile_NA, Tile_NA, Tile_Right2, Tile_NA, Tile_Right, Tile_NA, Tile_NA, Tile_Right2, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_NA, Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_E8, Tile_NA, Tile_Left, Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left,
@@ -184,12 +178,6 @@ const Tile water[1024] =
     Tile_Right, Tile_Water, Tile_Water, Tile_Water, Tile_NA, Tile_NA, Tile_NA, Tile_E3, Tile_Right2, Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_E10, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left, Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Top, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left,
     Tile_NA, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_NA, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_NA, Tile_NA, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Water,
 };
-
-
-
-
-
-
 
 
 
@@ -214,39 +202,37 @@ const Tile terra[1024] =
 {
     Tile_Right, Tile_SpikesDown, Tile_SpikesDown, Tile_SpikesDown, Tile_SpikesDown, Tile_SpikesDown, Tile_SpikesDown, Tile_SpikesDown, Tile_SpikesDown, Tile_SpikesDown, Tile_SpikesDown, Tile_SpikesDown, Tile_SpikesDown, Tile_SpikesDown, Tile_SpikesDown, Tile_SpikesDown, Tile_Left, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left,
     Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left,
-    Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_GravitasDown, Tile_GravitasDown, Tile_GravitasDown, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left,
+    Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_GravitasDown, Tile_GravitasDown, Tile_GravitasDown, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_E8, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left,
     Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Portal, Tile_NA, Tile_NA, Tile_Left,
     Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Right2, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_SpikedBall,
     Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_SpikedBall,
     Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_SpikedBall,
     Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_MiddleRightTop, Tile_GravitasUp, Tile_Warning, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Coin, Tile_SpikedBall,
-    Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_SpikedBall, Tile_NA, Tile_NA, Tile_NA, Tile_Right2, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Spikes, Tile_Top, Tile_Spikes, Tile_Top, Tile_Spikes, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_NA,
+    Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_E7, Tile_NA, Tile_NA, Tile_NA, Tile_SpikedBall, Tile_NA, Tile_NA, Tile_NA, Tile_Right2, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Spikes, Tile_Top, Tile_Spikes, Tile_Top, Tile_Spikes, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_NA,
     Tile_Right, Tile_NA, Tile_NA, Tile_Jumper, Tile_NA, Tile_Jumper, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_MiddleBottom, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Top, Tile_Left, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA,
     Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Jumper, Tile_NA, Tile_NA, Tile_NA, Tile_Spikes, Tile_MiddleBottom, Tile_NA, Tile_NA, Tile_Jumper, Tile_NA, Tile_Left, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA,
     Tile_Right, Tile_NA, Tile_Jumper, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Jumper, Tile_Left, Tile_Left2, Tile_Jumper, Tile_SpikedBall, Tile_NA, Tile_NA, Tile_Left, Tile_NA, Tile_Right, Tile_SpikesDown, Tile_SpikesDown, Tile_SpikesDown, Tile_SpikesDown, Tile_SpikesDown, Tile_SpikesDown, Tile_SpikesDown, Tile_SpikesDown, Tile_SpikesDown, Tile_SpikesDown, Tile_SpikesDown, Tile_Left,
-    Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Bottom2, Tile_NA, Tile_NA, Tile_Left, Tile_Left2, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left, Tile_NA, Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left,
+    Tile_Right, Tile_NA, Tile_E6, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Bottom2, Tile_NA, Tile_NA, Tile_Left, Tile_Left2, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left, Tile_NA, Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left,
     Tile_Right, Tile_Jumper, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left, Tile_Top, Tile_Top, Tile_NA, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_NA, Tile_NA, Tile_Right, Tile_E3, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_E2, Tile_NA, Tile_NA, Tile_NA, Tile_Left,
     Tile_Right, Tile_NA, Tile_NA, Tile_MiddleTop, Tile_MiddleRight, Tile_NA, Tile_MiddleLeft, Tile_GravitasDown, Tile_Left, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Right, Tile_Water, Tile_Water, Tile_Water, Tile_Bottom2, Tile_Bottom2, Tile_Bottom2, Tile_Bottom2, Tile_Bottom2, Tile_NA, Tile_SpikedBall, Tile_NA, Tile_Left,
     Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_MiddleTop, Tile_SpikesDown, Tile_SpikesDown, Tile_SpikesDown, Tile_SpikesDown, Tile_Left, Tile_NA, Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_TopRight, Tile_WaterTop, Tile_WaterTop, Tile_WaterTop, Tile_Left, Tile_NA, Tile_NA, Tile_NA, Tile_Right, Tile_NA, Tile_SpikedBall, Tile_NA, Tile_Left,
     Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_Bottom, Tile_SpikesDown, Tile_Bottom, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left, Tile_NA, Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_Air, Tile_GravitasDown, Tile_Air, Tile_Air, Tile_Air, Tile_Left, Tile_NA, Tile_NA, Tile_NA, Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_Left,
     Tile_Right, Tile_Bottom, Tile_SpikesDown, Tile_Bottom, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left, Tile_NA, Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_Air, Tile_Air, Tile_Air, Tile_NA, Tile_NA, Tile_Top2, Tile_Top2, Tile_Left, Tile_NA, Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_Left,
     Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left, Tile_NA, Tile_Right, Tile_Bottom2, Tile_Bottom2, Tile_Bottom2, Tile_Bottom2, Tile_Bottom2, Tile_Bottom2, Tile_Bottom2, Tile_Bottom2, Tile_NA, Tile_NA, Tile_Left, Tile_NA, Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_Left,
-    Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_NA, Tile_NA, Tile_Right2, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_NA, Tile_Left2, Tile_E4, Tile_Left, Tile_NA, Tile_Right, Tile_SpikesDown, Tile_SpikesDown, Tile_NA, Tile_Left,
-    Tile_Right, Tile_NA, Tile_GravitasUp, Tile_NA, Tile_NA, Tile_Jumper, Tile_GravitasDown, Tile_NA, Tile_GravitasDown, Tile_NA, Tile_NA, Tile_Bottom, Tile_E5, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_GravitasUp, Tile_NA, Tile_Left, Tile_Left2, Tile_NA, Tile_Left, Tile_NA, Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_Left,
+    Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_NA, Tile_NA, Tile_Right2, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_NA, Tile_Left2, Tile_NA, Tile_Left, Tile_NA, Tile_Right, Tile_SpikesDown, Tile_SpikesDown, Tile_NA, Tile_Left,
+    Tile_Right, Tile_NA, Tile_GravitasUp, Tile_NA, Tile_NA, Tile_Jumper, Tile_GravitasDown, Tile_NA, Tile_GravitasDown, Tile_NA, Tile_NA, Tile_Bottom, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_GravitasUp, Tile_NA, Tile_Left, Tile_Left2, Tile_NA, Tile_Left, Tile_NA, Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_Left,
     Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_GravitasUp, Tile_MiddleBottom, Tile_NA, Tile_Bottom, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_MiddleTop, Tile_NA, Tile_Left, Tile_Left2, Tile_NA, Tile_Left, Tile_NA, Tile_Right, Tile_SpikedBall, Tile_NA, Tile_E1, Tile_Left,
     Tile_Right, Tile_NA, Tile_NA, Tile_Jumper, Tile_NA, Tile_NA, Tile_Jumper, Tile_MiddleTop, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Spikes, Tile_Spikes, Tile_MiddleRightTop, Tile_MiddleLeft, Tile_MiddleBottom, Tile_Top2, Tile_NA, Tile_NA, Tile_Left, Tile_NA, Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_Left,
     Tile_NA, Tile_Spikes, Tile_Spikes, Tile_Spikes, Tile_Spikes, Tile_Spikes, Tile_Spikes, Tile_Spikes, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_NA, Tile_Right, Tile_Spikes, Tile_Spikes, Tile_Spikes, Tile_Middle, Tile_NA, Tile_NA, Tile_Left, Tile_NA, Tile_Right, Tile_NA, Tile_NA, Tile_SpikedBall, Tile_Left,
     Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Spikes, Tile_Spikes, Tile_Spikes, Tile_Spikes, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Top, Tile_Top, Tile_Top, Tile_NA, Tile_NA, Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_Left,
     Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_Left,
     Tile_NA, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_NA, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_NA, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_NA, Tile_NA, Tile_NA, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Right, Tile_Water, Tile_Water, Tile_Water, Tile_Left,
-    Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_GravitasDown, Tile_NA, Tile_SpikesDown, Tile_NA, Tile_NA, Tile_NA, Tile_Bottom, Tile_SpikesDown, Tile_NA, Tile_NA, Tile_Bottom, Tile_NA, Tile_SpikesDown, Tile_SpikesDown, Tile_SpikesDown, Tile_NA, Tile_NA, Tile_NA, Tile_Right2, Tile_Right, Tile_WaterTop, Tile_WaterTop, Tile_WaterTop, Tile_Left,
-    Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Bottom, Tile_NA, Tile_NA, Tile_NA, Tile_Bottom, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Top2, Tile_Air, Tile_Air, Tile_Air, Tile_Left,
-    Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_NA, Tile_NA, Tile_SpikedBall, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left,
-    Tile_Right, Tile_NA, Tile_NA, Tile_E0, Tile_NA, Tile_GravitasUp, Tile_Spikes, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_GravitasUp, Tile_NA, Tile_NA, Tile_SpikedBall, Tile_SpikedBall, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Left,
+    Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_GravitasDown, Tile_NA, Tile_SpikesDown, Tile_NA, Tile_NA, Tile_NA, Tile_Bottom, Tile_SpikesDown, Tile_NA, Tile_NA, Tile_Bottom, Tile_NA, Tile_SpikesDown, Tile_SpikesDown, Tile_SpikesDown, Tile_NA, Tile_NA, Tile_NA, Tile_GravitasDown, Tile_SpikesDown, Tile_WaterTop, Tile_WaterTop, Tile_WaterTop, Tile_Left,
+    Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_E4, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Bottom, Tile_NA, Tile_NA, Tile_NA, Tile_Bottom, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Air, Tile_Air, Tile_Air, Tile_Left,
+    Tile_Right, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_Bottom, Tile_NA, Tile_SpikedBall, Tile_NA, Tile_E5, Tile_NA, Tile_NA, Tile_NA, Tile_Left,
+    Tile_Right, Tile_NA, Tile_NA, Tile_E0, Tile_NA, Tile_GravitasUp, Tile_Spikes, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_GravitasUp, Tile_NA, Tile_NA, Tile_SpikedBall, Tile_SpikedBall, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_NA, Tile_GravitasUp, Tile_NA, Tile_Left,
     Tile_NA, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_NA, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Top, Tile_Air,
 };
-
-
 
 static const EntityType terraEntities[] =
 {
@@ -254,14 +240,14 @@ static const EntityType terraEntities[] =
     Enemy_Bandit,
     Enemy_Bandit,
     Enemy_Bandit,
-    Enemy_Bandit,
-    Enemy_Bandit,
-    Prop_Barrel,
-    Prop_Barrel,
-    Prop_Barrel,
-    Prop_Barrel,
-    Prop_Barrel,
-    Prop_Barrel,
+    Enemy_Schuft,
+    Enemy_Schuft,
+    Enemy_Schuft,
+    Enemy_Schuft,
+    Enemy_Schuft,
+    Enemy_Schuft,
+    Enemy_Schuft,
+    Enemy_Schuft,
 };
 
 

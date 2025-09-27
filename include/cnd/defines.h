@@ -79,7 +79,7 @@
 //
 #define WORLD  g_world
 #define GAME   g_game
-#define CAMERA WORLD.entities[ID_CAMERA]
+#define CAMERA WORLD.list.entities[ID_CAMERA]
 #define PLAYER GAME.player
 #define BTNS   Vec_Buttons
 

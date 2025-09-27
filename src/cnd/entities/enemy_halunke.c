@@ -25,23 +25,18 @@ void update_halunke(entity e)
 		i8 localDy = I8(dy);
 		const i8 localDx = I8(dx);
 
-		draw_queue_push(localDx >= 0 ? halunke_left : halunke_right, localDy + 3, localDx);
+		if (WORLD.gravity > 0)
+		{
+			draw_queue_push(localDx >= 0 ? halunke_left : halunke_right, localDy + 3, localDx);
+		}
+		else
+		{
+			draw_queue_push(localDx >= 0 ? halunke_left_r : halunke_right_r, localDy - 4, localDx);
+		}
 
 		if (e->isSameTile && manhattan(localDy, localDx) < 0xA)
 		{
-			const i8 localDxMask = localDx >> 7;
-			const i8 localDxAbs = (localDx ^ localDxMask) - localDxMask;
-
-			if ((CAMERA.velocity.y <= -2 && localDxAbs < 6) || (CAMERA.isAttacking && (CAMERA.velocity.x ^ localDx) >= 0))
-			{
-				e->update = update_death;
-				add_score(Score_50);
-				CAMERA.velocity.y = Velocity_KillUpWind;
-			}
-			else
-			{
-				character_damage();
-			}
+			entity_camera_hit_detection(e, localDx);
 		}
     }
 }
@@ -50,5 +45,6 @@ void prefab_halunke(entity e)
 {
     e->update = update_halunke;
     e->kill   = update_kill;
+	e->score  = Score_50;
     entity_set_animation(e, explosion, ELEMENT_SIZE(explosion), ARRAY_SIZE(explosion));
 }

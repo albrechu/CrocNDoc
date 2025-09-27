@@ -119,6 +119,7 @@ void croc_draw_local_move(entity e, i8 const y, i8 const x)
 
 void update_croc_hit(entity e)
 {
+    character_off_ground_impulse_response(e);
     if (--e->data[0] == 0)
     {
         e->isAttacking = false;
@@ -126,21 +127,23 @@ void update_croc_hit(entity e)
     }
     else
     {
-        e->velocity.x = Velocity_Hit * e->transform;
-        if (BTNS & Input_Button4 && e->isGrounded)
+        if (BTNS & Input_Button4 && (e->isGrounded || e->offGroundImpulseResponseTicks))
         {
             e->velocity.y = Velocity_Jump;
+            e->offGroundImpulseResponseTicks = 0;
         }
 
         void* data = (void*)cloud[e->data[0] & 0x7];
         if (e->transform > 0)
         {
+            e->velocity.x = Velocity_Hit;
             draw_queue_push(croc_idle_right[1], 4, 0);
             draw_queue_push(data, 10, 23 - (e->data[0] << 1));
             WORLD.eyePosition = (v2i){ 15, 4 };
         }
         else
         {
+            e->velocity.x = -Velocity_Hit;
             draw_queue_push(croc_idle_left[1], 4, 0);
             draw_queue_push(data, 10, -14 + (e->data[0] << 1));
             WORLD.eyePosition = (v2i){ 15, -4 };
@@ -150,6 +153,7 @@ void update_croc_hit(entity e)
 
 void update_croc_gravitas_hit(entity e)
 {
+    character_off_ground_impulse_response(e);
     if (--e->data[0] == 0)
     {
         e->isAttacking = false;
@@ -157,24 +161,26 @@ void update_croc_gravitas_hit(entity e)
     }
     else
     {
-        e->velocity.x = Velocity_Hit * e->transform;
-        if (BTNS & Input_Button4 && e->isGrounded)
+        if (BTNS & Input_Button4 && (e->isGrounded || e->offGroundImpulseResponseTicks))
         {
-            e->velocity.y = Velocity_Jump;
+            e->velocity.y = -Velocity_Jump;
+            e->offGroundImpulseResponseTicks = 0;
         }
 
         void* data = (void*)cloud[e->data[0] & 0x7];
         if (e->transform > 0)
         {
+            e->velocity.x = Velocity_Hit;
             draw_queue_push(croc_idle_right_r[1], -4, 0);
             draw_queue_push(data, -10, 23 - (e->data[0] << 1));
-            WORLD.eyePosition = (v2i){ -14, -4 };
+            WORLD.eyePosition = (v2i){ -15, 4 };
         }
         else
         {
+            e->velocity.x = -Velocity_Hit;
             draw_queue_push(croc_idle_left_r[1], -4, 0);
             draw_queue_push(data, -10, -14 + (e->data[0] << 1));
-            WORLD.eyePosition = (v2i){ -14, 4 };
+            WORLD.eyePosition = (v2i){ -15, -4 };
         }
     }
 }
@@ -250,6 +256,7 @@ void prefab_croc(entity e)
 {
     e->update       = update_croc_air;
     e->kill         = update_stub;
+    e->score        = 0;
     e->inLocalSpace = true;
     e->type         = Character_Croc;
     e->state        = CharacterState_Idle;
@@ -263,15 +270,13 @@ void prefab_croc_prepare(entity e)
     e->data[0] = 80;
     e->position.x = 0;
     e->position.y = 80;
-    //CAMERA.position.x = 0;
-    //CAMERA.position.y = 0;
     e->update = update_croc_prepare;
     e->kill = update_stub;
 }
 
 void croc_hit()
 {
-    if (CAMERA.isGrounded && CAMERA.data[0] <= 0)
+    if (CAMERA.isGrounded)
     {
         CAMERA.isAttacking = true;
         if ((CAMERA.substance & Substance_Water) == 0)
@@ -284,17 +289,12 @@ void croc_hit()
 
 void update_croc_air(entity e)
 {
+    character_off_ground_impulse_response(e);
+
     switch (BTNS)
     {
-    case Input_Button1: // Marvin-Mode
-#ifdef NDEBUG
-        Vec_Joy_Mux_1_Y = 3;
-        e->type = Character_Marvin;
-        e->update = update_marvin;
-#endif
-        break;
     case Input_Button2: // Transform
-        if (e->isGrounded && !PLAYER.isOtherCharacterDead)
+        if ((e->isGrounded || e->offGroundImpulseResponseTicks) && !PLAYER.isOtherCharacterDead)
         {
             e->type   = Character_Doc;
             e->update = update_doc_air;
@@ -319,10 +319,10 @@ void update_croc_air(entity e)
     }
     break;
     case Input_Button4: // Jump
-        if (e->isGrounded)
+        if (e->isGrounded || e->offGroundImpulseResponseTicks)
         {
-            e->velocity.y += Velocity_Jump;
-            e->velocity.x += CAMERA.transform * Velocity_JumpX;
+            e->velocity.y = Velocity_Jump;
+            e->offGroundImpulseResponseTicks = 0;
         }
         break;
     default:
@@ -366,17 +366,12 @@ void update_croc_air(entity e)
 
 void update_croc_gravitas_air(entity e)
 {
+    character_off_ground_impulse_response(e);
+
     switch (BTNS)
     {
-    case Input_Button1: // Marvin-Mode
-        #ifdef NDEBUG
-            Vec_Joy_Mux_1_Y = 3;
-            e->type = Character_Marvin;
-            e->update = update_marvin;
-        #endif
-        break;
     case Input_Button2: // Transform
-        if (e->isGrounded && !PLAYER.isOtherCharacterDead)
+        if ((e->isGrounded || e->offGroundImpulseResponseTicks) && !PLAYER.isOtherCharacterDead)
         {
             e->type    = Character_Doc;
             e->update = update_doc_gravitas_air;
@@ -403,10 +398,10 @@ void update_croc_gravitas_air(entity e)
     }
     break;
     case Input_Button4: // Jump
-        if (e->isGrounded)
+        if (e->isGrounded || e->offGroundImpulseResponseTicks)
         {
-            e->velocity.y -= Velocity_Jump;
-            e->velocity.x += CAMERA.transform * Velocity_JumpX;
+            e->velocity.y = -Velocity_Jump;
+            e->offGroundImpulseResponseTicks = 0;
         }
         break;
     default:
@@ -452,13 +447,6 @@ void update_croc_water(entity e)
 {
     switch (BTNS)
     {
-    case Input_Button1: // Marvin-Mode
-#ifdef NDEBUG
-        Vec_Joy_Mux_1_Y = 3;
-        e->type = Character_Marvin;
-        e->update = update_marvin;
-#endif
-        break;
     case Input_Button2: // Swap
         if (!PLAYER.isOtherCharacterDead)
         {
@@ -518,13 +506,6 @@ void update_croc_gravitas_water(entity e)
 {
     switch (BTNS)
     {
-    case Input_Button1: // Marvin-Mode
-        #ifdef NDEBUG
-            Vec_Joy_Mux_1_Y = 3;
-            e->type    = Character_Marvin;
-            e->update = update_marvin;
-        #endif
-        break;
     case Input_Button2: // Swap
         if (!PLAYER.isOtherCharacterDead)
         {

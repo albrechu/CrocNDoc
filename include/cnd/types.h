@@ -114,13 +114,12 @@ enum Velocity_
 {
     Velocity_Gravity    = 1,
     Velocity_Run        = 2,
-    Velocity_Hit        = 7,
+    Velocity_Hit        = 6,
 	Velocity_Friction   = 1,
     Velocity_Jump       = 10,
     Velocity_Breaching  = 12,
     Velocity_SwimUp     = 10,
     Velocity_KillUpWind = 10,
-    Velocity_JumpX      = 0,
     Velocity_ThrowX     = 5,
     Velocity_ThrowY     = 8,
     Velocity_Jumper     = 12,
@@ -186,7 +185,7 @@ enum Character_
 {
     Character_Croc,
     Character_Doc,
-    Character_Marvin,
+    Character_Max,
 };
 
 /**
@@ -194,19 +193,21 @@ enum Character_
 */
 enum Enemy_
 {
-    Prop_Crate,
+    Entity_Prepare,
+    Entity_Croc,
+
     Prop_Barrel,
     Prop_Coin,
     // <add new props here>
 
     Prop_Max = Prop_Coin,
-    Enemy_Tunichtgut,
     Enemy_Halunke,
     Enemy_Gauner,
     Enemy_Schuft,
     Enemy_Schelm,
     Enemy_Bandit,
     Enemy_Boesewicht,
+    //Enemy_Tunichtgut,
     //Enemy_Strolch,
     // Enemy_Ganove,
     // Enemy_Spitzbube
@@ -321,12 +322,12 @@ enum Stage_
     Stage_Sewers,   
     Stage_Water,
     Stage_Gravitas,
-    Stage_Bonus,
 };
 typedef i8 Stage;
 
 enum Score_
 {
+    Score_0    = 0,
     Score_50   = 1,
     Score_100  = 2,
     Score_200  = 4,
@@ -354,6 +355,15 @@ typedef struct animation_t
 /////////////////////////////////////////////////////////////////////////
 //	Types
 //
+typedef u8 handle;
+#define HANDLE_INDEX_BITS   6
+#define HANDLE_INVALID      0xFFu
+#define HANDLE_VERSION_BITS ((sizeof(handle) * 8) - HANDLE_INDEX_BITS)
+#define HANDLE_CREATE(idx, version) (((handle)(idx)) | (((handle)(version)) << HANDLE_INDEX_BITS))
+#define HANDLE_INDEX(h) ((h) & (((handle)(1 << HANDLE_INDEX_BITS)) - 1))
+#define HANDLE_VERSION(h) ((h) >> HANDLE_INDEX_BITS)
+#define HANDLE_IS_CAMERA(h) (HANDLE_INDEX(h) == 0)
+
 typedef struct entity_t entity_t, *entity;
 typedef void (*update_t)(entity);
 typedef void (*prefab_t)(entity);
@@ -376,9 +386,12 @@ struct entity_t
     bool        isSameTile;   // Same tile as the player?
 
     // Entity info
-    idx_t       id;
-    idx_t       globalId;      
-    bool        isEnemy;       
+    handle handle;
+    handle reference; // Possibly contains the reference to an entity. (e.g. reference is an held object)
+    idx_t  globalId;      
+    bool   isEnemy; 
+    bool   isAllocated;
+    u8     score;
 
     // [[ Optional ]]
     i8          transform;   // x-direction the entity is facing. 1 for right, -1 for left
@@ -387,7 +400,8 @@ struct entity_t
     bool        isAttacking; 
     Material    substance;     
     i8          invincibilityTicks;
-    i8          data[4]; 
+    i8          offGroundImpulseResponseTicks;
+    i8          data[2]; 
 };
 //static_assert(sizeof(entity_t) == 34);
 
@@ -431,21 +445,34 @@ typedef struct level_t
     Stage      const  adjacentStage; // Stage reachable through the portal.
 } level_t, *level;
 
+/**
+* @brief free "entity" list
+*/
+typedef struct entity_list_t
+{
+    entity   iterator;
+    entity_t entities[ENTITIES_ACTIVE_MAX];
+    handle   free[ENTITIES_ACTIVE_MAX]; 
+    handle   alive[ENTITIES_ACTIVE_MAX];
+    i8       freeCount;
+    i8       aliveCount;
+} entity_list_t;
+
 typedef struct world_t
 {
     // Level information
     const Tile*    tiles; // Tiles of the selected level
     const level_t* level; // Selected Level
+    entity_list_t  list;
     // Entities
-    entity_t        entities[ENTITIES_ACTIVE_MAX];   // Contains active entities in the scene.
-    idx_t           entityIdxs[ENTITIES_ACTIVE_MAX]; // Contains indices into entities for easier swapping.
+    //entity_t        entities[ENTITIES_ACTIVE_MAX];   // Contains active entities in the scene.
+    //idx_t           entityIdxs[ENTITIES_ACTIVE_MAX]; // Contains indices into entities for easier swapping.
     last_sighting_t lastSeen[ENTITIES_MAX];          // Information about all entities in the scene.
     
     // State
     bool       gameIsOver;     // Game over flag to stop damaging hit collision.
     bool       tileFlags[4];   // Tile state flags. [0] = BarrierVertical, [1] = BarrierHorizontal, [2] = Coin, [3] = Reserved.
-    i8         entityCount;    // Active entities
-    i8         entitySelected; // Selected entity index
+    //i8         entityCount;    // Active entities
     WorldState worldState;     // World state while drawing or post tile iteration.
     v2i        eyePosition;    // Position of the player characters eye. Yes its really done here! 
 

@@ -106,5 +106,7 @@ typedef struct track_t
 extern const track_t g_corneria;
 extern const track_t g_crocodileCacophony;
 extern const track_t g_champion;
+extern const track_t g_day;
+
 
 extern const track_t musicOff;

@@ -19,7 +19,7 @@ setlocal enableextensions enabledelayedexpansion
 @REM C_OPTIMIZATION_LEVEL			set desired level of optimization, requires ENABLE_C_OPTIMIZATION=yes
 
 set ENABLE_PREPROCESSING=no
-set ENABLE_C_DEBUGGING=yes
+set ENABLE_C_DEBUGGING=no
 set ENABLE_C_OPTIMIZATION=yes
 set ENABLE_ASSEMBLY_OPTIMIZATION=yes
 set C_OPTIMIZATION_LEVEL=-O2

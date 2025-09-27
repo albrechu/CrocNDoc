@@ -14,9 +14,9 @@
 //
 bool character_grab(void)
 {
-    for (idx_t pi = 1; pi < WORLD.entityCount; ++pi)
+    for (i8 i = 1; i < WORLD.list.aliveCount; i++)
     {
-        entity e = &WORLD.entities[WORLD.entityIdxs[pi]];
+        entity e = &WORLD.list.entities[WORLD.list.alive[i]];
         if (e->isSameTile && !e->isEnemy)
         {
             v2i delta;
@@ -24,7 +24,6 @@ bool character_grab(void)
             delta.x = I8(e->position.x - CAMERA.position.x);
             if (manhattan(delta.x, delta.y) < 0x15) // Manhattan Distance
             {
-                CAMERA.state = CharacterState_HoldsProp;
                 if (CAMERA.substance & Substance_Water)
                 {
                     e->update = update_death;
@@ -32,17 +31,10 @@ bool character_grab(void)
                 }
                 else
                 {
-                    e->state     = PropState_Held;
-                    e->update    = update_barrel_held;
-
-                    if (pi != 1) // Game needs to ensure that a hold prop is always at idx 1
-                    {
-                        idx_t tmpIdx = WORLD.entityIdxs[1];
-                        WORLD.entityIdxs[1] = WORLD.entityIdxs[pi];
-                        WORLD.entityIdxs[pi] = tmpIdx;
-                        WORLD.entities[WORLD.entityIdxs[1]].id = 1;
-                        WORLD.entities[WORLD.entityIdxs[pi]].id = pi;
-                    }
+                    CAMERA.state     = CharacterState_HoldsProp;
+                    e->state         = PropState_Held;
+                    e->update        = update_barrel_held;
+                    CAMERA.reference = e->handle;
                 }
                 CAMERA.isGrounded = false;
                 return true;
@@ -54,8 +46,11 @@ bool character_grab(void)
 
 void character_throw(void)
 {
-    CAMERA.state = CharacterState_Idle;
-    prefab_barrel_throw(&WORLD.entities[WORLD.entityIdxs[1]]);
+    if (handle_valid(CAMERA.reference))
+    {
+        CAMERA.state = CharacterState_Idle;
+        prefab_barrel_throw(entity_get(CAMERA.reference));
+    }
 }
 
 void character_damage(void)
@@ -97,5 +92,26 @@ void character_damage(void)
             PLAYER.isOtherCharacterDead = true;
             CAMERA.invincibilityTicks = 30;
         }
+    }
+}
+
+void character_off_ground_impulse_response(entity e)
+{
+    if (!e->isGrounded)
+    {
+        if (e->offGroundImpulseResponseTicks < 0) // Fallen of ground in the previous frame.
+        {
+            e->offGroundImpulseResponseTicks = 6;
+        }
+        else if (e->offGroundImpulseResponseTicks > 0) // Tick down response timer
+        {
+            --e->offGroundImpulseResponseTicks;
+        }
+        // else: == 0, Until one touches ground, the response will be nil.
+    }
+    else if (e->offGroundImpulseResponseTicks != -1)
+    {
+        e->velocity.x = 0;
+        e->offGroundImpulseResponseTicks = -1; // Resets to allow the impulse again after falling.
     }
 }

@@ -90,13 +90,14 @@ void prefab_schelm(entity e)
 	e->update = update_schelm_thrown;
     e->kill   = update_kill;
 
-    const i16 dx = e->position.x - CAMERA.position.x;
+    const i16 dx  = e->position.x - CAMERA.position.x;
 #define PROJECTILE_SPEED_BITS 1 
     e->position.y += TILE_HEIGHT_2;
     e->velocity.y = 0;
     e->velocity.x = ((dx < 0) - (dx > 0)) << PROJECTILE_SPEED_BITS;
-	e->data[0] = e->velocity.x; // For next frames until it hits the target
-    e->data[1] = 15;
+	e->data[0]    = e->velocity.x; // For next frames until it hits the target
+    e->data[1]    = 15;
+    e->score      = Score_0;
 
     entity_set_animation(e, explosion, ELEMENT_SIZE(explosion), ARRAY_SIZE(explosion));
 }

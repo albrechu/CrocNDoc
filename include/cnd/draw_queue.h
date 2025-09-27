@@ -53,11 +53,13 @@ typedef union queue_pointer_t
 //	Globals
 //
 extern queue_pointer_t drawQueue;
+extern element_t       drawList[];
 
 /////////////////////////////////////////////////////////////////////////
 //	Functions
 //
-void draw_stack_clear(void);
+#define draw_stack_clear() drawQueue.element = drawList
+
 void draw_stack_draw(void);
 
 #define draw_queue_push(mesh, y, x)\

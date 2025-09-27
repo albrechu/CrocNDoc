@@ -194,7 +194,7 @@ adjust: // Adjust position and flags if necessary
     return;
 
 LBL(Tile_Air):
-    if (e->id == ID_CAMERA && (e->substance & Substance_Water) == Substance_Water)
+    if (HANDLE_IS_CAMERA(e->handle) && (e->substance & Substance_Water) == Substance_Water)
     {
         switch (e->substance)
         {
@@ -214,7 +214,7 @@ LBL(Tile_Air):
     }
     goto *next;
 LBL(Tile_Water):
-    if (e->id == ID_CAMERA && (e->substance & Substance_Water) != Substance_Water)
+    if (HANDLE_IS_CAMERA(e->handle) && (e->substance & Substance_Water) != Substance_Water)
     {
         switch (e->substance)
         {
@@ -343,7 +343,7 @@ LBL(Tile_Spikes):
     if (relative_y(e) - e->velocity.y >= (TILE_HEIGHT >> 1))
     {
         set_ground(e);
-        if (e->id != ID_CAMERA)
+        if (!HANDLE_IS_CAMERA(e->handle))
         {
             e->update = update_death;
         }
@@ -381,7 +381,7 @@ LBL(Tile_BarrierVertical):
     {
         if (relative_x(e) + e->velocity.x >= TILE_WIDTH - 1)
         {
-            if (e->id == ID_CAMERA && e->isAttacking)
+            if (HANDLE_IS_CAMERA(e->handle) && e->isAttacking)
                 TILE_FLAG(0) = true;
             else
                 e->velocity.x = 0;
@@ -393,7 +393,7 @@ LBL(Tile_BarrierHorizontal):
     {
         if (relative_y(e) - e->velocity.y >= TILE_WIDTH)
         {
-            if (e->id == ID_CAMERA)
+            if (HANDLE_IS_CAMERA(e->handle))
             {
                 if (e->velocity.y < -14 || e->velocity.y > 14) // Broke the barrier
                 {
@@ -413,7 +413,10 @@ LBL(Tile_BarrierHorizontal):
     goto *next;
 LBL(Tile_WaterTop):
     if ((relative_y(e) + e->velocity.y >= TILE_HEIGHT - 1) && e->velocity.y > 0)
+    {
         e->velocity.y = Velocity_Breaching;
+        e->isGrounded = false;
+    }
     goto *next;
 LBL(Tile_Portal):
 {
@@ -446,7 +449,7 @@ if (!TILE_FLAG(2))
 }
     goto* next;
 LBL(Tile_GravitasUp):
-    if (e->id == ID_CAMERA && e->substance < Substance_GravitasAir && (relative_y(e) - e->velocity.y >= (TILE_HEIGHT >> 1)))
+    if (HANDLE_IS_CAMERA(e->handle) && e->substance < Substance_GravitasAir && (relative_y(e) - e->velocity.y >= (TILE_HEIGHT >> 1)))
     {
         if (e->substance == Substance_Air)
         {
@@ -458,9 +461,12 @@ LBL(Tile_GravitasUp):
             e->update = e->type == Character_Croc ? update_croc_gravitas_water : update_doc_gravitas_water;
             e->substance = Substance_GravitasWater;
         }
-        e->isAttacking = false;
         e->velocity.y  = 0;
-        e->state       = CharacterState_Idle;
+        if (e->isAttacking)
+        {
+            e->state       = CharacterState_Idle;
+        }
+        e->isAttacking = false;
         WORLD.gravity  = -Velocity_Gravity;
     }
     goto* next;
@@ -468,7 +474,7 @@ LBL(Tile_SpikesDown):
     if (relative_y(e) - e->velocity.y < (TILE_HEIGHT >> 1))
     {
         set_ground(e);
-        if (e->id > 0)
+        if (!HANDLE_IS_CAMERA(e->handle))
         {
             entity_set_status(e, EntityState_Dead);
         }
@@ -484,7 +490,7 @@ LBL(Tile_SpikesDown):
 LBL(Tile_Warning):
     goto *next;
 LBL(Tile_GravitasDown):
-    if (e->id == 0 && e->substance >= Substance_GravitasAir && (relative_y(e) - e->velocity.y < (TILE_HEIGHT >> 1)))
+    if (HANDLE_IS_CAMERA(e->handle) && e->substance >= Substance_GravitasAir && (relative_y(e) - e->velocity.y < (TILE_HEIGHT >> 1)))
     {
         if (e->substance == Substance_GravitasAir)
         {
@@ -536,30 +542,40 @@ end:
     goto *next;
 }
 
-
 force_inline void world_next()
 {
-    const i8    idx = WORLD.entitySelected++;
-    entity e   = WORLD.entities + WORLD.entityIdxs[idx];
-
     switch (WORLD.worldState)
     {
     case WorldState_Update:
     {
-        e->update(e);
-        if (WORLD.entitySelected >= WORLD.entityCount)
+        if (WORLD.list.iterator->isAllocated)
+            WORLD.list.iterator->update(WORLD.list.iterator);
+
+        if (WORLD.list.iterator == &WORLD.list.entities[ENTITIES_ACTIVE_MAX-1])
         {
-            WORLD.worldState     = WorldState_CollisionDetection;
-            WORLD.entitySelected = 0;
+            WORLD.worldState    = WorldState_CollisionDetection;
+            WORLD.list.iterator = WORLD.list.entities;
+        }
+        else
+        {
+            ++WORLD.list.iterator;
         }
     }
         break;
     case WorldState_CollisionDetection:
-        check_tiles(e);
-        if (WORLD.entitySelected >= WORLD.entityCount)
+        if (WORLD.list.iterator->isAllocated)
         {
-            WORLD.worldState     = WorldState_Next;
-            WORLD.entitySelected = 0;
+            check_tiles(WORLD.list.iterator);
+        }
+
+        if (WORLD.list.iterator == &WORLD.list.entities[ENTITIES_ACTIVE_MAX-1])
+        {
+            WORLD.worldState    = WorldState_Next;
+            WORLD.list.iterator = WORLD.list.entities;
+        }
+        else
+        {
+            ++WORLD.list.iterator;
         }
         break;
     default:
@@ -567,8 +583,7 @@ force_inline void world_next()
     }
 }
 
-
-void Draw_Line_d2(i8 a, i8 b)
+force_inline void Draw_Line_d2(i8 a, i8 b)
 {
     VIA_port_a = a;
     VIA_port_b = 0;
@@ -587,25 +602,24 @@ void Draw_Line_d2(i8 a, i8 b)
     Vec_Misc_Count = 0;
 
     reset_0_ref();
-    //Reset0Ref();
-    Reset_Pen();
+    reset_pen();
 }
 
 void world_freeze(void)
 {
     for (i8 i = 0; i < ENTITIES_ACTIVE_MAX; ++i)
-        WORLD.entities[i].update = update_stub;
+        WORLD.list.entities[i].update = update_stub;
 }
 
 void world_progress(void)
 {
-    WORLD.entitySelected = ID_CAMERA;
+    WORLD.list.iterator = WORLD.list.entities;
 
     /**
      * Handle Drawing
      */
     v2i selectedTile;
-    i8 xMin        = I8(CAMERA.position.x >> TILE_SCALE_BITS) - 4;
+    i8 xMin        = I8(CAMERA.position.x >> TILE_SCALE_BITS) - 3;
     selectedTile.x = xMin;
     i8 yMin        = I8(CAMERA.position.y >> TILE_SCALE_BITS) - 3;
     selectedTile.y = yMin + 7;
@@ -614,7 +628,7 @@ void world_progress(void)
 
     xMin = MAX8(0, xMin);
 
-    i8 xMax = selectedTile.x + 8;
+    i8 xMax = selectedTile.x + 7;
     xMax = MIN8(xMax, (WORLD_STRIDE));
     xMax = MAX8(0, xMax);
 
@@ -690,10 +704,6 @@ void world_progress(void)
     tr = firstTL + TILE_WIDTH;
     tt = I8(CAMERA.position.y - (I16(selectedTile.y) << TILE_SCALE_BITS));
     tb = tt - TILE_HEIGHT;
-
-    //assert(!((tt > 0) && (tt > 0)));
-    /*monitor("TB", tb);
-    monitor("TT", tt);*/
 
     goto *jump[tile];
 
@@ -841,21 +851,16 @@ LBL(Tile_Spikes):
     } 
     goto end;
 LBL(Tile_SpikedBall):
-{
-    const i8 centerY = tb + TILE_HEIGHT_2;
-    const i8 centerX = tl + TILE_WIDTH_2;
-    if (centerY < tt && centerX < tr)
+    if (tb < tt && tl < tr)
     {
-        draw_queue_push(spikedBall, centerY, centerX)
+        draw_queue_push(spikedBall, tb + TILE_HEIGHT_2, tl + TILE_WIDTH_2)
     }
-}
     goto end;
 LBL(Tile_Jumper):
 {
-    const i8 x = tl + TILE_WIDTH_4;
-    if (tb < tt && x < tr)
+    if (tb < tt && tl < tr)
     {
-        beam_set_position(tb, x);
+        beam_set_position(tb, tl + TILE_WIDTH_4);
         Draw_VLc((void* const)jumper);
     }
 }
@@ -875,13 +880,12 @@ LBL(Tile_BarrierHorizontal):
     } 
     goto end;
 LBL(Tile_WaterTop):
-    if (tt > tb) 
+    if (tt > tb && tr > tl)
     {
         draw_queue_push(watertop[WORLD.freq8_8], tt, tl)
     } 
     goto end;
 LBL(Tile_E0):
-    if (WORLD.entityCount < ENTITIES_ACTIVE_MAX)
     {
         tile -= Tile_E0;
         last_sighting last = &WORLD.lastSeen[tile];
@@ -905,7 +909,7 @@ LBL(Tile_Portal):
     goto end;
 
 LBL(Tile_Coin) :
-if (!TILE_FLAG(2))
+if (!TILE_FLAG(2) && tt > tb && tr > tl)
 {
     draw_queue_push(diamond, tb + (TILE_HEIGHT_2 >> 1), tl + (TILE_WIDTH_2 >> 0));
 }
@@ -969,20 +973,9 @@ void world_create(Stage const stage)
     MEMZERO(WORLD);
     WORLD.level       = &levels[stage];
     WORLD.tiles       = WORLD.level->level;
-    WORLD.entityCount = 1; // 1 for the player
-    for (idx_t idx = 0; idx < ENTITIES_ACTIVE_MAX; ++idx)
-    {
-        WORLD.entities[idx].id       = idx;
-        WORLD.entities[idx].globalId = ID_INVALID;
-        WORLD.entities[idx].update   = update_stub;
-        WORLD.entities[idx].kill     = update_stub;
-        WORLD.entityIdxs[idx]        = idx;
-    }
+    entity_create_list();
+    entity_create_anonymous(Entity_Croc, WORLD.level->startingTile);
 
-    CAMERA.tile.y     = WORLD.level->startingTile.y;
-    CAMERA.tile.x     = WORLD.level->startingTile.x;
     CAMERA.position.y = (I16(CAMERA.tile.y) << TILE_SCALE_BITS)  - (TILE_HEIGHT >> 1);
     CAMERA.position.x = (I16(CAMERA.tile.x) << TILE_SCALE_BITS)  + (TILE_WIDTH  >> 1);
-    CAMERA.id         =  ID_CAMERA; // Player is always at 0
-    CAMERA.globalId   = ID_INVALID; // Player does not have an id
 }

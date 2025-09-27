@@ -28,21 +28,25 @@
 #define SPE 9
 #define SPS 8
 
-#define SPHF 10
-#define SPQF 8
-#define SPEF 8
+#define SPWF 11 // Whole note
+#define SPHF 10 // Half note
+#define SPQF 8  // Quarter note
+#define SPEF 8  // 
 #define SPSF 7
 // One-Channel
+#define W(a) DUR(a, SPWF)
 #define H(a) DUR(a, SPHF)
 #define Q(a) DUR(a, SPQF)
 #define E(a) DUR(a, SPEF)
 #define S(a) DUR(a, SPSF)
 // Two-Channels
+#define W2(a, b) CH0 | a, DUR(b, SPWF)
 #define H2(a, b) CH0 | a, DUR(b, SPHF)
 #define Q2(a, b) CH0 | a, DUR(b, SPQF)
 #define E2(a, b) CH0 | a, DUR(b, SPEF)
 #define S2(a, b) CH0 | a, DUR(b, SPSF)
 // Three-Channels
+#define W3(a, b, c) CH0 | a, CH1 | b, DUR(c, SPWF)
 #define H3(a, b, c) CH0 | a, CH1 | b, DUR(c, SPHF)
 #define Q3(a, b, c) CH0 | a, CH1 | b, DUR(c, SPQF)
 #define S3(a, b, c) CH0 | a, CH1 | b, DUR(c, SPSF)
@@ -811,13 +815,275 @@ const track_t g_champion =
         E(EB4),
         E(F4),
         E(EB4),
-        E(F4)
+        DUR(F4, CORNERIA_PAUSE2)
 
-        
         | Note_End,
     }
 };
 
+
+const track_t g_day =
+{
+    .amplitudes = &g_amplitudes,
+    .frequencies = &g_frequencies,
+    .notes =
+    {
+        // Measure 1
+        E2(G5, G2),
+        E(G3),
+        E2(F5, G3),
+        E2(B4, G2),
+        E(G3),
+        E2(B4, G3),
+        E2(C5, G2),
+        E2(F5, G3),
+        // Measure 2
+        E2(D5, G2),
+        E2(G4, G3),
+        E(G3),
+        E2(G4, G2),
+        E(G3),
+        E2(G4, G3),
+        E2(D5, G2),
+        E2(G5, G3),
+        // Measure 3
+        E2(A6, G2),
+        E(G3),
+        E(G3),
+        E2(B6, G2),
+        E(G3),
+        E(G3),
+        E2(A4, G2),
+        S(D4),
+        S2(G4, G3),
+        // Measure 4
+        CH0 | B4, CH1 | D4, DUR(G2, SPEF),
+        E(G3),
+        E(G3),
+        CH0 | C5, CH1 | E4, DUR(G2, SPEF),
+        E(G3),
+        E(G3),
+        S2(G5, G2),
+        S(D5),
+        S2(B4, G3),
+        S(G4),
+        // Measure 5
+        E2(G5, G2),
+        E(G3),
+        E2(F5, G3),
+        E2(B4, G2),
+        E(G3),
+        E2(B4, G3),
+        E2(C5, G2),
+        E2(E5, G3),
+        // Measure 6
+        S2(D5, G2),
+        E(G3),
+        E(G3),
+        E(G2),
+        E(G3),
+        E(G3),
+        E(G2),
+        E(G3),
+        // Measure 7
+        E2(D5, G2),
+        E2(G4, G3),
+        E(G3),
+        E(G2),
+        E(G3),
+        CH0 | A4, CH1 | D4, DUR(G3, SPEF),
+        CH0 | D5, CH1 | E4, DUR(G2, SPEF),
+        CH0 | E5, CH1 | C5, DUR(G3, SPEF),
+        // Measure 8
+        S3(B4, G4, G2),
+        S2(D5, A4),
+        S3(D5, B4, G3),
+        E(G3),
+        E(G2),
+        S2(G5, G3),
+        S(G5),
+        S2(A5, G3),
+        E2(B5, G2),
+        E2(G5, G3),
+        // Measure 9
+        E2(D6, G2),
+        E(E3),
+        E(D4),
+        E2(B5, G4),
+        E(D5),
+        E(G5),
+        E(B5),
+        E(D5),
+        // Measure 10
+        E(G5),
+        E(D5),
+        E(B4),
+        E(G4),
+        E2(D5, D4),
+        E(G5),
+        CH0 | B4, CH1 | B3, DUR(G3, SPEF),
+        E(D3),
+        // Measure 11
+        W3(A4, D4, D3),
+        E(A3),
+        E(D4),
+        E(D4),
+        E(A3),
+        E(D4),
+        E(D4),
+        E(D3),
+        // Measure 12
+        E(A3),
+        E(D4),
+        E(D4),
+        E(A3),
+        E2(D4, E3),
+        E2(E4, A3),
+        E2(A4, D4),
+        E2(D5, E4),
+        // Measure 13
+        H3(B4, D4, G2),
+        Q(G3),
+        E(B3),
+        E(D4),
+        E(BH),
+        E(G2),
+        E(A2),
+        E(BH),
+        // Measure 14
+        E(D3),
+        E(BH),
+        E(D3),
+        E(G3),
+        E(D3),
+        E(BH),
+        S2(G5, D4),
+        S(D5),
+        S2(B4, G3),
+        S(G4),
+        // Measure 15
+        E2(G5, G2),
+        E(G3),
+        E2(F5, G3),
+        E2(B4, G2),
+        E(G3),
+        E2(B4, G3),
+        E2(C5, G2),
+        E2(F5, G3),
+        // Measure 16
+        E2(D5, G2),
+        E2(G4, G3),
+        E(G3),
+        E2(G4, G2),
+        E(G3),
+        E(G3),
+        E(G2),
+        E(G3),
+        // Measure 17
+        E2(G4, G2),
+        E2(G5, G3),
+        E(G3),
+        E(G2),
+        E(G2),
+        E(G3),
+        E(G3),
+        E(G2),
+        // Measure 18
+        E(G2),
+        E(D3),
+        E(G3),
+        E(B3),
+        E(D4),
+        E(F4),
+        S2(D5, D4),
+        S(G5),
+        S2(B5, B3),
+        // Measure 19
+        E2(A5, G3),
+        E(G4),
+        E(D4),
+        E(B3),
+        E(G3),
+        E(D4),
+        S2(E4, A3),
+        S(A4),
+        S2(D5, G3),
+        // Measure 20
+        Q2(D5, G2), 
+        E(A3),
+        E(D4),
+        E2(A4, G3),
+        H2(E4, A3),
+        E(D4),
+        E(G3),
+        E(A3),
+        // Measure 21
+        E2(D4, G2),
+        E(G3),
+        W2(G4, A3),
+        E(D4),
+        E(G3),
+        E(B3),
+        E(D4),
+        E(G3),
+        // Measure 22
+        E(B3),
+        E(G3),
+        E(G3),
+        E(B3),
+        S2(G6, G3),
+        S(D6),
+        S2(G5, G3),
+        S(D5),
+        S2(G4, B3),
+        E(G3),
+        // Measure 23
+        E(G2),
+        E(G3),
+        S2(G4, G3),
+        S(D5),
+        S2(G5, G2),
+        S(D6),
+        Q2(G6, G3),
+        E(G3),
+        E(G2),
+        E(G3),
+        // Measure 24
+        E(G2),
+        E(G3),
+        E(G3),
+        Q2(A3, G2),
+        E2(D4, D3),
+        E2(D5, D4),
+        E2(C5, C4),
+        E2(D4, D3),
+        // Measure 25
+        E2(A3, G3),
+        E2(D4, D3),
+        E(G4),
+        E(A4),
+        E(G3),
+        E(G4),
+        E(A4),
+        E(D5),
+        // Measure 26
+        E(G4),
+        E(A4),
+        E(D5),
+        E(A4),
+        E2(G4, G3),
+        E2(G3, BB2),
+        E2(D4, D3),
+        E2(G4, G3),
+        // Measure 27
+        E2(A4, A3),
+        E2(G4, G3),
+        E2(C4, C3),
+        CH0 | C5, CH1 | C4, DUR(G2, CORNERIA_PAUSE2)
+        
+        | Note_End
+    },
+};
 
 #define CROCODILE_CACOPHONY_32ND       4
 #define CROCODILE_CACOPHONY_SIXTEENTH  6

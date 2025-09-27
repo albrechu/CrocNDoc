@@ -136,17 +136,11 @@ void doc_draw_glide_mirrored(entity e)
 
 void update_doc_air(entity e)
 {
+    character_off_ground_impulse_response(e);
     switch (BTNS)
     {
-    case Input_Button1: // Marvin-Mode
-#ifdef NDEBUG
-        Vec_Joy_Mux_1_Y = 3;
-        e->type = Character_Marvin;
-        e->update = update_marvin;
-#endif
-        break;
     case Input_Button2: // Swap
-        if (e->isGrounded && !PLAYER.isOtherCharacterDead)
+        if ((e->isGrounded || e->offGroundImpulseResponseTicks) && !PLAYER.isOtherCharacterDead)
         {
             e->type = Character_Croc;
             e->update = update_croc_air;
@@ -168,10 +162,10 @@ void update_doc_air(entity e)
     }
     break;
     case Input_Button4: // Jump
-        if (e->isGrounded)
+        if (e->isGrounded || e->offGroundImpulseResponseTicks)
         {
-            e->velocity.y += Velocity_Jump;
-            e->velocity.x += e->transform * Velocity_JumpX;
+            e->velocity.y = Velocity_Jump;
+            e->offGroundImpulseResponseTicks = 0;
         }
         else
         {
@@ -268,13 +262,6 @@ void update_doc_water(entity e)
 {
     switch (BTNS)
     {
-    case Input_Button1: // Marvin-Mode
-#ifdef NDEBUG
-        Vec_Joy_Mux_1_Y = 3;
-        e->type = Character_Marvin;
-        e->update = update_marvin;
-#endif
-        break;
     case Input_Button2: // Swap
         if (!PLAYER.isOtherCharacterDead)
         {
@@ -331,16 +318,10 @@ void update_doc_water(entity e)
 
 void update_doc_gravitas_air(entity e)
 {
+    character_off_ground_impulse_response(e);
     switch (BTNS)
     {
-    case Input_Button1: // Swap
-#ifdef NDEBUG
-        Vec_Joy_Mux_1_Y = 3;
-        e->type = Character_Marvin;
-        e->update = update_marvin;
-#endif
-        break;
-    case Input_Button2: // Marvin-Mode
+    case Input_Button2: // Swap
         if (e->isGrounded && !PLAYER.isOtherCharacterDead)
         {
             e->type   = Character_Croc;
@@ -363,10 +344,10 @@ void update_doc_gravitas_air(entity e)
     }
     break;
     case Input_Button4: // Jump
-        if (e->isGrounded)
+        if (e->isGrounded || e->offGroundImpulseResponseTicks)
         {
-            e->velocity.y -= Velocity_Jump;
-            e->velocity.x += e->transform * Velocity_JumpX;
+            e->velocity.y = -Velocity_Jump;
+            e->offGroundImpulseResponseTicks = 0;
         }
         else
         {

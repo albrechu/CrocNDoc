@@ -71,25 +71,13 @@ force_inline void moveto_d(const i8 y, const i8 x)
 	VIA_port_b    = 0x01;
 	VIA_port_a    = x;
 	VIA_t1_cnt_hi = 0x00;
+	const i8 yAbs = abs_a(y);
 	i8 xAbs = abs_a(x);
-	i8 yAbs = abs_a(y);
 	xAbs = xAbs > yAbs ? xAbs : yAbs;
-	if (xAbs <= 0x40)
-	{
-		while ((VIA_int_flags & 0x40) == 0);
-	}
-	else if (xAbs <= 0x64)
-	{
-		while ((VIA_int_flags & 0x40) == 0);
-		i8 nop = 4;
-		while (nop--);
-	}
-	else
-	{
-		i8 nop = 8;
-		while ((VIA_int_flags & 0x40) == 0);
-		while (nop--);
-	}
+	i8 nop = ((xAbs > 0x40) << 2) | ((xAbs > 0x64) << 1) << 2;
+
+	while ((VIA_int_flags & 0x40) == 0);
+	while (nop--);
 }
 
 force_inline void beam_set_position(const i8 y, const i8 x)

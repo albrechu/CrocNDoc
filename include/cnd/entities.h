@@ -50,6 +50,11 @@ void character_throw(void);
 * @brief 
 */
 void character_damage(void);
+/**
+* @brief 
+*/
+void character_off_ground_impulse_response(entity e);
+
 
 /////////////////////////////////////////////////////////////////////////
 //	Generic Entity functions
@@ -74,6 +79,8 @@ void entity_create_anonymous(EntityType const type, v2i const tile);
 */
 void entity_set_animation(entity e, void const* keyframes, i8 keyframeSize, i8 keyframeCount);
 
+
+
 /**
  * @brief Kills the entity e and tries to revives the players other character
  */
@@ -93,31 +100,41 @@ void update_stub(entity e);
 
 void add_score(u8 score);
 
+void entity_set_death(entity e);
+
+void entity_camera_hit_detection(entity e, i8 localDx);
+
+void   entity_create_list();
+entity entity_alloc();
+void   entity_free(entity e);
+entity entity_get(handle h);
+bool   handle_valid(handle h);
+
 /////////////////////////////////////////////////////////////////////////
 //	Croc
 //
 /**
-* @brief 
+* @brief Update function when Croc is in air
 */
 void update_croc_air(entity e);
 /**
-* @brief 
+* @brief Update function when Croc is in air and gravitation is inversed.
 */
 void update_croc_gravitas_air(entity e);
 /**
-* @brief 
+* @brief Update function when Croc is underwater.
 */
 void update_croc_water(entity e);
 /**
-* @brief 
+* @brief Update function when Croc is underwater and gravitation is inversed
 */
 void update_croc_gravitas_water(entity e);
 /**
-* @brief 
+* @brief Update function while Croc is attacking
 */
 void update_croc_hit(entity e);
 /**
-* @brief 
+* @brief Update function  while Croc is hitting and gravitation is inversed
 */
 void update_croc_gravitas_hit(entity e);
 /**
@@ -158,20 +175,6 @@ void update_doc_gravitas_water(entity e);
 void update_doc_gravitas_glide(entity e);
 
 /////////////////////////////////////////////////////////////////////////
-// Marvin-Mode
-//
-/**
-* @brief 
-*/
-void update_marvin(entity e);
-
-/////////////////////////////////////////////////////////////////////////
-// Crate
-//
-void update_crate(entity e);
-void prefab_crate(entity e);
-
-/////////////////////////////////////////////////////////////////////////
 // Barrel
 //
 /**
@@ -203,15 +206,6 @@ void prefab_barrel_throw(entity e);
  */
 void update_gauner(entity e);
 void prefab_gauner(entity e);
-
-/////////////////////////////////////////////////////////////////////////
-// Tunichtgut
-//
-/**
- * @brief 
- */
-void update_tunichtgut(entity e);
-void prefab_tunichtgut(entity e);
 
 /////////////////////////////////////////////////////////////////////////
 // Halunke

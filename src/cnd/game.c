@@ -28,7 +28,6 @@
 #include <cnd/game.h>
 // [[Local]]
 #include <cnd/xutils.h>
-#include <cnd/plot.h>
 #include <cnd/track.h>
 #include <cnd/entities.h>
 #include <cnd/globals.h>
@@ -45,6 +44,9 @@
 // Defines
 //
 #define GAMEOVER_PRESSED_SPEED 60
+#define HEART_Y               -60
+#define HEART_DX               12
+#define HEART_MARGIN           12
 
 /////////////////////////////////////////////////////////////////////////
 // Game Functions
@@ -62,7 +64,7 @@ void game_soft_reset(void)
     GAME.stage = Stage_Tutorial;
     PLAYER.lives = 3;
     
-    prefab_croc_prepare(&WORLD.entities[1]);
+    prefab_croc_prepare(&WORLD.list.entities[1]);
     GAME.ticksUntilNewGame = GAMEOVER_PRESSED_SPEED;
     GAME.progress          = game_update_prepare;
     GAME.state             = GameState_Play;
@@ -74,13 +76,12 @@ void game_next_attempt(void)
     Intensity_7F();
     game_enter_stage(GAME.stage);
     GAME.progress = game_update_play;
-    //plot_init();
-    //plot_set_plot(Plot_Tutorial);
 }
 
 void game_enter_stage(Stage stage)
 {
     GAME.stage = stage;
+    
     switch (stage)
     {
     case Stage_Tutorial:
@@ -93,7 +94,7 @@ void game_enter_stage(Stage stage)
         GAME.track = &g_champion;
         break;
     case Stage_Gravitas:
-        GAME.track = &g_corneria;
+        GAME.track = &g_day;
         break;
     default:
         break;
@@ -104,8 +105,6 @@ void game_enter_stage(Stage stage)
     world_create(stage);
     PLAYER.isOtherCharacterDead = true;
     WORLD.gravity = Velocity_Gravity;
-    prefab_croc(&CAMERA);
-    
 }
 
 force_inline void game_draw_eye()
@@ -113,10 +112,6 @@ force_inline void game_draw_eye()
     beam_set_position(WORLD.eyePosition.y, WORLD.eyePosition.x);
     Dot_here();
 }
-
-#define HEART_Y      -60
-#define HEART_DX     12
-#define HEART_MARGIN 12
 
 void game_visualize_hearts(void)
 {
@@ -145,7 +140,7 @@ void game_prepare_next_stage(GameState state)
     CAMERA.position.x = 0;
     CAMERA.position.y = 0;
     GAME.track = &musicOff;
-    prefab_croc_prepare(&WORLD.entities[1]);
+    prefab_croc_prepare(&WORLD.list.entities[1]);
     GAME.ticksUntilNewGame = GAMEOVER_PRESSED_SPEED;
     GAME.progress = game_update_prepare;
     GAME.state = state;
@@ -159,7 +154,7 @@ void game_update_prepare(void)
 
     draw_stack_clear();
     
-    WORLD.entities[1].update(&WORLD.entities[1]);
+    WORLD.list.entities[1].update(&WORLD.list.entities[1]);
     game_visualize_hearts();
 
     Vec_Text_Height = TEXT_BIG_HEIGHT;
@@ -176,7 +171,7 @@ void game_update_prepare(void)
         {
             --PLAYER.lives;
             GAME.state = GameState_Play;
-            prefab_croc_prepare(&WORLD.entities[1]);
+            prefab_croc_prepare(&WORLD.list.entities[1]);
         }
         break;
     default:
@@ -247,18 +242,18 @@ void game_update_gameover(void)
     draw_stack_draw();
 }
 
-void game_set_frequencies(void)
+force_inline void game_set_frequencies(void)
 {
-    const u16 ticks = ++WORLD.ticks;
-    WORLD.freq2     = I8(ticks & 1);
-    WORLD.freq16    = I8((ticks >> 4) & 1);
-    WORLD.freq8_8   = I8((ticks >> 3) & 7);
+    const u8 ticks  = ++WORLD.ticks;
+    WORLD.freq2      = I8(ticks & 1);
+    WORLD.freq16     = I8((ticks >> 4) & 1);
+    WORLD.freq8_8    = I8((ticks >> 3) & 7);
 }
 
 void game_update_play(void)
 {
     Joy_Digital();
-    dp_VIA_t1_cnt_lo = 0x60;
+    dp_VIA_t1_cnt_lo = 0x50;
     game_set_frequencies();
 
     draw_stack_clear();
@@ -285,19 +280,4 @@ void game_update_play(void)
         --GAME.ticksScoreGainedVisible;
     }
     game_draw_eye();
-
-}
-
-void game_update_plot(void)
-{
-    game_set_frequencies();
-    if (BTNS & Input_Button1)
-    {
-        if (plot_skip())
-        {
-            GAME.progress = game_update_play;
-            return;
-        }
-    }
-    plot_typewriter_next();
 }

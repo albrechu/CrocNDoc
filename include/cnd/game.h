@@ -38,7 +38,6 @@ void game_update_prepare(void);
 void game_prepare_next_stage(GameState state);
 void game_remove_live(void);
 void game_update_play(void);
-void game_update_plot(void);
 void game_update_gameover(void);
 void game_set_frequencies(void);
 void game_enter_stage(Stage stage);
