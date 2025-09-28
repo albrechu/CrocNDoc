@@ -1,5 +1,5 @@
 # Croc & Doc
-This is Croc&Doc, a 2D platformer for the vector-based Vectrex gaming console.
+This is Croc&Doc, a 2D platformer for the vector-based Vectrex gaming console.  **[PLAY](https://drsnuggles.github.io/jsvecx/?rom=https://github.com/albrechu/CrocNDoc/releases/download/1.2/croc_n_doc.zip)**
 
 Dangerous creatures roam the levels.    | Understand the gravitas of the situation.
 :--------------------------------------:|:-----------------------------------------:
@@ -10,6 +10,8 @@ Dangerous creatures roam the levels.    | Understand the gravitas of the situati
 ![](assets/images/water.png?raw=true "") | ![](assets/images/lives.png?raw=true "")
 
 ## Build
+Unfortunately are the build tools currently private. Ignore the following.
+
 The game should be easy to build with the batch file that was slightly changed. You can for example call `make` at root to compile 
 and run the game. It just calls the batch file with `make_c.bat` and `make_c.bat run`. You don't need make, but this would be 
 easier for testing without relying on geany. Note that the geany file was never tested, because I use Visual Studio as an editor 
