@@ -29,6 +29,8 @@
 #include <cnd/globals.h>
 #include <cnd/xutils.h>
 #include <cnd/mesh.h>
+#include <cnd/sound.h>
+#include <cnd/music.h>
 #include <vectrex.h>
 #include <lib/print.h>
 #include <lib/assert.h>
@@ -66,7 +68,39 @@ void __stub(void) {}
 
 void check_tiles(entity e)
 {
-	e->velocity.y -= WORLD.gravity;
+    switch (GAME.event)
+    {
+    case Event_None:
+        e->velocity.y -= WORLD.gravity;
+        break;
+    case Event_Storm:
+        e->velocity.x += WORLD.wind;
+        e->velocity.y -= WORLD.gravity;
+        break;
+    case Event_MoonWalk:
+        e->velocity.y -= WORLD.moon;
+        if (GRAVITY_DOWN())
+            e->velocity.y = MIN8(e->velocity.y, Velocity_MoonWalk);
+        else
+            e->velocity.y = MAX8(e->velocity.y, -Velocity_MoonWalk);
+        break;
+    case Event_TheFloorIsLava:
+        e->velocity.y -= WORLD.gravity;
+        break;
+    case Event_IcyRoads:
+        e->velocity.y -= WORLD.gravity;
+        break;
+    case Event_YouAreBeingFollowed:
+        break;
+    case Event_EarthQuake:
+        break;
+    case Event_Tiny:
+        e->velocity.y -= WORLD.gravity;
+        break;
+    default:
+        break;
+    }
+
     e->isGrounded = false;
     
     static const void* jump[] =
@@ -161,7 +195,15 @@ adjust: // Adjust position and flags if necessary
     {
         e->position.x += I16(e->velocity.x);
         e->tile.x     = xAfter;
-        e->velocity.x = 0;
+        if (GAME.event == Event_IcyRoads)
+        {
+            if ((WORLD.ticks & 14) == 0)
+                e->velocity.x -= e->transform;
+        }
+        else
+        {
+            e->velocity.x = 0;
+        }
     }
 
     if (e->velocity.y)
@@ -170,67 +212,65 @@ adjust: // Adjust position and flags if necessary
         e->tile.y = yAfter;
     }
     
-    i8 dy = e->tile.y - CAMERA.tile.y;
-    const i8 dyMask = dy >> 7;
-    dy = (dy ^ dyMask) - dyMask;
-    i8 dx = e->tile.x - CAMERA.tile.x;
-    const i8 dxMask = dx >> 7;
-    dx = ((dx ^ dxMask) - dxMask);
+    e->tileAbsDelta.y = e->tile.y - CAMERA.tile.y;
+    const i8 dyMask = e->tileAbsDelta.y >> 7;
+    e->tileAbsDelta.y = (e->tileAbsDelta.y ^ dyMask) - dyMask;
+    e->tileAbsDelta.x = e->tile.x - CAMERA.tile.x;
+    const i8 dxMask = e->tileAbsDelta.x >> 7;
+    e->tileAbsDelta.x = ((e->tileAbsDelta.x ^ dxMask) - dxMask);
     
     // Check if entity is local.
-    e->inLocalSpace = dx < 4 && dy < 4;
+    e->inLocalSpace = e->tileAbsDelta.x < 4 && e->tileAbsDelta.y < 4;
     if (!e->inLocalSpace)
     {
-        if (dx > 5 || dy > 5) // Possibly remove entity if too far away
+        if (e->tileAbsDelta.x > 5 || e->tileAbsDelta.y > 5) // Possibly remove entity if too far away
         {
-            entity_set_status(e, EntityStatus_Inactive);
+            if (e->isEnemy)
+            {
+                entity_set_status(e, EntityStatus_Inactive);
+            }
+            else if (e->tileAbsDelta.x > 8 || e->tileAbsDelta.y > 8)
+            {
+                entity_set_status(e, EntityStatus_Inactive);
+            }
         }
-        e->isSameTile = false;
-    }
-    else
-    {
-        e->isSameTile = e->tile.x == CAMERA.tile.x && e->tile.y == CAMERA.tile.y;
     }
     return;
 
 LBL(Tile_Air):
-    if (HANDLE_IS_CAMERA(e->handle) && (e->substance & Substance_Water) == Substance_Water)
+    if (HANDLE_IS_CAMERA(e->handle) && (e->substance & Substance_Water))
     {
-        switch (e->substance)
+        if (e->substance == Substance_GravitasWater)
         {
-        case Substance_Water:
-            e->substance   = Substance_Air;
-            e->isAttacking = false;
-            e->update      = e->type == Character_Croc ? update_croc_air : update_doc_air;
-            break;
-        case Substance_GravitasWater:
-            e->substance   = Substance_GravitasAir;
-            e->isAttacking = false;
-            e->update      = e->type == Character_Croc ? update_croc_gravitas_air : update_doc_gravitas_air;
-            break;
-        default:
-            break;
+            e->substance = Substance_GravitasAir;
+        }
+        else
+        {
+            e->substance = Substance_Air;
+        }
+        sound_push_sfx(&g_splash);;
+        e->isAttacking = false;
+        if (e->type == Character_Croc)
+        {
+            e->update = update_croc_air;
+        }
+        else
+        {
+            e->recoveryTicks = 10;
+            e->update = update_doc_air;
         }
     }
     goto *next;
 LBL(Tile_Water):
     if (HANDLE_IS_CAMERA(e->handle) && (e->substance & Substance_Water) != Substance_Water)
     {
-        switch (e->substance)
-        {
-        case Substance_Air:
-            e->substance   = Substance_Water;
-            e->isAttacking = false;
-            e->update      = e->type == Character_Croc ? update_croc_water : update_doc_water;
-            break;
-        case Substance_GravitasAir:
-            e->substance   = Substance_GravitasWater;
-            e->isAttacking = false;
-            e->update      = e->type == Character_Croc ? update_croc_gravitas_water : update_doc_gravitas_water;
-            break;
-        default:
-            break;
-        }
+        if (e->substance == Substance_GravitasAir)
+            e->substance = Substance_GravitasWater;
+        else
+            e->substance = Substance_Water;
+
+        e->isAttacking = false;
+        e->update      = e->type == Character_Croc ? update_croc_water : update_doc_water;
     }
     goto *next;
 LBL(Tile_Top2):
@@ -414,7 +454,9 @@ LBL(Tile_BarrierHorizontal):
 LBL(Tile_WaterTop):
     if ((relative_y(e) + e->velocity.y >= TILE_HEIGHT - 1) && e->velocity.y > 0)
     {
-        e->velocity.y = Velocity_Breaching;
+        e->recoveryTicks = 7;
+        if (GRAVITY_DOWN())
+            e->velocity.y = Velocity_Breaching;
         e->isGrounded = false;
     }
     goto *next;
@@ -451,22 +493,20 @@ if (!TILE_FLAG(2))
 LBL(Tile_GravitasUp):
     if (HANDLE_IS_CAMERA(e->handle) && e->substance < Substance_GravitasAir && (relative_y(e) - e->velocity.y >= (TILE_HEIGHT >> 1)))
     {
-        if (e->substance == Substance_Air)
-        {
-            e->update    = e->type == Character_Croc ? update_croc_gravitas_air : update_doc_gravitas_air;
-            e->substance = Substance_GravitasAir;
-        }
-        else // Substance_GravitasWater
-        {
-            e->update = e->type == Character_Croc ? update_croc_gravitas_water : update_doc_gravitas_water;
-            e->substance = Substance_GravitasWater;
-        }
+        if (e->substance & Substance_Water)
+            e->update = e->type == Character_Croc ? update_croc_water : update_doc_water;
+        else 
+            e->update = e->type == Character_Croc ? update_croc_air : update_doc_air;
+
+        e->substance |= Substance_GravitasAir;
         e->velocity.y  = 0;
+        e->velocity.x  = 0;
         if (e->isAttacking)
         {
-            e->state       = CharacterState_Idle;
+            e->state = CharacterState_Idle;
         }
         e->isAttacking = false;
+        e->recoveryTicks = 0;
         WORLD.gravity  = -Velocity_Gravity;
     }
     goto* next;
@@ -502,9 +542,10 @@ LBL(Tile_GravitasDown):
             e->update    = e->type == Character_Croc ? update_croc_water : update_doc_water;
             e->substance = Substance_Water;
         }
-        e->isAttacking = false;
-        e->velocity.y  = 0;
-        e->state       = CharacterState_Idle;
+        e->isAttacking   = false;
+        e->velocity.y    = 0;
+        e->state         = CharacterState_Idle;
+        e->recoveryTicks = 0;
         WORLD.gravity  = Velocity_Gravity;
     }
     goto *next;
@@ -583,7 +624,7 @@ force_inline void world_next()
     }
 }
 
-force_inline void Draw_Line_d2(i8 a, i8 b)
+void Draw_Line_d2(i8 a, i8 b)
 {
     VIA_port_a = a;
     VIA_port_b = 0;
@@ -847,13 +888,13 @@ LBL(Tile_MiddleLeftTop):
 LBL(Tile_Spikes):
     if (tr > tl && tt > tb) 
     {
-        draw_queue_push(spikes, tb, tl)
+        draw_stack_push(spikes, tb, tl)
     } 
     goto end;
 LBL(Tile_SpikedBall):
     if (tb < tt && tl < tr)
     {
-        draw_queue_push(spikedBall, tb + TILE_HEIGHT_2, tl + TILE_WIDTH_2)
+        draw_stack_push(spikedBall, tb + TILE_HEIGHT_2, tl + TILE_WIDTH_2)
     }
     goto end;
 LBL(Tile_Jumper):
@@ -882,7 +923,7 @@ LBL(Tile_BarrierHorizontal):
 LBL(Tile_WaterTop):
     if (tt > tb && tr > tl)
     {
-        draw_queue_push(watertop[WORLD.freq8_8], tt, tl)
+        draw_stack_push(watertop[WORLD.freq8_8], tt, tl)
     } 
     goto end;
 LBL(Tile_E0):
@@ -911,19 +952,19 @@ LBL(Tile_Portal):
 LBL(Tile_Coin) :
 if (!TILE_FLAG(2) && tt > tb && tr > tl)
 {
-    draw_queue_push(diamond, tb + (TILE_HEIGHT_2 >> 1), tl + (TILE_WIDTH_2 >> 0));
+    draw_stack_push(diamond, tb + (TILE_HEIGHT_2 >> 1), tl + (TILE_WIDTH_2 >> 0));
 }
 goto end;
 LBL(Tile_GravitasUp):
     if (tt > tb) 
     {
-        draw_queue_push(gravitasUp, tb, tl + TILE_WIDTH_2);
+        draw_stack_push(gravitasUp, tb, tl + TILE_WIDTH_2);
     }
     goto end;
 LBL(Tile_SpikesDown) :
     if (tt > tb)
     {
-        draw_queue_push(spikesDown, tt, tl);
+        draw_stack_push(spikesDown, tt, tl);
     }
     goto end;
 LBL(Tile_Warning):
@@ -931,7 +972,7 @@ LBL(Tile_Warning):
 LBL(Tile_GravitasDown):
     if (tt > tb)
     {
-        draw_queue_push(gravitasDown, tt, tl + TILE_WIDTH_2);
+        draw_stack_push(gravitasDown, tt, tl + TILE_WIDTH_2);
     }
     goto end;
 LBL(Tile_Hole0):
@@ -971,9 +1012,9 @@ end:
 void world_create(Stage const stage)
 {
     MEMZERO(WORLD);
-    WORLD.level       = &levels[stage];
-    WORLD.tiles       = WORLD.level->level;
-    entity_create_list();
+    WORLD.level = &levels[stage];
+    WORLD.tiles = WORLD.level->level;
+    entity_list_clear();
     entity_create_anonymous(Entity_Croc, WORLD.level->startingTile);
 
     CAMERA.position.y = (I16(CAMERA.tile.y) << TILE_SCALE_BITS)  - (TILE_HEIGHT >> 1);

@@ -6,5 +6,7 @@
 /////////////////////////////////////////////////////////////////////////
 //	Global Data
 //
-game_t  g_game;
-world_t g_world;
+game_t  g_game;  // Game logic
+sound_t g_sound; // Sound module
+world_t g_world; // Game Scene
+

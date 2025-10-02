@@ -28,7 +28,8 @@
 #include <cnd/game.h>
 // [[Local]]
 #include <cnd/xutils.h>
-#include <cnd/track.h>
+#include <cnd/music.h>
+#include <cnd/sound.h>
 #include <cnd/entities.h>
 #include <cnd/globals.h>
 #include <cnd/mesh.h>
@@ -48,6 +49,18 @@
 #define HEART_DX               12
 #define HEART_MARGIN           12
 
+const char* events[] =
+{
+    "NONE\x80",
+    "STORM\x80",
+    "MOON WALK\x80",
+    "FLOOR IS LAVA\x80",
+    "ICY ROADS\x80",
+    "YOU ARE FOLLOWED\x80",
+    "EARTHQUAKE\x80",
+    "FROM BACK HERE?\x80",
+};
+
 /////////////////////////////////////////////////////////////////////////
 // Game Functions
 //
@@ -57,53 +70,23 @@ void game_soft_reset(void)
     Vec_Joy_Mux_1_Y = 0;
     Vec_Joy_Mux_2_X = 0;
     Vec_Joy_Mux_2_Y = 0;
-    Vec_Text_Height = TEXT_BIG_HEIGHT;
-    Vec_Text_Width  = TEXT_BIG_WIDTH;
 
 	MEMZERO(GAME);
     GAME.stage = Stage_Tutorial;
+    GAME.event = Event_None;
     PLAYER.lives = 3;
-    
-    prefab_croc_prepare(&WORLD.list.entities[1]);
-    GAME.ticksUntilNewGame = GAMEOVER_PRESSED_SPEED;
-    GAME.progress          = game_update_prepare;
-    GAME.state             = GameState_Play;
-    GAME.track             = &musicOff;
-}
-
-void game_next_attempt(void)
-{
-    Intensity_7F();
-    game_enter_stage(GAME.stage);
-    GAME.progress = game_update_play;
+    game_prepare_next_stage(GameState_Play);
+    sound_clear();
 }
 
 void game_enter_stage(Stage stage)
 {
     GAME.stage = stage;
-    
-    switch (stage)
-    {
-    case Stage_Tutorial:
-        GAME.track = &g_corneria;
-        break;
-    case Stage_Sewers:
-        GAME.track = &g_crocodileCacophony;
-        break;
-    case Stage_Water:
-        GAME.track = &g_champion;
-        break;
-    case Stage_Gravitas:
-        GAME.track = &g_day;
-        break;
-    default:
-        break;
-    }
-    Stop_Sound();
-    Vec_Music_Flag = 0;
-    Clear_Sound();
+
+    sound_clear();
+    sound_push_music(g_tracks[stage]);
     world_create(stage);
-    PLAYER.isOtherCharacterDead = true;
+    PLAYER.isOtherCharacterDead = false;
     WORLD.gravity = Velocity_Gravity;
 }
 
@@ -113,34 +96,12 @@ force_inline void game_draw_eye()
     Dot_here();
 }
 
-void game_visualize_hearts(void)
-{
-    switch (PLAYER.lives)
-    {
-    case 1:
-        draw_queue_push(heart, HEART_Y, -(HEART_DX >> 1));
-        break;
-    case 2:
-        draw_queue_push(heart, HEART_Y, -(HEART_DX + (HEART_MARGIN >> 1)));
-        draw_queue_push(heart, HEART_Y, HEART_MARGIN >> 1);
-        break;
-    case 3:
-        draw_queue_push(heart, HEART_Y, -((HEART_DX >> 1) + HEART_MARGIN + HEART_DX));
-        draw_queue_push(heart, HEART_Y, -(HEART_DX >> 1));
-        draw_queue_push(heart, HEART_Y, +((HEART_DX >> 1) + HEART_MARGIN));
-        break;
-    default:
-        break;
-    }
-}
-
 void game_prepare_next_stage(GameState state)
 {
     WORLD.ticks = 0;
-    CAMERA.position.x = 0;
-    CAMERA.position.y = 0;
-    GAME.track = &musicOff;
-    prefab_croc_prepare(&WORLD.list.entities[1]);
+    sound_stop_music();
+    entity_list_clear();
+    entity_create_anonymous(Entity_Prepare, (v2i) { 1, 1 });
     GAME.ticksUntilNewGame = GAMEOVER_PRESSED_SPEED;
     GAME.progress = game_update_prepare;
     GAME.state = state;
@@ -154,26 +115,66 @@ void game_update_prepare(void)
 
     draw_stack_clear();
     
-    WORLD.list.entities[1].update(&WORLD.list.entities[1]);
-    game_visualize_hearts();
+    if (CAMERA.isAllocated)
+        CAMERA.update(&CAMERA);
 
-    Vec_Text_Height = TEXT_BIG_HEIGHT;
-    Vec_Text_Width  = TEXT_BIG_WIDTH;
+    // Visualize hearts
+    switch (PLAYER.lives)
+    {
+    case 1:
+        draw_stack_push(heart, HEART_Y, -(HEART_DX >> 1));
+        break;
+    case 2:
+        draw_stack_push(heart, HEART_Y, -(HEART_DX + (HEART_MARGIN >> 1)));
+        draw_stack_push(heart, HEART_Y, HEART_MARGIN >> 1);
+        break;
+    default: // More than 3 hearts
+        TEXT_SET_BIG();
+        Print_Str_d(HEART_Y + 10, (HEART_DX << 1) - (HEART_MARGIN >> 1), "++\x80");
+        /* fallthrough */
+    case 3:
+        draw_stack_push(heart, HEART_Y, -((HEART_DX >> 1) + HEART_MARGIN + HEART_DX));
+        draw_stack_push(heart, HEART_Y, -(HEART_DX >> 1));
+        draw_stack_push(heart, HEART_Y, +((HEART_DX >> 1) + HEART_MARGIN));
+        break;
+    }
+
+    TEXT_SET_BIG();
     print_long_unsigned_int(80, -40, PLAYER.score);
+
+    if (GAME.event != Event_None && WORLD.freq8_8 & 1)
+    {
+        TEXT_SET_SMALL();
+        Print_Str_d(-15, -(TEXT_SMALL_WIDTH >> 1), "EVENT!\x80");
+        Print_Str_d(-30, -TEXT_SMALL_WIDTH, (void* const)events[GAME.event]);
+    }
 
     switch (GAME.state)
     {
-    case GameState_InGame:
-        game_next_attempt();
-        break;
-    case GameState_DeathAnimation:
-        if (--GAME.ticksUntilNewGame == 0)
+    case GameState_Play:
+        if (WORLD.ticks == 100)
         {
-            --PLAYER.lives;
-            GAME.state = GameState_Play;
-            prefab_croc_prepare(&WORLD.list.entities[1]);
+            CAMERA.kill(&CAMERA);
+            Intensity_7F();
+            game_enter_stage(GAME.stage);
+            WORLD.windPhase = 0;
+            GAME.progress = game_update_play;
         }
         break;
+    case GameState_Died:
+        if (WORLD.ticks == 100)
+        {
+            entity_set_death(&CAMERA);
+            WORLD.ticks = 0;
+        }
+        if (WORLD.list.aliveCount == 0)
+        {
+            GAME.state = GameState_Play;
+            entity_create_anonymous(Entity_Prepare, (v2i) { 1, 1 });
+            --PLAYER.lives;
+        }
+        break;
+
     default:
         break;
     }
@@ -185,11 +186,12 @@ void game_remove_live(void)
 {
     if (PLAYER.lives <= 1)
     {
-        GAME.progress = game_update_gameover;
-        WORLD.ticks = 7;
-        CAMERA.transform = 1;
-        GAME.ticksUntilNewGame = GAMEOVER_PRESSED_SPEED;
+        GAME.progress          = game_update_gameover;
+        WORLD.windPhase        = 0;
+        WORLD.wind             = 0;
         world_freeze();
+        entity_set_death(&CAMERA);
+        GAME.ticksUntilNewGame = GAMEOVER_PRESSED_SPEED;
     }   
     else // Play lost live animation
     {
@@ -202,19 +204,19 @@ void game_update_gameover(void)
     game_set_frequencies();
     draw_stack_clear();
 
+    if (CAMERA.isAllocated)
+        CAMERA.update(&CAMERA);
+
     Joy_Analog();
-    Vec_Text_Height = TEXT_BIG_HEIGHT;
-    Vec_Text_Width = TEXT_BIG_WIDTH;
+    TEXT_SET_BIG();
     
     beam_set_position(-(Vec_Text_Height << 1), Vec_Joy_1_X >> 1);
     Print_Str_d(0, -60, "GAME OVER\x80");
     if (WORLD.freq16)
     {
-        Vec_Text_Height = TEXT_SMALL_HEIGHT;
-        Vec_Text_Width  = TEXT_SMALL_WIDTH;
+        TEXT_SET_SMALL();
         Print_Str_d(-30, -TEXT_SMALL_WIDTH, "HOLD BUTTON 4\x80");
-        Vec_Text_Height = TEXT_BIG_HEIGHT;
-        Vec_Text_Width  = TEXT_BIG_WIDTH;
+        TEXT_SET_BIG();
     }
     print_long_unsigned_int(100, -40, PLAYER.score);
 
@@ -244,30 +246,182 @@ void game_update_gameover(void)
 
 force_inline void game_set_frequencies(void)
 {
-    const u8 ticks  = ++WORLD.ticks;
-    WORLD.freq2      = I8(ticks & 1);
-    WORLD.freq16     = I8((ticks >> 4) & 1);
-    WORLD.freq8_8    = I8((ticks >> 3) & 7);
+    ++WORLD.ticks;
+    WORLD.freq2      = I8(WORLD.ticks & 1);
+    WORLD.freq16     = I8((WORLD.ticks >> 4) & 1);
+    WORLD.freq8_8    = I8((WORLD.ticks >> 3) & 7);
 }
+
+const i8 windSequence[] = { 0,1,0,-1 };
+
+//void explosion_snd(void) 
+//{
+//    i8 A;
+//
+//    if (Vec_Expl_Flag & 0x80)
+//    {
+//        Vec_Expl_Flag &= 0x7F;
+//
+//        struct tmp_t { u8 bytes[4]; };
+//        *((struct tmp_t*)&Vec_Expl_1) = *((struct tmp_t*)GAME.explosion); // Copy 4 bytes
+//        Vec_Expl_Chans = ((Vec_Expl_1 >> 3) | Vec_Expl_1) & 7;
+//        Vec_Expl_ChanA = Vec_Expl_1 & 0x38;
+//        Vec_Expl_ChanB = Vec_Expl_1 & 0x07;
+//        Vec_Expl_Chan = 2;
+//        A = 0x7F;
+//    }
+//    else {
+//        if (Vec_Expl_Timer == 0) return;
+//
+//        A = Vec_Expl_Timer - Vec_Expl_4;
+//        if (A < 0) {
+//            Vec_Expl_Timer = 0;
+//            // Skip to channel noise section
+//            goto noise_update;
+//        }
+//    }
+//
+//    Vec_Expl_Timer = A;
+//    A >>= 2;
+//
+//    // Channel A effect
+//    if (Vec_Expl_ChanA) {
+//        Vec_Music_Wk_6 = A;
+//        if (Vec_Expl_2 < 0) {            // BMI in 6809
+//            Vec_Music_Wk_6 = ~A;        // COMB / bit inversion
+//        }
+//        else if (Vec_Expl_2 > 0) {    // BNE + positive check
+//            Vec_Music_Wk_6 = ~A;
+//        }
+//    }
+//
+//    // Adjust value for next step
+//    A >>= 1;
+//    if ((A > 7) && (A != 0x0F)) ++A;
+//
+//    // Channel B / noise effect
+//    if (Vec_Expl_3 != 0) {
+//        if (Vec_Expl_3 > 0) {
+//            A ^= 0x0F;  // EORA #$0F
+//        }
+//    }
+//
+//noise_update:
+//    // Noise / channel assignment
+//    if (Vec_Expl_ChanB != 0) {
+//        while (true) {
+//            Vec_Expl_Chan--;
+//            if (Vec_Expl_Chan < 0) Vec_Expl_Chan = 2;
+//
+//            i8 mask = (i8)Bitmask_a((u8)Vec_Expl_Chan);
+//            if (mask & Vec_Expl_ChanB) break; // Exit loop if channel is active
+//        }
+//
+//        const i8 chan_index = 2 - Vec_Expl_Chan; // Map channel to index
+//        i8 rnd = I8(Random() & 0x0F);
+//        if (rnd <= 5) rnd = (rnd << 1) + 5;  // ASLA + ADDA #5
+//        (&Vec_Music_Wk_1)[chan_index] = rnd;
+//        (&Vec_Music_Wk_1)[chan_index + 1] = (i8)Vec_Random_Seed1;
+//    }
+//
+//    // Mask explosion parameter into music work register
+//    Vec_Music_Wk_7 &= ~Vec_Expl_1;
+//
+//    // Write noise values for active channels
+//    i8 chans = Vec_Expl_Chans;
+//    i8* ptr = &Vec_Music_Wk_7;
+//    while (chans) 
+//    {
+//        ptr--;          // step backward through registers
+//        if (chans & 1) *ptr = A;
+//        chans >>= 1;
+//    }
+//}
 
 void game_update_play(void)
 {
     Joy_Digital();
-    dp_VIA_t1_cnt_lo = 0x50;
+    dp_VIA_t1_cnt_lo = 0x60;
     game_set_frequencies();
 
     draw_stack_clear();
 
+    switch (GAME.event)
+    {
+    case Event_None:
+        break;
+    case Event_Storm:
+    {
+        if (WORLD.ticks == 255)
+        {
+            WORLD.windPhase = (WORLD.windPhase + 1) & 3;
+            WORLD.wind = windSequence[WORLD.windPhase];
+        }
+        else
+        {
+            if ((WORLD.ticks < 96) && (WORLD.ticks > 64))
+            {
+                Intensity_7F();
+            }
+            else
+            {
+                Intensity_3F();
+            }
+            
+            draw_stack_push(&wind[1 + WORLD.wind][0], (WORLD.gravity << 5), 0);
+            beam_set_position((WORLD.gravity << 5) + (WORLD.gravity << 3), -15);
+            Draw_Line_d(0, 32 - I8(WORLD.ticks >> 3));
+        }
+    }
+        break;
+    case Event_MoonWalk:
+        Intensity_3F();
+        WORLD.moon = ((WORLD.ticks & 3) == 0) ? WORLD.gravity : 0;
+        break;
+    case Event_TheFloorIsLava:
+        if (CAMERA.isGrounded)
+        {
+            if (++WORLD.heat > 63)
+            {
+                character_damage();
+                WORLD.heat = 0;
+            }
+
+            beam_set_position((WORLD.gravity << 5), 0);
+            Draw_Line_d((-WORLD.gravity) << 3, 0);
+            Moveto_d((-WORLD.gravity) << 1, 0);
+            Dot_here();
+            Moveto_d((WORLD.gravity << 4), -31);
+            Draw_Line_d(0, 63 - WORLD.heat);
+        }
+        else
+        {
+            WORLD.heat = 0;
+        }
+        break;
+    case Event_IcyRoads:
+        break;
+    case Event_YouAreBeingFollowed:
+        break;
+    case Event_EarthQuake:
+        break;
+    case Event_Tiny:
+        dp_VIA_t1_cnt_lo = 0x25;
+        break;
+    default:
+        break;
+    }
+
+
     if (!PLAYER.isOtherCharacterDead)
-        draw_queue_push(heart, 115, 100);
+        draw_stack_push(heart, 115, 100);
 
     world_progress();
 
     draw_stack_draw();
     if (GAME.ticksScoreGainedVisible > 0)
     {
-        Vec_Text_Height = TEXT_SMALL_HEIGHT;
-        Vec_Text_Width  = TEXT_SMALL_WIDTH;
+        TEXT_SET_SMALL();
         beam_set_position(115, -10);
         switch (PLAYER.scoreGained)
         {

@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 //	Includes
 //
-#include <cnd/track.h>
+#include <cnd/music.h>
 #include <vectrex.h>
 
 /////////////////////////////////////////////////////////////////////////
@@ -59,17 +59,19 @@
 #define CORNERIA_PAUSE2 16
 #define CORNERIA_PAUSE3 63
 
-const amplitudes_t g_amplitudes =
+const music_t* g_tracks[4] =
 {
-        .amplitudes = {0xCC, 0xCC, 0xBB, 0xBB, 0xAA, 0xAA, 0x99, 0x99, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+    &g_corneria,
+    &g_crocodileCacophony,
+    &g_champion,
+    &g_day,
 };
 
-const frequencies_t g_frequencies =
-    {
-        .frequencies = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}};
+const amplitudes_t g_amplitudes = { .values = {0xCC, 0xCC, 0xBB, 0xBB, 0xAA, 0xAA, 0x99, 0x99, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00} };
+const frequencies_t g_frequencies = { .values = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}};
 
 
-const track_t g_corneria =
+const music_t g_corneria =
     {
         .amplitudes = &g_amplitudes,
         .frequencies = &g_frequencies,
@@ -558,7 +560,7 @@ const track_t g_corneria =
 #define Q2P(a, b) CH0 | a, DUR(b, U8(SPPQ))
 #define E2P(a, b) CH0 | a, DUR(b, U8(SPPE))
 
-const track_t g_champion =
+const music_t g_champion =
 {
     .amplitudes = &g_amplitudes,
     .frequencies = &g_frequencies,
@@ -822,7 +824,7 @@ const track_t g_champion =
 };
 
 
-const track_t g_day =
+const music_t g_day =
 {
     .amplitudes = &g_amplitudes,
     .frequencies = &g_frequencies,
@@ -1113,7 +1115,7 @@ const track_t g_day =
 #define CCP2(x, y) x | CHN, CCP1(y)
 #define CCP3(x, y, z) x | CHN, CCP2(y, z)
 
-const track_t g_crocodileCacophony =
+const music_t g_crocodileCacophony =
     {
         .amplitudes = &g_amplitudes,
         .frequencies = &g_frequencies,
@@ -1389,9 +1391,17 @@ const track_t g_crocodileCacophony =
             },
 };
 
-const track_t musicOff =
+const sfx_t g_splash =
 {
-    .amplitudes = (amplitudes_t const*)&Vec_ADSR_FADE4,
-    .frequencies = (frequencies_t const*)&Vec_TWANG_VIBEHL,
-    .notes = {128, 128, 0, 128}
+    0b00001100, 1, -10, 0x02
+};
+
+const sfx_t g_explosion1 =
+{
+    0b00001100, 1, -10, 0x02
+};
+
+const sfx_t g_explosion2 =
+{
+    0b00001100, 1, -10, 0x02
 };

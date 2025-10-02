@@ -17,7 +17,7 @@ bool character_grab(void)
     for (i8 i = 1; i < WORLD.list.aliveCount; i++)
     {
         entity e = &WORLD.list.entities[WORLD.list.alive[i]];
-        if (e->isSameTile && !e->isEnemy)
+        if (IS_SAME_TILE(e, &CAMERA) && !e->isEnemy)
         {
             v2i delta;
             delta.y = I8(e->position.y - CAMERA.position.y);
@@ -63,34 +63,9 @@ void character_damage(void)
         }
         else
         {
-            CAMERA.type ^= Character_Doc;
-            switch (CAMERA.substance)
-            {
-            case Substance_Water:
-                CAMERA.isAttacking = false;
-                CAMERA.velocity.y = 0;
-                CAMERA.update      = CAMERA.type == Character_Croc ? update_croc_water : update_doc_water;
-                break;
-            case Substance_Air:
-                CAMERA.isAttacking = false;
-                CAMERA.velocity.y  = 0;
-                CAMERA.update      = CAMERA.type == Character_Croc ? update_croc_air : update_doc_air;
-                break;
-            case Substance_GravitasAir:
-                CAMERA.isAttacking = false;
-                CAMERA.velocity.y = 0;
-                CAMERA.update      = CAMERA.type == Character_Croc ? update_croc_gravitas_air : update_doc_gravitas_air;
-                break;
-            case Substance_GravitasWater:
-                CAMERA.isAttacking = false;
-                CAMERA.velocity.y = 0;
-                CAMERA.update      = CAMERA.type == Character_Croc ? update_croc_gravitas_water : update_doc_gravitas_water;
-                break;
-            default:
-                break;
-            }
+            CAMERA.invincibilityTicks   = 50;
+            character_swap();
             PLAYER.isOtherCharacterDead = true;
-            CAMERA.invincibilityTicks = 30;
         }
     }
 }
@@ -102,6 +77,7 @@ void character_off_ground_impulse_response(entity e)
         if (e->offGroundImpulseResponseTicks < 0) // Fallen of ground in the previous frame.
         {
             e->offGroundImpulseResponseTicks = 6;
+            e->recoveryTicks                 = 0;
         }
         else if (e->offGroundImpulseResponseTicks > 0) // Tick down response timer
         {
@@ -113,5 +89,46 @@ void character_off_ground_impulse_response(entity e)
     {
         e->velocity.x = 0;
         e->offGroundImpulseResponseTicks = -1; // Resets to allow the impulse again after falling.
+    }
+}
+
+void character_swap(void)
+{
+    if (CAMERA.substance & Substance_Water)
+    {
+        if (!PLAYER.isOtherCharacterDead)
+        {
+            CAMERA.isAttacking = false;
+            CAMERA.type  ^= Character_Doc;
+            if (CAMERA.type == Character_Doc)
+            {
+                CAMERA.update = update_doc_water;
+                CAMERA.hitbox = (v2i){ Hitbox_DocY, Hitbox_DocX };
+            }
+            else
+            {
+                CAMERA.update = update_croc_water;
+                CAMERA.hitbox = (v2i){ Hitbox_CrocY, Hitbox_CrocX };
+            }
+        }
+
+    }
+    else // Substance_Air
+    {
+        if ((CAMERA.isGrounded || CAMERA.offGroundImpulseResponseTicks) && !PLAYER.isOtherCharacterDead)
+        {
+            CAMERA.isAttacking = false;
+            CAMERA.type       ^= Character_Doc;
+            if (CAMERA.type == Character_Doc)
+            {
+                CAMERA.update = update_doc_air;
+                CAMERA.hitbox = (v2i){ Hitbox_DocY, Hitbox_DocX };
+            }
+            else
+            {
+                CAMERA.update = update_croc_air;
+                CAMERA.hitbox = (v2i){ Hitbox_CrocY, Hitbox_CrocX };
+            }
+        }
     }
 }

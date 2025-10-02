@@ -54,7 +54,10 @@ void character_damage(void);
 * @brief 
 */
 void character_off_ground_impulse_response(entity e);
-
+/**
+* @brief
+*/
+void character_swap(void);
 
 /////////////////////////////////////////////////////////////////////////
 //	Generic Entity functions
@@ -79,7 +82,15 @@ void entity_create_anonymous(EntityType const type, v2i const tile);
 */
 void entity_set_animation(entity e, void const* keyframes, i8 keyframeSize, i8 keyframeCount);
 
+/**
+* @brief Checks whether the entity intersects the camera/player based on their respective hitboxes.
+*/
+bool entity_intersects_camera(entity e, i8 dy, i8 dx);
 
+/**
+* @biref
+*/
+void entity_exchange_blows(entity e, i8 dy);
 
 /**
  * @brief Kills the entity e and tries to revives the players other character
@@ -104,11 +115,31 @@ void entity_set_death(entity e);
 
 void entity_camera_hit_detection(entity e, i8 localDx);
 
-void   entity_create_list();
+/////////////////////////////////////////////////////////////////////////
+//	LIFO Free List allocator for entities
+//
+/**
+* @brief Clears the list of entities and (re-)initializes the allocator.
+*/
+void   entity_list_clear();
+/**
+* @brief Try to allocate an entity.
+* @return Pointer to entity on success, NULL otherwise. 
+*/
 entity entity_alloc();
+/**
+* @brief Frees an entity. Entity has to be allocated. Use handle_valid(e->handle) if unsure.
+*/
 void   entity_free(entity e);
+/**
+* @brief Get the entity by handle. Reference has to be valid. Use handle_valid(handle) if unsure.
+*/
 entity entity_get(handle h);
-bool   handle_valid(handle h);
+/**
+* @brief Returns if the reference to the entity is still valid.
+* @return True if entity is alive, false otherwise.
+*/
+bool handle_valid(handle h);
 
 /////////////////////////////////////////////////////////////////////////
 //	Croc
@@ -118,25 +149,13 @@ bool   handle_valid(handle h);
 */
 void update_croc_air(entity e);
 /**
-* @brief Update function when Croc is in air and gravitation is inversed.
-*/
-void update_croc_gravitas_air(entity e);
-/**
 * @brief Update function when Croc is underwater.
 */
 void update_croc_water(entity e);
 /**
-* @brief Update function when Croc is underwater and gravitation is inversed
-*/
-void update_croc_gravitas_water(entity e);
-/**
 * @brief Update function while Croc is attacking
 */
 void update_croc_hit(entity e);
-/**
-* @brief Update function  while Croc is hitting and gravitation is inversed
-*/
-void update_croc_gravitas_hit(entity e);
 /**
  * @brief
  */
@@ -161,18 +180,6 @@ void update_doc_water(entity e);
 * @brief 
 */
 void update_doc_glide(entity e);
-/**
-* @brief 
-*/
-void update_doc_gravitas_air(entity e);
-/**
-* @brief 
-*/
-void update_doc_gravitas_water(entity e);
-/**
-* @brief 
-*/
-void update_doc_gravitas_glide(entity e);
 
 /////////////////////////////////////////////////////////////////////////
 // Barrel
@@ -217,7 +224,7 @@ void update_halunke(entity e);
 void prefab_halunke(entity e);
 
 /////////////////////////////////////////////////////////////////////////
-// Schuft
+// Schuft 
 //
 /**
  * @brief Schuft follows the player horizontally and vertically 
@@ -227,28 +234,36 @@ void prefab_schuft(entity e);
 
 
 /////////////////////////////////////////////////////////////////////////
-// Schelm
+// Schelm - Spike Projectile
 //
 /**
- * @brief Schelm
+ * @brief Schelm is a thrown spike and is a danger to the player pre-explosion.
  */
-void update_schelm_waiting(entity e);
 void update_schelm_thrown(entity e);
+/**
+ * @brief Schelm template.
+ */
 void prefab_schelm(entity e);
 
 /////////////////////////////////////////////////////////////////////////
-// Bandit
+// Bandit - Spider
 //
 /**
- * @brief Bandit
+ * @brief Bandit is a spider, that can only go in x-direction and in y-direction with gravity.
  */
 void update_bandit(entity e);
+/**
+ * @brief Bandit template.
+ */
 void prefab_bandit(entity e);
 
-
+/////////////////////////////////////////////////////////////////////////
+// Coin
+//
 /**
  * @brief 
  */
+void update_coin_achieved(entity e);
 void prefab_coin(entity e);
 
 /////////////////////////////////////////////////////////////////////////

@@ -32,5 +32,6 @@
 /////////////////////////////////////////////////////////////////////////
 //	Globals
 //
-extern game_t  g_game;
-extern world_t g_world;
+extern game_t  g_game;  // Game logic
+extern sound_t g_sound; // Sound module
+extern world_t g_world; // Game Scene

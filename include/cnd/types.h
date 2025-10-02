@@ -114,6 +114,7 @@ enum Velocity_
 {
     Velocity_Gravity    = 1,
     Velocity_Run        = 2,
+    Velocity_MoonWalk   = 5,
     Velocity_Hit        = 6,
 	Velocity_Friction   = 1,
     Velocity_Jump       = 10,
@@ -125,6 +126,35 @@ enum Velocity_
     Velocity_Jumper     = 12,
 };
 typedef i8 Velocity;
+
+enum Event_
+{
+    Event_None,
+    Event_Storm,
+    Event_MoonWalk,
+    Event_TheFloorIsLava,
+    Event_IcyRoads,
+    Event_YouAreBeingFollowed,
+    Event_EarthQuake,
+    Event_Tiny,
+};
+typedef i8 Event;
+
+enum Hitbox_
+{
+    Hitbox_CrocY    = 20,
+    Hitbox_CrocX    = 10,
+    Hitbox_DocY     = 13,
+    Hitbox_DocX     = 7,
+    Hitbox_HalunkeY = 10,
+    Hitbox_HalunkeX = 20,
+    Hitbox_SchuftY = 12,
+    Hitbox_SchuftX = -12,
+    Hitbox_SchelmY = 10,
+    Hitbox_SchelmX = 6,
+    Hitbox_BanditY = 14,
+    Hitbox_BanditX = 14,
+};
 
 /** 
 * @brief Input_ contains all bit values available for controller inputs
@@ -291,6 +321,49 @@ enum Tile_
 };
 typedef i8 Tile;
 
+enum Note_
+{
+    G2 = 0x00U, GS2 = 0x01U, AB2 = 0x01U,
+    A2 = 0x02U, AS2 = 0x03U, BB2 = 0x03U,
+    BH = 0x04U,
+    C3 = 0x05U, CS3 = 0x06U, DB3 = 0x06U,
+    D3 = 0x07U, DS3 = 0x08U, EB3 = 0x08U,
+    E3 = 0x09U, ES3 = 0x0AU, FB3 = 0x0AU,
+    F3 = 0x0AU, FS3 = 0x0BU, GB3 = 0x0BU,
+    G3 = 0x0CU, GS3 = 0x0DU, AB3 = 0x0DU,
+    A3 = 0x0EU, AS3 = 0x0FU, BB3 = 0x0FU,
+    B3 = 0x10U, BS3 = 0x11U,
+    C4 = 0x11U, CS4 = 0x12U, DB4 = 0x12U,
+    D4 = 0x13U, DS4 = 0x14U, EB4 = 0x14U,
+    E4 = 0x15U, ES4 = 0x16U,
+    F4 = 0x16U, FS4 = 0x17U, GB4 = 0x17U,
+    G4 = 0x18U, GS4 = 0x19U, AB4 = 0x19U,
+    A4 = 0x1AU, AS4 = 0x1BU, BB4 = 0x1BU,
+    B4 = 0x1CU, BS4 = 0x1DU,
+    C5 = 0x1DU, CS5 = 0x1EU, DB5 = 0x1EU,
+    D5 = 0x1FU, DS5 = 0x20U, EB5 = 0x20U,
+    E5 = 0x21U,
+    F5 = 0x22U, FS5 = 0x23U, GB5 = 0x23U,
+    G5 = 0x24U, GS5 = 0x25U, AB5 = 0x25U,
+    A5 = 0x26U, AS5 = 0x27U, BB5 = 0x27U,
+    B5 = 0x28U, BS5 = 0x29U, CB6 = 0x28U,
+    C6 = 0x29U, CS6 = 0x2AU, DB6 = 0x2AU,
+    D6 = 0x2BU, DS6 = 0x2CU, EB6 = 0x2CU,
+    E6 = 0x2DU, ES6 = 0x2EU,
+    F6 = 0x2EU, FS6 = 0x2FU, GB6 = 0x2FU,
+    G6 = 0x30U, GS6 = 0x31U, AB6 = 0x31U,
+    A6 = 0x32U, AS6 = 0x33U, BB6 = 0x33U,
+    B6 = 0x34U, BS6 = 0x35U,
+    C7 = 0x35U, CS7 = 0x36U, DB7 = 0x36U,
+    D7 = 0x37U, DS7 = 0x38U, EB7 = 0x38U,
+    E7 = 0x39U,
+    F7 = 0x3AU, FS7 = 0x3BU, GB7 = 0x3BU,
+    G7 = 0x3CU, GS7 = 0x3DU, AB7 = 0x3DU,
+    A7 = 0x3EU, AS7 = 0x3FU, BB7 = 0x3FU,
+    Note_End = 0x80U, CH0 = 0x80U, CH1 = 0x80U, CHN = 0x80U
+};
+typedef u8 Note;
+
 enum WorldState_
 {
     WorldState_Update,             // Entities are updated.
@@ -338,9 +411,7 @@ enum Score_
 enum GameState_
 {
     GameState_Play,
-    GameState_InGame,
     GameState_Died,
-    GameState_DeathAnimation,
 };
 typedef i8 GameState;
 
@@ -381,9 +452,9 @@ struct entity_t
     v2l         position;     // Position in world space.
     v2i         velocity;     // Speed measured in dots/tick.
 	v2i         tile;         // Last calculated tile.
+    v2i         tileAbsDelta; // Absolute delta tile distance from camera.
     bool        inLocalSpace; // Local space here refers to screen space.
     bool        isGrounded;   // On ground?
-    bool        isSameTile;   // Same tile as the player?
 
     // Entity info
     handle handle;
@@ -395,12 +466,14 @@ struct entity_t
 
     // [[ Optional ]]
     i8          transform;   // x-direction the entity is facing. 1 for right, -1 for left
+    v2i         hitbox;
     EntityType  type;        // May store the entity type 
     EntityState state;       // May store its state
     bool        isAttacking; 
     Material    substance;     
     i8          invincibilityTicks;
     i8          offGroundImpulseResponseTicks;
+    i8          recoveryTicks;
     i8          data[2]; 
 };
 //static_assert(sizeof(entity_t) == 34);
@@ -416,15 +489,47 @@ typedef struct player_t
     i8       lives;                // Lives available
 } player_t, *player;
 
+typedef struct amplitudes_t
+{
+    u8 values[16];
+} amplitudes_t, *amplitudes;
+
+typedef struct frequencies_t
+{
+    u8 values[8];
+} frequencies_t, *frequencies;
+
+typedef struct music_t
+{
+    amplitudes_t const*  amplitudes;
+    frequencies_t const* frequencies;
+    Note notes[];
+} music_t;
+
+typedef struct sfx_t
+{
+    i8 enable;	 // noise (bits 5-3) and tone channel (bits 2-0) enable (0b00nnnccc), 
+    i8 noise;	 // noise source sweep, =0 up, >0 down, <0 inhibit  
+    i8 volume;	 // volume sweep, =0 up, >0 down, <0 inhibit
+    u8 duration; // explosion duration, 0x01 longest to 0x80 shortest 
+} sfx_t;
+
+typedef struct sound_t
+{
+    music_t const* music;
+    sfx_t   const* sfx[3];
+
+    i8 soundEffects;
+} sound_t;
+
 typedef struct game_t
 {
     procedure_t progress;  // Selected game procedure progressing the game.
-    void const* explosion; // Sound effect - Unused
-    void const* track;     // Music
     // Entities
     player_t player; // Attempt information
     // Game State
     Stage     stage;             // Selected stage
+    Event     event;             // Selected event.
     GameState state;             // Selected state
     bool      isFinished;        // No lives left.
     i8        ticksUntilNewGame; // Ticks for game over timing.
@@ -463,17 +568,17 @@ typedef struct world_t
     // Level information
     const Tile*    tiles; // Tiles of the selected level
     const level_t* level; // Selected Level
-    entity_list_t  list;
+    entity_list_t  list;  // Entity allocation list (free list).
     // Entities
     //entity_t        entities[ENTITIES_ACTIVE_MAX];   // Contains active entities in the scene.
     //idx_t           entityIdxs[ENTITIES_ACTIVE_MAX]; // Contains indices into entities for easier swapping.
     last_sighting_t lastSeen[ENTITIES_MAX];          // Information about all entities in the scene.
     
     // State
+    WorldState worldState;     // World state while drawing or post tile iteration.
     bool       gameIsOver;     // Game over flag to stop damaging hit collision.
     bool       tileFlags[4];   // Tile state flags. [0] = BarrierVertical, [1] = BarrierHorizontal, [2] = Coin, [3] = Reserved.
     //i8         entityCount;    // Active entities
-    WorldState worldState;     // World state while drawing or post tile iteration.
     v2i        eyePosition;    // Position of the player characters eye. Yes its really done here! 
 
     u8   ticks;   // Iteration
@@ -483,4 +588,8 @@ typedef struct world_t
 
     // Physics
     i8 gravity; // Earth attraction
+    i8 wind;    // Wind strength
+    i8 windPhase;
+    i8 heat;
+    i8 moon;
 } world_t;

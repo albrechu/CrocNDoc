@@ -8,35 +8,34 @@
 #include <cnd/mesh.h>
 #include <cnd/draw_queue.h>
 
+
 /////////////////////////////////////////////////////////////////////////
 //	Functions
 //
 void update_halunke(entity e)
 {
+	LOCAL_POS(e, dy, dx);
+
+	e->velocity.x = ((dx < 0) - (dx > 0)) << 1;
+
     if (e->inLocalSpace)
     {
-        const i16 dx = e->position.x - CAMERA.position.x;
-        const i16 dy = CAMERA.position.y - e->position.y;
-		if (dx < -2 || dx > 2)
-			e->velocity.x = ((dx < 0) - (dx > 0)) << 1;
-		else
-			e->velocity.x = 0;
-
-		i8 localDy = I8(dy);
 		const i8 localDx = I8(dx);
+		const i8 localDy = I8(dy);
 
-		if (WORLD.gravity > 0)
+		if (GRAVITY_DOWN())
 		{
-			draw_queue_push(localDx >= 0 ? halunke_left : halunke_right, localDy + 3, localDx);
+			draw_stack_push(localDx >= 0 ? halunke_left : halunke_right, localDy, localDx);
 		}
 		else
 		{
-			draw_queue_push(localDx >= 0 ? halunke_left_r : halunke_right_r, localDy - 4, localDx);
+			draw_stack_push(localDx >= 0 ? halunke_left_r : halunke_right_r, localDy, localDx);
 		}
 
-		if (e->isSameTile && manhattan(localDy, localDx) < 0xA)
+		if (NEAR_CENTER(e))
 		{
-			entity_camera_hit_detection(e, localDx);
+			if (entity_intersects_camera(e, localDy, localDx))
+				entity_exchange_blows(e, localDy);
 		}
     }
 }
@@ -46,5 +45,6 @@ void prefab_halunke(entity e)
     e->update = update_halunke;
     e->kill   = update_kill;
 	e->score  = Score_50;
+	e->hitbox = (v2i){ Hitbox_HalunkeY, Hitbox_HalunkeX };
     entity_set_animation(e, explosion, ELEMENT_SIZE(explosion), ARRAY_SIZE(explosion));
 }

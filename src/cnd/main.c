@@ -28,7 +28,9 @@
 #include <cnd/globals.h>
 #include <cnd/game.h>
 #include <vectrex.h>
-#include <cnd/track.h>
+#include <cnd/music.h>
+#include <cnd/sound.h>
+#include <lib/monitor.h>
 
 /////////////////////////////////////////////////////////////////////////
 //	>> Entry <<
@@ -38,7 +40,7 @@ int main()
 	// (Re-)Configure game 
 soft_reset:
 	game_soft_reset();
-	
+
 	/**
 	* Game Loop
 	*/
@@ -48,13 +50,15 @@ soft_reset:
         * Synchronize frame and music
         */
         DP_to_C8();
-        Vec_Music_Flag |= 1;
-		
+        
+        
 		//GAME.explosion = &g_monsterPeng;
-        Init_Music_chk((void* const)GAME.track);
-        Explosion_Snd((void* const)GAME.explosion);
+        //Init_Sound();
+        //Init_Music_chk((void* const)GAME.track);
+        //Explosion_Snd((void* const)GAME.explosion);
+        
         Wait_Recal(); // Synchronize to frame
-        Do_Sound();
+        sound_play();
 
         /**
         * Read Input

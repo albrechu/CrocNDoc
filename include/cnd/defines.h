@@ -69,7 +69,8 @@
 #define TEXT_BIG_WIDTH      80
 #define TEXT_SMALL_HEIGHT   -4
 #define TEXT_SMALL_WIDTH    60
-
+#define CAMERA_LOCAL_Y      0 
+#define CAMERA_LOCAL_X      0 
 
 #define ID_INVALID -1
 #define ID_CAMERA   0
@@ -79,9 +80,11 @@
 //
 #define WORLD  g_world
 #define GAME   g_game
+#define SOUND  g_sound
 #define CAMERA WORLD.list.entities[ID_CAMERA]
 #define PLAYER GAME.player
 #define BTNS   Vec_Buttons
+#define BTN_STATE Vec_Btn_State
 
 /////////////////////////////////////////////////////////////////////////
 //	Macro Helper Functions
@@ -107,3 +110,30 @@
 
 #define ARRAY_SIZE(arr)   (sizeof(arr) / sizeof((arr)[0]))
 #define ELEMENT_SIZE(arr) (sizeof((arr)[0]))
+
+#define LOCAL_POS(e, dy, dx)  const i16 dy = CAMERA.position.y - e->position.y; \
+							  const i16 dx = e->position.x - CAMERA.position.x 
+#define GRAVITY_DOWN() (WORLD.gravity > 0)
+#define GRAVITY_UP()   (WORLD.gravity < 0)
+
+#define DEFINE_HITBOX(name, height, width) const i8 name[9] = \
+{ \
+	LENGTH(4), \
+	(height), 0, \
+	0, (width), \
+	-(height), 0, \
+	0, -(width), \
+}
+
+#define SWAP(tmp, x, y) tmp = x; \
+						x = y; \
+						y = tmp
+
+#define SWAP_MAX(tmp, x, y) if (x > y) { SWAP(tmp, x, y); }
+							
+#define IS_SAME_TILE(e1, e2) (((e1)->tile.x == (e2)->tile.x) && ((e1)->tile.y == (e2)->tile.y))
+
+#define NEAR_CENTER(e) ((e)->tileAbsDelta.x <= 1 && (e)->tileAbsDelta.y <= 1)
+
+#define TEXT_SET_SMALL() Vec_Text_Height = TEXT_SMALL_HEIGHT, Vec_Text_Width = TEXT_SMALL_WIDTH
+#define TEXT_SET_BIG() Vec_Text_Height = TEXT_BIG_HEIGHT, Vec_Text_Width = TEXT_BIG_WIDTH

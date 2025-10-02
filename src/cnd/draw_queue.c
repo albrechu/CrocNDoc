@@ -49,10 +49,3 @@ void draw_stack_draw(void)
     }
 }
 
-force_inline void wait_for_interrupt()
-{
-    while ((VIA_int_flags & 0x40) == 0) {} // Wait for Interrupt
-
-    __asm__ volatile ("nop");
-    VIA_shift_reg = 0x00;
-}

@@ -18,14 +18,14 @@ void croc_draw_default(entity e)
     {
         if (e->transform < 0)
         {
-            draw_queue_push(croc_idle_left[WORLD.freq16], 4, 0);
-            draw_queue_push(croc_arm[1], 7 + (WORLD.freq16 << 1), -5);
+            draw_stack_push(croc_idle_left[WORLD.freq16], 4, 0);
+            draw_stack_push(croc_arm[1], 7 + (WORLD.freq16 << 1), -5);
             WORLD.eyePosition = (v2i){ 13 + (WORLD.freq16 << 1), -4 };
         }
         else
         {
-            draw_queue_push(croc_idle_right[WORLD.freq16], 4, 0);
-            draw_queue_push(croc_arm[0], 7 + (WORLD.freq16 << 1), 1);
+            draw_stack_push(croc_idle_right[WORLD.freq16], 4, 0);
+            draw_stack_push(croc_arm[0], 7 + (WORLD.freq16 << 1), 1);
             WORLD.eyePosition = (v2i){ 13 + (WORLD.freq16 << 1), 4 };
         }
     }
@@ -33,14 +33,14 @@ void croc_draw_default(entity e)
     {
         if (e->transform < 0)
         {
-            draw_queue_push(croc_idle_left[0], 4, 0);
-            draw_queue_push(croc_arm[1], 7, -5);
+            draw_stack_push(croc_idle_left[0], 4, 0);
+            draw_stack_push(croc_arm[1], 7, -5);
             WORLD.eyePosition = (v2i){ 13, -4 };
         }
         else
         {
-            draw_queue_push(croc_idle_right[0], 4, 0);
-            draw_queue_push(croc_arm[0], 7, 1);
+            draw_stack_push(croc_idle_right[0], 4, 0);
+            draw_stack_push(croc_arm[0], 7, 1);
             WORLD.eyePosition = (v2i){ 13, 4 };
         }
     }
@@ -52,14 +52,14 @@ void croc_draw_mirrored(entity e)
     {
         if (e->transform < 0)
         {
-            draw_queue_push(croc_idle_left_r[WORLD.freq16], -4, 0);
-            draw_queue_push(croc_arm_r[1], -8 - (WORLD.freq16 << 1), -5);
+            draw_stack_push(croc_idle_left_r[WORLD.freq16], -4, 0);
+            draw_stack_push(croc_arm_r[1], -8 - (WORLD.freq16 << 1), -5);
             WORLD.eyePosition = (v2i){ -13 - (WORLD.freq16 << 1), -4 };
         }
         else
         {
-            draw_queue_push(croc_idle_right_r[WORLD.freq16], -4, 0);
-            draw_queue_push(croc_arm_r[0], -8 - (WORLD.freq16 << 1), 2);
+            draw_stack_push(croc_idle_right_r[WORLD.freq16], -4, 0);
+            draw_stack_push(croc_arm_r[0], -8 - (WORLD.freq16 << 1), 2);
             WORLD.eyePosition = (v2i){ -13 - (WORLD.freq16 << 1), 4 };
         }
     }
@@ -67,14 +67,14 @@ void croc_draw_mirrored(entity e)
     {
         if (e->transform < 0)
         {
-            draw_queue_push(croc_idle_left_r[0], -4, 0);
-            draw_queue_push(croc_arm_r[1], -8, -5);
+            draw_stack_push(croc_idle_left_r[0], -4, 0);
+            draw_stack_push(croc_arm_r[1], -8, -5);
             WORLD.eyePosition = (v2i){ -13, -4 };
         }
         else
         {
-            draw_queue_push(croc_idle_right_r[0], -4, 0);
-            draw_queue_push(croc_arm_r[0], -8, 2);
+            draw_stack_push(croc_idle_right_r[0], -4, 0);
+            draw_stack_push(croc_arm_r[0], -8, 2);
             WORLD.eyePosition = (v2i){ -13, 4 };
         }
     }
@@ -88,14 +88,14 @@ void croc_draw_local_move(entity e, i8 const y, i8 const x)
     {
         if (e->transform < 0)
         {
-            draw_queue_push(croc_idle_left[WORLD.freq16], 4 + y, 0 + x);
-            draw_queue_push(croc_arm[1], 7 + (WORLD.freq16 << 1) + y, -5 + x);
+            draw_stack_push(croc_idle_left[WORLD.freq16], 4 + y, 0 + x);
+            draw_stack_push(croc_arm[1], 7 + (WORLD.freq16 << 1) + y, -5 + x);
             WORLD.eyePosition = (v2i){ 13 + (WORLD.freq16 << 1) + y, -4 + x };
         }
         else
         {
-            draw_queue_push(croc_idle_right[WORLD.freq16], 4 + y, 0 + x);
-            draw_queue_push(croc_arm[0], 7 + (WORLD.freq16 << 1) + y, 1 + x);
+            draw_stack_push(croc_idle_right[WORLD.freq16], 4 + y, 0 + x);
+            draw_stack_push(croc_arm[0], 7 + (WORLD.freq16 << 1) + y, 1 + x);
             WORLD.eyePosition = (v2i){ 13 + (WORLD.freq16 << 1) + y, 4 + x };
         }
     }
@@ -103,19 +103,18 @@ void croc_draw_local_move(entity e, i8 const y, i8 const x)
     {
         if (e->transform < 0)
         {
-            draw_queue_push(croc_idle_left[0], 4 + y, 0 + x);
-            draw_queue_push(croc_arm[1], 7 + y, -5 + x);
+            draw_stack_push(croc_idle_left[0], 4 + y, 0 + x);
+            draw_stack_push(croc_arm[1], 7 + y, -5 + x);
             WORLD.eyePosition = (v2i){ 13 + y, -4 + x };
         }
         else
         {
-            draw_queue_push(croc_idle_right[0], 4 + y, 0 + x);
-            draw_queue_push(croc_arm[0], 7 + y, 1 + x);
+            draw_stack_push(croc_idle_right[0], 4 + y, 0 + x);
+            draw_stack_push(croc_arm[0], 7 + y, 1 + x);
             WORLD.eyePosition = (v2i){ 13 + y, 4 + x };
         }
     }
 }
-
 
 void update_croc_hit(entity e)
 {
@@ -129,62 +128,47 @@ void update_croc_hit(entity e)
     {
         if (BTNS & Input_Button4 && (e->isGrounded || e->offGroundImpulseResponseTicks))
         {
-            e->velocity.y = Velocity_Jump;
+            e->velocity.y = GRAVITY_DOWN() ? Velocity_Jump : -Velocity_Jump;
             e->offGroundImpulseResponseTicks = 0;
         }
 
         void* data = (void*)cloud[e->data[0] & 0x7];
-        if (e->transform > 0)
+        if (GRAVITY_DOWN())
         {
-            e->velocity.x = Velocity_Hit;
-            draw_queue_push(croc_idle_right[1], 4, 0);
-            draw_queue_push(data, 10, 23 - (e->data[0] << 1));
-            WORLD.eyePosition = (v2i){ 15, 4 };
+            if (e->transform > 0)
+            {
+                e->velocity.x = Velocity_Hit;
+                draw_stack_push(croc_idle_right[1], 4, 0);
+                draw_stack_push(data, 10, 23 - (e->data[0] << 1));
+                WORLD.eyePosition = (v2i){ 15, 4 };
+            }
+            else
+            {
+                e->velocity.x = -Velocity_Hit;
+                draw_stack_push(croc_idle_left[1], 4, 0);
+                draw_stack_push(data, 10, -14 + (e->data[0] << 1));
+                WORLD.eyePosition = (v2i){ 15, -4 };
+            }
         }
         else
         {
-            e->velocity.x = -Velocity_Hit;
-            draw_queue_push(croc_idle_left[1], 4, 0);
-            draw_queue_push(data, 10, -14 + (e->data[0] << 1));
-            WORLD.eyePosition = (v2i){ 15, -4 };
+            if (e->transform > 0)
+            {
+                e->velocity.x = Velocity_Hit;
+                draw_stack_push(croc_idle_right_r[1], -4, 0);
+                draw_stack_push(data, -10, 23 - (e->data[0] << 1));
+                WORLD.eyePosition = (v2i){ -15, 4 };
+            }
+            else
+            {
+                e->velocity.x = -Velocity_Hit;
+                draw_stack_push(croc_idle_left_r[1], -4, 0);
+                draw_stack_push(data, -10, -14 + (e->data[0] << 1));
+                WORLD.eyePosition = (v2i){ -15, -4 };
+            }
         }
     }
 }
-
-void update_croc_gravitas_hit(entity e)
-{
-    character_off_ground_impulse_response(e);
-    if (--e->data[0] == 0)
-    {
-        e->isAttacking = false;
-        e->update = update_croc_gravitas_air;
-    }
-    else
-    {
-        if (BTNS & Input_Button4 && (e->isGrounded || e->offGroundImpulseResponseTicks))
-        {
-            e->velocity.y = -Velocity_Jump;
-            e->offGroundImpulseResponseTicks = 0;
-        }
-
-        void* data = (void*)cloud[e->data[0] & 0x7];
-        if (e->transform > 0)
-        {
-            e->velocity.x = Velocity_Hit;
-            draw_queue_push(croc_idle_right_r[1], -4, 0);
-            draw_queue_push(data, -10, 23 - (e->data[0] << 1));
-            WORLD.eyePosition = (v2i){ -15, 4 };
-        }
-        else
-        {
-            e->velocity.x = -Velocity_Hit;
-            draw_queue_push(croc_idle_left_r[1], -4, 0);
-            draw_queue_push(data, -10, -14 + (e->data[0] << 1));
-            WORLD.eyePosition = (v2i){ -15, -4 };
-        }
-    }
-}
-
 
 void update_croc_prepare(entity e)
 {
@@ -232,46 +216,27 @@ void update_croc_prepare(entity e)
     e->velocity.x = 0;
 
     croc_draw_local_move(e, y, x);
-
-    switch (GAME.state)
-    {
-    case GameState_Play:
-        if (--e->data[0] == 0)
-            GAME.state = GameState_InGame;
-        break;
-    case GameState_Died:
-        if (--e->data[0] == 0)
-        {
-            e->update              = update_death;
-            GAME.state             = GameState_DeathAnimation;
-            GAME.ticksUntilNewGame = 8;
-        }
-        break;
-    default:
-        break;
-    }
 }
 
 void prefab_croc(entity e)
 {
     e->update       = update_croc_air;
-    e->kill         = update_stub;
+    e->kill         = update_kill;
     e->score        = 0;
     e->inLocalSpace = true;
     e->type         = Character_Croc;
     e->state        = CharacterState_Idle;
     e->transform    = 1;
+    e->hitbox       = (v2i){ Hitbox_CrocY, Hitbox_CrocX};
     entity_set_animation(e, explosion, ELEMENT_SIZE(explosion), ARRAY_SIZE(explosion));
 }
 
 void prefab_croc_prepare(entity e)
 {
     prefab_croc(e);
-    e->data[0] = 80;
     e->position.x = 0;
     e->position.y = 80;
-    e->update = update_croc_prepare;
-    e->kill = update_stub;
+    e->update     = update_croc_prepare;
 }
 
 void croc_hit()
@@ -281,7 +246,7 @@ void croc_hit()
         CAMERA.isAttacking = true;
         if ((CAMERA.substance & Substance_Water) == 0)
         {
-            CAMERA.update = CAMERA.substance & Substance_GravitasAir ? update_croc_gravitas_hit : update_croc_hit;
+            CAMERA.update = update_croc_hit;
         }
         CAMERA.data[0] = 12;
     }
@@ -294,11 +259,7 @@ void update_croc_air(entity e)
     switch (BTNS)
     {
     case Input_Button2: // Transform
-        if ((e->isGrounded || e->offGroundImpulseResponseTicks) && !PLAYER.isOtherCharacterDead)
-        {
-            e->type   = Character_Doc;
-            e->update = update_doc_air;
-        }
+        character_swap();
         break;
     case Input_Button3: // Hit | Grab
     {
@@ -321,7 +282,7 @@ void update_croc_air(entity e)
     case Input_Button4: // Jump
         if (e->isGrounded || e->offGroundImpulseResponseTicks)
         {
-            e->velocity.y = Velocity_Jump;
+            e->velocity.y = GRAVITY_DOWN() ? Velocity_Jump : -Velocity_Jump;
             e->offGroundImpulseResponseTicks = 0;
         }
         break;
@@ -334,11 +295,11 @@ void update_croc_air(entity e)
         if (e->transform == 1)
         {
             e->transform  = -1;
-            e->velocity.x = (-Velocity_Run) << (e->velocity.y == 0);
+            e->velocity.x = (-Velocity_Run) << e->isGrounded;
         }
         else if (e->velocity.x > -Velocity_Run)
         {
-            e->velocity.x = (-Velocity_Run) << (e->velocity.y == 0);
+            e->velocity.x = (-Velocity_Run) << e->isGrounded;
         }
     }
     else if (Vec_Joy_1_X > 0)
@@ -346,11 +307,11 @@ void update_croc_air(entity e)
         if (e->transform == -1)
         {
             e->transform  = 1;
-            e->velocity.x = Velocity_Run << (e->velocity.y == 0);
+            e->velocity.x = Velocity_Run << e->isGrounded;
         }
         else if (e->velocity.x < Velocity_Run)
         {
-            e->velocity.x = Velocity_Run << (e->velocity.y == 0);
+            e->velocity.x = Velocity_Run << e->isGrounded;
         }
     }
 
@@ -361,86 +322,14 @@ void update_croc_air(entity e)
             return;
     }
 
-    croc_draw_default(e);
-}
-
-void update_croc_gravitas_air(entity e)
-{
-    character_off_ground_impulse_response(e);
-
-    switch (BTNS)
+    if (GRAVITY_DOWN())
     {
-    case Input_Button2: // Transform
-        if ((e->isGrounded || e->offGroundImpulseResponseTicks) && !PLAYER.isOtherCharacterDead)
-        {
-            e->type    = Character_Doc;
-            e->update = update_doc_gravitas_air;
-        }
-        break;
-    case Input_Button3: // Hit | Grab
+        croc_draw_default(e);
+    }
+    else
     {
-        switch (CAMERA.state)
-        {
-        case CharacterState_Idle: // Grab if one is close enough
-        {
-            if (!character_grab())
-            {
-                croc_hit();
-            }
-        }
-        break;
-        case CharacterState_HoldsProp: // Throw
-            character_throw();
-            break;
-        default:
-            break;
-        }
+        croc_draw_mirrored(e);
     }
-    break;
-    case Input_Button4: // Jump
-        if (e->isGrounded || e->offGroundImpulseResponseTicks)
-        {
-            e->velocity.y = -Velocity_Jump;
-            e->offGroundImpulseResponseTicks = 0;
-        }
-        break;
-    default:
-        break;
-    }
-
-    if (Vec_Joy_1_X < 0)
-    {
-        if (e->transform == 1)
-        {
-            e->transform  = -1;
-            e->velocity.x = (-Velocity_Run) << (e->velocity.y == 0);
-        }
-        else if (e->velocity.x > -Velocity_Run)
-        {
-            e->velocity.x = (-Velocity_Run) << (e->velocity.y == 0);
-        }
-    }
-    else if (Vec_Joy_1_X > 0)
-    {
-        if (e->transform == -1)
-        {
-            e->transform  = 1;
-            e->velocity.x = Velocity_Run << (e->velocity.y == 0);
-        }
-        else if (e->velocity.x < Velocity_Run)
-        {
-            e->velocity.x = Velocity_Run << (e->velocity.y == 0);
-        }
-    }
-
-    if (CAMERA.invincibilityTicks)
-    {
-        --CAMERA.invincibilityTicks;
-        if (WORLD.freq2)
-            return;
-    }
-
-    croc_draw_mirrored(e);
 }
 
 void update_croc_water(entity e)
@@ -448,22 +337,24 @@ void update_croc_water(entity e)
     switch (BTNS)
     {
     case Input_Button2: // Swap
-        if (!PLAYER.isOtherCharacterDead)
-        {
-            e->type   = Character_Doc;
-            e->update = update_doc_water;
-        }
+        character_swap();
         break;
     case Input_Button3: // Grab
         character_grab();
         break;
     case Input_Button4: // Swim Up
-        e->velocity.y += Velocity_SwimUp;
-        e->velocity.y = MIN8(e->velocity.y, Velocity_SwimUp);
+        if (GRAVITY_DOWN())
+        {
+            e->velocity.y += Velocity_SwimUp;
+            e->velocity.y = MIN8(e->velocity.y, Velocity_SwimUp);
+        }
+        else
+        {
+            e->velocity.y -= Velocity_SwimUp;
+            e->velocity.y = MAX8(e->velocity.y, -Velocity_SwimUp);
+        }
         break;
     default:
-        if (e->velocity.y < -2)
-            e->velocity.y = -2;
         break;
     }
     
@@ -499,61 +390,17 @@ void update_croc_water(entity e)
             return;
     }
 
-    croc_draw_default(e);
-}
-
-void update_croc_gravitas_water(entity e)
-{
-    switch (BTNS)
+    if (GRAVITY_DOWN())
     {
-    case Input_Button2: // Swap
-        if (!PLAYER.isOtherCharacterDead)
-        {
-            e->type   = Character_Doc;
-            e->update = update_doc_gravitas_water;
-        }
-        break;
-    case Input_Button4: // Swim Up
-        e->velocity.y -= Velocity_SwimUp;
-        e->velocity.y = MAX8(e->velocity.y, (-Velocity_SwimUp));
-        break;
-    default:
+        if (e->velocity.y < -2)
+            e->velocity.y = -2;
+        croc_draw_default(e);
+    }
+    else
+    {
         if (e->velocity.y > 2)
             e->velocity.y = 2;
-        break;
+        croc_draw_mirrored(e);
     }
-    
-    if (Vec_Joy_1_X < 0)
-    {
-        if (e->transform == 1)
-        {
-            e->transform = -1;
-            e->velocity.x = (-Velocity_Run) << (e->velocity.y == 0);
-        }
-        else if (e->velocity.x > -Velocity_Run)
-        {
-            e->velocity.x = (-Velocity_Run) << (e->velocity.y == 0);
-        }
-    }
-    else if (Vec_Joy_1_X > 0)
-    {
-        if (e->transform == -1)
-        {
-            e->transform = 1;
-            e->velocity.x = Velocity_Run << (e->velocity.y == 0);
-        }
-        else if (e->velocity.x < Velocity_Run)
-        {
-            e->velocity.x = Velocity_Run << (e->velocity.y == 0);
-        }
-    }
-
-    if (CAMERA.invincibilityTicks)
-    {
-        --CAMERA.invincibilityTicks;
-        if (WORLD.freq2)
-            return;
-    }
-
-    croc_draw_mirrored(e);
 }
+

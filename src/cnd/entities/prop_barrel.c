@@ -28,7 +28,7 @@ void update_barrel_thrown(entity e)
     {
         i8 dy = I8(CAMERA.position.y - e->position.y);
         i8 dx = I8(e->position.x - CAMERA.position.x);
-        draw_queue_push(e->transform == 1 ? barrel_right : barrel_left, dy, dx);
+        draw_stack_push(e->transform == 1 ? barrel_right : barrel_left, dy, dx);
     }
 }
 
@@ -38,13 +38,13 @@ void update_barrel(entity e)
     {
         i8 dy = I8(CAMERA.position.y - e->position.y);
         i8 dx = I8(e->position.x - CAMERA.position.x);
-        if (WORLD.gravity > 0)
+        if (GRAVITY_DOWN())
         {
-            draw_queue_push(barrel, dy, dx);
+            draw_stack_push(barrel, dy, dx);
         }
         else
         {
-            draw_queue_push(barrel_r, dy, dx);
+            draw_stack_push(barrel_r, dy, dx);
         }
     }
 }
@@ -55,13 +55,13 @@ void update_barrel_held(entity e)
     e->tile = CAMERA.tile;
     e->velocity.x = 0;
     e->velocity.y = 0;
-    if (WORLD.gravity > 0)
+    if (GRAVITY_DOWN())
     {
-        draw_queue_push(CAMERA.transform == 1 ? barrel_right : barrel_left, 0, 0);
+        draw_stack_push(CAMERA.transform == 1 ? barrel_right : barrel_left, 0, 0);
     }
     else
     {
-        draw_queue_push(CAMERA.transform == 1 ? barrel_right_r : barrel_left_r, 0, 0);
+        draw_stack_push(CAMERA.transform == 1 ? barrel_right_r : barrel_left_r, 0, 0);
     }
 }
 
