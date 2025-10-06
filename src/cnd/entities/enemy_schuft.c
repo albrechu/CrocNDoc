@@ -26,14 +26,7 @@ void update_schuft(entity e)
 		i8 localDy = I8(dy);
 		const i8 localDx = I8(dx);
 
-        if (GRAVITY_DOWN())
-        {
-            draw_stack_push(localDx >= 0 ? schuft_left : schuft_right, localDy, localDx);
-        }
-        else
-        {
-            draw_stack_push(localDx >= 0 ? schuft_left_r : schuft_right_r, localDy, localDx);
-        }
+        draw_entity(localDy, localDx, schuft_left, schuft_right, schuft_left_r, schuft_right_r);
 
         if (NEAR_CENTER(e))
         {

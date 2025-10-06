@@ -30,7 +30,6 @@
 #include <vectrex.h>
 #include <cnd/music.h>
 #include <cnd/sound.h>
-#include <lib/monitor.h>
 
 /////////////////////////////////////////////////////////////////////////
 //	>> Entry <<
@@ -49,13 +48,7 @@ soft_reset:
         /**
         * Synchronize frame and music
         */
-        DP_to_C8();
-        
-        
-		//GAME.explosion = &g_monsterPeng;
-        //Init_Sound();
-        //Init_Music_chk((void* const)GAME.track);
-        //Explosion_Snd((void* const)GAME.explosion);
+        DP_to_C8(); // DP-Register to C8
         
         Wait_Recal(); // Synchronize to frame
         sound_play();

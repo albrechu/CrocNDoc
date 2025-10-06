@@ -8,6 +8,9 @@
 #include <cnd/xutils.h>
 #include <cnd/draw_queue.h>
 #include <lib/monitor.h>
+#include <cnd/sound.h>
+#include <cnd/music.h>
+#include <lib/assert.h>
 
 /////////////////////////////////////////////////////////////////////////
 //	Functions
@@ -46,10 +49,7 @@ void update_death(entity e)
     }
     else 
     {
-        if (e->score)
-        {
-            add_score(e->score);
-        }
+        add_score(e->score);
         e->kill(e);
     }
 }
@@ -59,16 +59,18 @@ void update_stub(entity e)
     (void)e;
 }
 
-void add_score(u8 score)
+void add_score(i8 score)
 {
-    PLAYER.score += score;
-    PLAYER.scoreGained = score;
-    GAME.ticksScoreGainedVisible = 16;
+    if ((score >= 0) && (score < Score_Max))
+    {
+        PLAYER.score += (1u << U8(score));
+        PLAYER.scoreGained           = score;
+        GAME.ticksScoreGainedVisible = 32;
+    }
 }
 
 void entity_list_clear()
 {
-    WORLD.list.aliveCount = 0;
     WORLD.list.freeCount  = ARRAY_SIZE(WORLD.list.free);
     i8 idx = WORLD.list.freeCount - 1;
     for (i8 i = 0; i < WORLD.list.freeCount; ++i, --idx)
@@ -90,7 +92,6 @@ entity entity_alloc()
         return null;
 
     handle idx = WORLD.list.free[--WORLD.list.freeCount];
-    WORLD.list.alive[WORLD.list.aliveCount++] = idx;
     entity e = &WORLD.list.entities[idx];
     e->isAllocated = true;
     e->handle      = HANDLE_CREATE(idx, HANDLE_VERSION(e->handle));
@@ -104,19 +105,6 @@ void entity_free(entity e)
     e->handle            = HANDLE_CREATE(idx, version);
     e->isAllocated = false;
     WORLD.list.free[WORLD.list.freeCount++] = idx;
-
-    idx_t i;
-    for (i = 0; i < WORLD.list.aliveCount; ++i)
-    {
-        if (WORLD.list.alive[i] == idx)
-            break;
-    }
-    idx_t last = WORLD.list.aliveCount - 1;
-    if (i != last) // swap with last
-    {
-        WORLD.list.alive[i] = WORLD.list.alive[last];
-    }
-    --WORLD.list.aliveCount;
 }
 
 bool handle_valid(handle h)
@@ -139,9 +127,10 @@ entity entity_get(handle h)
     return &WORLD.list.entities[HANDLE_INDEX(h)];
 }
 
-void entity_set_death(entity e)
+void entity_set_pancaked_death(entity e)
 {
     e->update = update_death;
+    sound_push_sfx(e->isEnemy ? &g_explosion1 : &g_explosion2);
     if (WORLD.gravity < 0)
         CAMERA.velocity.y = -Velocity_KillUpWind;
     else
@@ -155,21 +144,21 @@ void entity_camera_hit_detection(entity e, i8 localDx)
     if (CAMERA.isAttacking)
     {
         if ((CAMERA.velocity.x ^ localDx) >= 0) // Only if they look in the opposite direction upon attack.
-            entity_set_death(e);
+            entity_set_pancaked_death(e);
     }
     else if (localDxAbs < 6)
     {
         if (GRAVITY_DOWN())
         {
             if (CAMERA.velocity.y <= -2)
-                entity_set_death(e);
+                entity_set_pancaked_death(e);
             else
                 character_damage();
         }
         else // GRAVITY_UP()
         {
             if (CAMERA.velocity.y >= 2)
-                entity_set_death(e);
+                entity_set_pancaked_death(e);
             else
                 character_damage();
         }
@@ -197,6 +186,27 @@ void entity_create_named(idx_t const globalId, v2i const tile)
     entity e = entity_alloc();
     if (e)
     {
+        EntityType type;
+        if (GAME.event != Event_EnemyShuffle)
+        {
+            type = WORLD.level->entities[globalId];
+        }
+        else
+        {
+            if (globalId == 0) 
+            {
+                type = Prop_Barrel;
+            }
+            else
+            {
+            next:
+                type = (EntityType)(random() & 15);
+                if (!(type == Prop_Barrel || (type > Prop_Max && type < Entity_Max)))
+                    goto next;
+            }
+        }
+
+
         e->reference    = HANDLE_INVALID;
         e->isAllocated = true;
         e->globalId     = globalId;
@@ -205,13 +215,12 @@ void entity_create_named(idx_t const globalId, v2i const tile)
         e->position.y   = (I16(tile.y) << TILE_SCALE_BITS) - (TILE_HEIGHT >> 1);
         e->position.x   = (I16(tile.x) << TILE_SCALE_BITS) + (TILE_WIDTH >> 1);
         e->velocity.x   = 0, e->velocity.y = 0;
-        e->type         = WORLD.level->entities[globalId];
-        e->isEnemy      = e->type > Prop_Max;
+        e->isEnemy      = type > Prop_Max;
         e->inLocalSpace = true; // Has to be local in order to spawn
         e->tileAbsDelta = (v2i){3, 3}; // Unknown
         e->isGrounded   = false; // Unknown
         e->transform    = 0;
-        prefabs[e->type](e);
+        prefabs[type](e);
     }
 }
 
@@ -226,13 +235,13 @@ void entity_create_anonymous(EntityType const type, v2i const tile)
         e->position.y   = (I16(tile.y) << TILE_SCALE_BITS) - (TILE_HEIGHT >> 1); // Starts in middle of tile and Y inverted
         e->position.x   = (I16(tile.x) << TILE_SCALE_BITS) + (TILE_WIDTH >> 1); // Starts in middle of tile
         e->velocity.x   = 0, e->velocity.y = 0; // Starts with no velocity by defautlt
-        e->type         = type;
-        e->isEnemy      = e->type > Prop_Max;
+        e->isEnemy      = type > Prop_Max;
         e->inLocalSpace = true; // Has to be local in order to spawn
         e->tileAbsDelta = (v2i){ 3, 3 }; // Unknown
         e->isGrounded   = false; // Unknown
         e->transform    = 0;
-        prefabs[type](e);
+        if (type < Entity_Max)
+            prefabs[type](e);
     }
 }
 
@@ -243,7 +252,7 @@ void entity_set_animation(entity e, void const* keyframes, i8 keyframeSize, i8 k
     e->animation.remainder = keyframeCount;
 }
 
-#ifdef NDEBUG
+#ifndef NDEBUG
 static i8 entityHitbox[9] =
 {
     LENGTH(4),
@@ -265,8 +274,22 @@ static i8 cameraHitbox[9] =
 
 bool entity_intersects_camera(entity e, i8 dy, i8 dx)
 {
-    i8 l1 = dx, r1 = dx + (dx >= 0 ? e->hitbox.x : -e->hitbox.x), b1 = dy;
-    i8 l2 = 0, r2 = (CAMERA.transform >= 0 ? CAMERA.hitbox.x : -CAMERA.hitbox.x), b2 = 0;
+    i8 l1, r1;
+    if (dx >= 0) // Looks left
+    {
+        l1 = dx - (e->hitbox.x >> 1);
+        r1 = l1 + e->hitbox.x;
+    }
+    else // Looks right
+    {
+        l1 = dx - (e->hitbox.x >> 1);
+        r1 = l1 + e->hitbox.x;
+    }
+    // Camera left/right
+    i8 l2 = -(CAMERA.hitbox.x >> 1), r2 = (CAMERA.hitbox.x >> 1);
+
+    // Calculate y-s
+    i8 b1 = dy, b2 = 0;
     i8 t1 = dy, t2;
     if (GRAVITY_DOWN())
     {
@@ -285,7 +308,7 @@ bool entity_intersects_camera(entity e, i8 dy, i8 dx)
     SWAP_MAX(tmp, b1, t1);
     SWAP_MAX(tmp, b2, t2);
 
-#ifdef NDEBUG
+#ifndef NDEBUG
     entityHitbox[1] = t1 - b1;
     entityHitbox[4] = r1 - l1;
     entityHitbox[5] = -entityHitbox[1];
@@ -312,10 +335,11 @@ void entity_exchange_blows(entity e, i8 dy)
 {
     if (CAMERA.isAttacking || (GRAVITY_DOWN() && (dy < -4)) || (GRAVITY_UP() && (dy > 4)))
     {
-        entity_set_death(e);
+        entity_set_pancaked_death(e);
     }
     else
     {
+        entity_set_pancaked_death(e);
         character_damage();
     }
 }
@@ -323,7 +347,7 @@ void entity_exchange_blows(entity e, i8 dy)
 /////////////////////////////////////////////////////////////////////////
 //	Function Table
 //
-const prefab_t prefabs[EntityType_Max] =
+const prefab_t prefabs[Entity_Max] =
 {
     prefab_croc_prepare,
     prefab_croc,
@@ -334,4 +358,5 @@ const prefab_t prefabs[EntityType_Max] =
     prefab_schuft,
     prefab_schelm,
     prefab_bandit,
+    prefab_boesewicht,
 };

@@ -109,9 +109,9 @@ void update_death(entity e);
 */
 void update_stub(entity e);
 
-void add_score(u8 score);
+void add_score(i8 score);
 
-void entity_set_death(entity e);
+void entity_set_pancaked_death(entity e);
 
 void entity_camera_hit_detection(entity e, i8 localDx);
 
@@ -267,6 +267,15 @@ void update_coin_achieved(entity e);
 void prefab_coin(entity e);
 
 /////////////////////////////////////////////////////////////////////////
+// Boesewicht
+//
+/**
+ * @brief
+ */
+void update_boesewicht(entity e);
+void prefab_boesewicht(entity e);
+
+/////////////////////////////////////////////////////////////////////////
 //	Function Table
 //
-extern const prefab_t prefabs[EntityType_Max];
+extern const prefab_t prefabs[Entity_Max];

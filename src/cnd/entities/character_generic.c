@@ -8,16 +8,18 @@
 #include <cnd/xutils.h>
 #include <lib/assert.h>
 #include <cnd/draw_queue.h>
+#include <cnd/music.h>
+#include <cnd/sound.h>
 
 /////////////////////////////////////////////////////////////////////////
 //	Functions
 //
 bool character_grab(void)
 {
-    for (i8 i = 1; i < WORLD.list.aliveCount; i++)
+    for (i8 i = 1; i < ENTITIES_ACTIVE_MAX; i++)
     {
-        entity e = &WORLD.list.entities[WORLD.list.alive[i]];
-        if (IS_SAME_TILE(e, &CAMERA) && !e->isEnemy)
+        entity e = &WORLD.list.entities[i];
+        if (e->isAllocated && IS_SAME_TILE(e, &CAMERA) && !e->isEnemy)
         {
             v2i delta;
             delta.y = I8(e->position.y - CAMERA.position.y);
@@ -27,7 +29,8 @@ bool character_grab(void)
                 if (CAMERA.substance & Substance_Water)
                 {
                     e->update = update_death;
-                    add_score(Score_50);
+                    sound_push_sfx(&g_explosion2);
+                    add_score(e->score);
                 }
                 else
                 {
@@ -59,11 +62,13 @@ void character_damage(void)
     {
         if (PLAYER.isOtherCharacterDead)
         {
+            sound_push_sfx(&g_explosion2);
             GAME.progress = game_remove_live;
         }
         else
         {
             CAMERA.invincibilityTicks   = 50;
+            CAMERA.isGrounded = true;
             character_swap();
             PLAYER.isOtherCharacterDead = true;
         }
@@ -110,6 +115,7 @@ void character_swap(void)
                 CAMERA.update = update_croc_water;
                 CAMERA.hitbox = (v2i){ Hitbox_CrocY, Hitbox_CrocX };
             }
+            sound_push_sfx(&g_swap);
         }
 
     }
@@ -129,6 +135,7 @@ void character_swap(void)
                 CAMERA.update = update_croc_air;
                 CAMERA.hitbox = (v2i){ Hitbox_CrocY, Hitbox_CrocX };
             }
+            sound_push_sfx(&g_swap);
         }
     }
 }

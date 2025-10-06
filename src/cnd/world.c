@@ -50,7 +50,7 @@
 #define TILE_FLAG(id) WORLD.tileFlags[id]
 #define LBL(x) lbl_##x
 #define W WORLD
-#define draw_line(y, x) Draw_Line_d2(y, x)
+#define draw_line(y, x) Draw_Line_d(y, x)
 
 /////////////////////////////////////////////////////////////////////////
 //	Functions
@@ -70,9 +70,6 @@ void check_tiles(entity e)
 {
     switch (GAME.event)
     {
-    case Event_None:
-        e->velocity.y -= WORLD.gravity;
-        break;
     case Event_Storm:
         e->velocity.x += WORLD.wind;
         e->velocity.y -= WORLD.gravity;
@@ -80,24 +77,16 @@ void check_tiles(entity e)
     case Event_MoonWalk:
         e->velocity.y -= WORLD.moon;
         if (GRAVITY_DOWN())
+        {
             e->velocity.y = MIN8(e->velocity.y, Velocity_MoonWalk);
+        }
         else
+        {
             e->velocity.y = MAX8(e->velocity.y, -Velocity_MoonWalk);
-        break;
-    case Event_TheFloorIsLava:
-        e->velocity.y -= WORLD.gravity;
-        break;
-    case Event_IcyRoads:
-        e->velocity.y -= WORLD.gravity;
-        break;
-    case Event_YouAreBeingFollowed:
-        break;
-    case Event_EarthQuake:
-        break;
-    case Event_Tiny:
-        e->velocity.y -= WORLD.gravity;
+        }
         break;
     default:
+        e->velocity.y -= WORLD.gravity;
         break;
     }
 
@@ -186,24 +175,24 @@ vertical:; // The vertical tile
     {
         tX = currentX;
         tY = I16(yAfter) << TILE_SCALE_BITS;
-        next = &&adjust;
-        tile = WORLD.tiles[tY + tileX];
-        goto* jump[tile];
+        next = && adjust;
+        i16 t = tY + tileX;
+        if (t >= 0)
+        {
+            tile = WORLD.tiles[t];
+            goto* jump[tile];
+        }
+        else // Out of bounds
+        {
+            e->velocity.y = 0;
+        }
     }
 adjust: // Adjust position and flags if necessary
     if (e->velocity.x)
     {
         e->position.x += I16(e->velocity.x);
         e->tile.x     = xAfter;
-        if (GAME.event == Event_IcyRoads)
-        {
-            if ((WORLD.ticks & 14) == 0)
-                e->velocity.x -= e->transform;
-        }
-        else
-        {
-            e->velocity.x = 0;
-        }
+        e->velocity.x = 0;
     }
 
     if (e->velocity.y)
@@ -248,7 +237,7 @@ LBL(Tile_Air):
         {
             e->substance = Substance_Air;
         }
-        sound_push_sfx(&g_splash);;
+        
         e->isAttacking = false;
         if (e->type == Character_Croc)
         {
@@ -386,6 +375,7 @@ LBL(Tile_Spikes):
         if (!HANDLE_IS_CAMERA(e->handle))
         {
             e->update = update_death;
+            sound_push_sfx(&g_explosion2);
         }
         else if (!WORLD.gameIsOver)
         {
@@ -397,12 +387,44 @@ LBL(Tile_Spikes):
     }
     goto *next;
 LBL(Tile_SpikedBall):
+    if (HANDLE_IS_CAMERA(e->handle) && !e->invincibilityTicks)
     {
-        i8 nextX = relative_x(e) + e->velocity.x;
-        i8 nextY = relative_y(e) + e->velocity.y;
-        if (e->globalId == -1 && ((nextX >= ((TILE_WIDTH >> 2) + (TILE_WIDTH >> 3)) && nextX <= TILE_WIDTH - ((TILE_WIDTH >> 2) + (TILE_WIDTH >> 3))) ||
-            (nextY >= ((TILE_HEIGHT >> 2) + (TILE_HEIGHT >> 3)) && nextY <= TILE_HEIGHT - ((TILE_HEIGHT >> 2) + (TILE_HEIGHT >> 3)))))
+        // Hitbox 
+        i8 l = -e->hitbox.x >> 1;
+        i8 r = -l;
+        i8 b = 0;
+        i8 t = GRAVITY_DOWN() ? e->hitbox.y : -e->hitbox.y;
+        // Spike
+        i8 cy = relative_y(e) - TILE_HEIGHT_2;
+        i8 cx = relative_x(e) - TILE_WIDTH_2;
+
+        i8 closestX;
+        if (cx < l)
+            closestX = l;
+        else if (cx > r)
+            closestX = r;
+        else
+            closestX = cx;
+
+        i8 closestY;
+        if (cy < b)
+            closestY = b;
+        else if (cy > t)
+            closestY = t;
+        else
+            closestY = cy;
+
+        // Dot Product
+        i16 dotx = I16(cx - closestX);
+        i16 doty = I16(cy - closestY);
+        dotx *= dotx;
+        doty *= doty;
+        dotx += doty;
+
+        if (dotx <= (Hitbox_SpikedBallRadius * Hitbox_SpikedBallRadius))
+        {
             character_damage();
+        }
     }
     goto *next;
 LBL(Tile_Jumper):
@@ -422,9 +444,14 @@ LBL(Tile_BarrierVertical):
         if (relative_x(e) + e->velocity.x >= TILE_WIDTH - 1)
         {
             if (HANDLE_IS_CAMERA(e->handle) && e->isAttacking)
+            {
                 TILE_FLAG(0) = true;
+                sound_push_sfx(&g_explosion2);
+            }
             else
+            {
                 e->velocity.x = 0;
+            }
         }
     }
     goto *next;
@@ -435,13 +462,29 @@ LBL(Tile_BarrierHorizontal):
         {
             if (HANDLE_IS_CAMERA(e->handle))
             {
-                if (e->velocity.y < -14 || e->velocity.y > 14) // Broke the barrier
+                if (GAME.event == Event_MoonWalk)
                 {
-                    TILE_FLAG(1) = true;
+                    if ((e->velocity.y < -Velocity_MoonWalk) || (e->velocity.y > Velocity_MoonWalk)) // Broke the barrier
+                    {
+                        TILE_FLAG(1) = true;
+                        sound_push_sfx(&g_explosion2);
+                    }
+                    else
+                    {
+                        set_ground(e);
+                    }
                 }
                 else
                 {
-                    set_ground(e);
+                    if ((e->velocity.y < -Velocity_AirTerminal) || (e->velocity.y > Velocity_AirTerminal)) // Broke the barrier
+                    {
+                        TILE_FLAG(1) = true;
+                        sound_push_sfx(&g_explosion2);
+                    }
+                    else
+                    {
+                        set_ground(e);
+                    }
                 }
             }
             else
@@ -467,12 +510,27 @@ LBL(Tile_Portal):
     if ((nextX >= (TILE_WIDTH_4 + (TILE_WIDTH >> 3)) && nextX <= TILE_WIDTH - (TILE_WIDTH_4 + (TILE_WIDTH >> 3))) ||
         (nextY >= (TILE_HEIGHT_4 + (TILE_HEIGHT >> 3)) && nextY <= TILE_HEIGHT - (TILE_HEIGHT_4 + (TILE_HEIGHT >> 3))))
     {
-        PLAYER.lives = 3; // Reset lives
+        if (PLAYER.lives < 3)
+            PLAYER.lives = 3; // Reset lives
+        else if (PLAYER.lives == 3) // Players will get lives for perfectly cleared levels up to 5 lives.
+            ++PLAYER.lives;
+        
         ++PLAYER.stagesDone;
-        PLAYER.score += PLAYER.stagesDone * Score_1000;
-        GAME.state = GameState_Play;
+        PLAYER.score += PLAYER.stagesDone * U16(1u << Score_800);
         
         GAME.stage = WORLD.level->adjacentStage;
+        if (PLAYER.stagesDone == 4)
+        {
+            random_mix_seed(WORLD.ticks);
+        }
+        if (PLAYER.stagesDone > 3)
+        {
+        next:;
+            Event event = (Event)(random() & 7);
+            if ((event == GAME.event) || (GAME.stage == Stage_Gravitas && (event == Event_EnemyShuffle)) || ((PLAYER.stagesDone <= 6) && ((event == Event_Storm) || (event == Event_None))))
+                goto next;
+            GAME.event = event;
+        }
         game_prepare_next_stage(GameState_Play);
     }
 }
@@ -516,6 +574,7 @@ LBL(Tile_SpikesDown):
         set_ground(e);
         if (!HANDLE_IS_CAMERA(e->handle))
         {
+            sound_push_sfx(e->isEnemy ? &g_explosion1 : &g_explosion2);
             entity_set_status(e, EntityState_Dead);
         }
         else if (!WORLD.gameIsOver)
@@ -583,7 +642,7 @@ end:
     goto *next;
 }
 
-force_inline void world_next()
+void world_next()
 {
     switch (WORLD.worldState)
     {
@@ -1012,11 +1071,18 @@ end:
 void world_create(Stage const stage)
 {
     MEMZERO(WORLD);
-    WORLD.level = &levels[stage];
-    WORLD.tiles = WORLD.level->level;
+    WORLD.level         = &levels[stage];
+    WORLD.tiles         = WORLD.level->level;
+    WORLD.gravity       = Velocity_Gravity;
     entity_list_clear();
     entity_create_anonymous(Entity_Croc, WORLD.level->startingTile);
 
     CAMERA.position.y = (I16(CAMERA.tile.y) << TILE_SCALE_BITS)  - (TILE_HEIGHT >> 1);
     CAMERA.position.x = (I16(CAMERA.tile.x) << TILE_SCALE_BITS)  + (TILE_WIDTH  >> 1);
+    if (GAME.event == Event_YouAreBeingFollowed)
+    {
+        prefab_boesewicht(&WORLD.eventEntity);
+        WORLD.eventEntity.position.y = CAMERA.position.y;
+        WORLD.eventEntity.position.x = (I16(15) << TILE_SCALE_BITS) + (TILE_WIDTH >> 1);
+    }
 }

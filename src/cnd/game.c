@@ -49,17 +49,33 @@
 #define HEART_DX               12
 #define HEART_MARGIN           12
 
-const char* events[] =
+/////////////////////////////////////////////////////////////////////////
+// Data
+//
+const char* stringsEvents[] =
 {
-    "NONE\x80",
-    "STORM\x80",
-    "MOON WALK\x80",
-    "FLOOR IS LAVA\x80",
-    "ICY ROADS\x80",
-    "YOU ARE FOLLOWED\x80",
-    "EARTHQUAKE\x80",
+    "ENEMY SHUFFLE\x80",
+    "    STORMY\x80",
+    "  MOON WALK\x80",
+    " FLOOR IS LAVA\x80",
+    "   PURSUIT\x80",
     "FROM BACK HERE?\x80",
+    " TIME ATTACK\x80",
+    "     NONE\x80",
+    // -- "Disabled" --
 };
+
+const char* stringScore[] =
+{
+    " +1\x80", 
+    " +2\x80",
+    " +4\x80",
+    " +8\x80",
+    "+16\x80",
+    "+32\x80",
+};
+
+const i8 windSequence[] = { 0,1,0,-1 };
 
 /////////////////////////////////////////////////////////////////////////
 // Game Functions
@@ -72,11 +88,10 @@ void game_soft_reset(void)
     Vec_Joy_Mux_2_Y = 0;
 
 	MEMZERO(GAME);
-    GAME.stage = Stage_Tutorial;
-    GAME.event = Event_None;
+    GAME.stage   = Stage_Tutorial;
     PLAYER.lives = 3;
     game_prepare_next_stage(GameState_Play);
-    sound_clear();
+    GAME.event = Event_Disabled;
 }
 
 void game_enter_stage(Stage stage)
@@ -86,38 +101,44 @@ void game_enter_stage(Stage stage)
     sound_clear();
     sound_push_music(g_tracks[stage]);
     world_create(stage);
-    PLAYER.isOtherCharacterDead = false;
-    WORLD.gravity = Velocity_Gravity;
+    PLAYER.isOtherCharacterDead = true;
 }
 
-force_inline void game_draw_eye()
+void game_draw_eye()
 {
     beam_set_position(WORLD.eyePosition.y, WORLD.eyePosition.x);
     Dot_here();
 }
 
-void game_prepare_next_stage(GameState state)
+void game_prepare_prepare(void)
 {
     WORLD.ticks = 0;
-    sound_stop_music();
+    sound_clear();
     entity_list_clear();
+    entity_create_anonymous(Entity_Stub, (v2i){ 0, 0 });
     entity_create_anonymous(Entity_Prepare, (v2i) { 1, 1 });
     GAME.ticksUntilNewGame = GAMEOVER_PRESSED_SPEED;
     GAME.progress = game_update_prepare;
+}
+
+void game_prepare_next_stage(GameState state)
+{
     GAME.state = state;
+    GAME.progress = game_prepare_prepare; // Delegate initialization to next frame.
 }
 
 void game_update_prepare(void)
 {
     Joy_Digital();
-    dp_VIA_t1_cnt_lo = 0x7A;
+    dp_VIA_t1_cnt_lo = 0x6A;
     game_set_frequencies();
 
     draw_stack_clear();
     
-    if (CAMERA.isAllocated)
-        CAMERA.update(&CAMERA);
-
+    if (PREPARE.isAllocated)
+        PREPARE.update(&PREPARE);
+    
+    TEXT_SET_BIG();
     // Visualize hearts
     switch (PLAYER.lives)
     {
@@ -128,8 +149,7 @@ void game_update_prepare(void)
         draw_stack_push(heart, HEART_Y, -(HEART_DX + (HEART_MARGIN >> 1)));
         draw_stack_push(heart, HEART_Y, HEART_MARGIN >> 1);
         break;
-    default: // More than 3 hearts
-        TEXT_SET_BIG();
+    default: // More than 4 hearts
         Print_Str_d(HEART_Y + 10, (HEART_DX << 1) - (HEART_MARGIN >> 1), "++\x80");
         /* fallthrough */
     case 3:
@@ -139,14 +159,13 @@ void game_update_prepare(void)
         break;
     }
 
-    TEXT_SET_BIG();
     print_long_unsigned_int(80, -40, PLAYER.score);
 
-    if (GAME.event != Event_None && WORLD.freq8_8 & 1)
+    if (GAME.event < Event_Disabled && (WORLD.freq8_8 & 1))
     {
         TEXT_SET_SMALL();
         Print_Str_d(-15, -(TEXT_SMALL_WIDTH >> 1), "EVENT!\x80");
-        Print_Str_d(-30, -TEXT_SMALL_WIDTH, (void* const)events[GAME.event]);
+        Print_Str_d(-30, -TEXT_SMALL_WIDTH, (void* const)stringsEvents[GAME.event]);
     }
 
     switch (GAME.state)
@@ -154,20 +173,19 @@ void game_update_prepare(void)
     case GameState_Play:
         if (WORLD.ticks == 100)
         {
-            CAMERA.kill(&CAMERA);
+            PREPARE.kill(&PREPARE);
             Intensity_7F();
             game_enter_stage(GAME.stage);
-            WORLD.windPhase = 0;
             GAME.progress = game_update_play;
         }
         break;
     case GameState_Died:
-        if (WORLD.ticks == 100)
+        if (WORLD.ticks == 50)
         {
-            entity_set_death(&CAMERA);
+            entity_set_pancaked_death(&PREPARE);
             WORLD.ticks = 0;
         }
-        if (WORLD.list.aliveCount == 0)
+        if (PREPARE.isAllocated == false)
         {
             GAME.state = GameState_Play;
             entity_create_anonymous(Entity_Prepare, (v2i) { 1, 1 });
@@ -190,7 +208,7 @@ void game_remove_live(void)
         WORLD.windPhase        = 0;
         WORLD.wind             = 0;
         world_freeze();
-        entity_set_death(&CAMERA);
+        entity_set_pancaked_death(&CAMERA);
         GAME.ticksUntilNewGame = GAMEOVER_PRESSED_SPEED;
     }   
     else // Play lost live animation
@@ -201,6 +219,7 @@ void game_remove_live(void)
 
 void game_update_gameover(void)
 {
+    dp_VIA_t1_cnt_lo = 0x65;
     game_set_frequencies();
     draw_stack_clear();
 
@@ -252,104 +271,16 @@ force_inline void game_set_frequencies(void)
     WORLD.freq8_8    = I8((WORLD.ticks >> 3) & 7);
 }
 
-const i8 windSequence[] = { 0,1,0,-1 };
-
-//void explosion_snd(void) 
-//{
-//    i8 A;
-//
-//    if (Vec_Expl_Flag & 0x80)
-//    {
-//        Vec_Expl_Flag &= 0x7F;
-//
-//        struct tmp_t { u8 bytes[4]; };
-//        *((struct tmp_t*)&Vec_Expl_1) = *((struct tmp_t*)GAME.explosion); // Copy 4 bytes
-//        Vec_Expl_Chans = ((Vec_Expl_1 >> 3) | Vec_Expl_1) & 7;
-//        Vec_Expl_ChanA = Vec_Expl_1 & 0x38;
-//        Vec_Expl_ChanB = Vec_Expl_1 & 0x07;
-//        Vec_Expl_Chan = 2;
-//        A = 0x7F;
-//    }
-//    else {
-//        if (Vec_Expl_Timer == 0) return;
-//
-//        A = Vec_Expl_Timer - Vec_Expl_4;
-//        if (A < 0) {
-//            Vec_Expl_Timer = 0;
-//            // Skip to channel noise section
-//            goto noise_update;
-//        }
-//    }
-//
-//    Vec_Expl_Timer = A;
-//    A >>= 2;
-//
-//    // Channel A effect
-//    if (Vec_Expl_ChanA) {
-//        Vec_Music_Wk_6 = A;
-//        if (Vec_Expl_2 < 0) {            // BMI in 6809
-//            Vec_Music_Wk_6 = ~A;        // COMB / bit inversion
-//        }
-//        else if (Vec_Expl_2 > 0) {    // BNE + positive check
-//            Vec_Music_Wk_6 = ~A;
-//        }
-//    }
-//
-//    // Adjust value for next step
-//    A >>= 1;
-//    if ((A > 7) && (A != 0x0F)) ++A;
-//
-//    // Channel B / noise effect
-//    if (Vec_Expl_3 != 0) {
-//        if (Vec_Expl_3 > 0) {
-//            A ^= 0x0F;  // EORA #$0F
-//        }
-//    }
-//
-//noise_update:
-//    // Noise / channel assignment
-//    if (Vec_Expl_ChanB != 0) {
-//        while (true) {
-//            Vec_Expl_Chan--;
-//            if (Vec_Expl_Chan < 0) Vec_Expl_Chan = 2;
-//
-//            i8 mask = (i8)Bitmask_a((u8)Vec_Expl_Chan);
-//            if (mask & Vec_Expl_ChanB) break; // Exit loop if channel is active
-//        }
-//
-//        const i8 chan_index = 2 - Vec_Expl_Chan; // Map channel to index
-//        i8 rnd = I8(Random() & 0x0F);
-//        if (rnd <= 5) rnd = (rnd << 1) + 5;  // ASLA + ADDA #5
-//        (&Vec_Music_Wk_1)[chan_index] = rnd;
-//        (&Vec_Music_Wk_1)[chan_index + 1] = (i8)Vec_Random_Seed1;
-//    }
-//
-//    // Mask explosion parameter into music work register
-//    Vec_Music_Wk_7 &= ~Vec_Expl_1;
-//
-//    // Write noise values for active channels
-//    i8 chans = Vec_Expl_Chans;
-//    i8* ptr = &Vec_Music_Wk_7;
-//    while (chans) 
-//    {
-//        ptr--;          // step backward through registers
-//        if (chans & 1) *ptr = A;
-//        chans >>= 1;
-//    }
-//}
-
 void game_update_play(void)
 {
     Joy_Digital();
-    dp_VIA_t1_cnt_lo = 0x60;
+    dp_VIA_t1_cnt_lo = 0x55;
     game_set_frequencies();
 
     draw_stack_clear();
 
     switch (GAME.event)
     {
-    case Event_None:
-        break;
     case Event_Storm:
     {
         if (WORLD.ticks == 255)
@@ -357,20 +288,17 @@ void game_update_play(void)
             WORLD.windPhase = (WORLD.windPhase + 1) & 3;
             WORLD.wind = windSequence[WORLD.windPhase];
         }
+        else if (WORLD.ticks < 32)
+        {
+            Intensity_7F();
+            draw_stack_push(&wind[1 + WORLD.wind][0], (WORLD.gravity << 5), 0);   
+        }
         else
         {
-            if ((WORLD.ticks < 96) && (WORLD.ticks > 64))
-            {
-                Intensity_7F();
-            }
-            else
-            {
-                Intensity_3F();
-            }
-            
-            draw_stack_push(&wind[1 + WORLD.wind][0], (WORLD.gravity << 5), 0);
-            beam_set_position((WORLD.gravity << 5) + (WORLD.gravity << 3), -15);
-            Draw_Line_d(0, 32 - I8(WORLD.ticks >> 3));
+            Intensity_3F();
+            i8 shrink = I8(WORLD.ticks >> 2);
+            beam_set_position((WORLD.gravity << 5) + (WORLD.gravity << 3), -31 + (shrink >> 1));
+            Draw_Line_d(0, 63 - shrink);
         }
     }
         break;
@@ -386,32 +314,63 @@ void game_update_play(void)
                 character_damage();
                 WORLD.heat = 0;
             }
-
-            beam_set_position((WORLD.gravity << 5), 0);
-            Draw_Line_d((-WORLD.gravity) << 3, 0);
-            Moveto_d((-WORLD.gravity) << 1, 0);
-            Dot_here();
-            Moveto_d((WORLD.gravity << 4), -31);
-            Draw_Line_d(0, 63 - WORLD.heat);
+            else
+            {
+                beam_set_position((WORLD.gravity << 5), 0);
+                Draw_Line_d((-WORLD.gravity) << 3, 0);
+                Moveto_d((-WORLD.gravity) << 1, 0);
+                Dot_here();
+                Moveto_d((WORLD.gravity << 4), -31 + (WORLD.heat >> 1));
+                Draw_Line_d(0, 63 - WORLD.heat);
+            }
         }
         else
         {
             WORLD.heat = 0;
         }
         break;
-    case Event_IcyRoads:
-        break;
     case Event_YouAreBeingFollowed:
-        break;
-    case Event_EarthQuake:
+    {
+        // Next
+        EVENT_ENT.update(&EVENT_ENT);
+        // Update entity manually without physics.
+        EVENT_ENT.position.y -= EVENT_ENT.velocity.y;
+        EVENT_ENT.position.x += EVENT_ENT.velocity.x;
+        EVENT_ENT.tile.y = I8((EVENT_ENT.position.y) >> TILE_SCALE_BITS);
+        EVENT_ENT.tile.x = I8((EVENT_ENT.position.x) >> TILE_SCALE_BITS);
+        EVENT_ENT.tileAbsDelta.y = EVENT_ENT.tile.y - CAMERA.tile.y;
+        const i8 dyMask = EVENT_ENT.tileAbsDelta.y >> 7;
+        EVENT_ENT.tileAbsDelta.y = (EVENT_ENT.tileAbsDelta.y ^ dyMask) - dyMask;
+        EVENT_ENT.tileAbsDelta.x = EVENT_ENT.tile.x - CAMERA.tile.x;
+        const i8 dxMask = EVENT_ENT.tileAbsDelta.x >> 7;
+        EVENT_ENT.tileAbsDelta.x = ((EVENT_ENT.tileAbsDelta.x ^ dxMask) - dxMask);
+        EVENT_ENT.inLocalSpace = EVENT_ENT.tileAbsDelta.x < 4 && EVENT_ENT.tileAbsDelta.y < 4;
+    }
         break;
     case Event_Tiny:
         dp_VIA_t1_cnt_lo = 0x25;
         break;
+    case Event_TimeAttack:
+        if ((WORLD.ticks & 15) == 0)
+        {
+            if (++WORLD.time == 255)
+            {
+                character_damage();
+                CAMERA.invincibilityTicks = false;
+                character_damage();
+                WORLD.gameIsOver = true;
+            }
+        }
+        else
+        {
+            i8 shrink = I8(WORLD.time >> 2);
+            beam_set_position((WORLD.gravity << 5), (-63 >> 1) + (shrink >> 1));
+            Draw_Line_d(0, 63 - shrink);
+        }
+        break;
     default:
         break;
     }
-
 
     if (!PLAYER.isOtherCharacterDead)
         draw_stack_push(heart, 115, 100);
@@ -419,18 +378,12 @@ void game_update_play(void)
     world_progress();
 
     draw_stack_draw();
+
     if (GAME.ticksScoreGainedVisible > 0)
     {
         TEXT_SET_SMALL();
-        beam_set_position(115, -10);
-        switch (PLAYER.scoreGained)
-        {
-        case Score_50:  Print_Str("+1\x80"); break;
-        case Score_100: Print_Str("+2\x80"); break;
-        case Score_200: Print_Str("+4\x80"); break;
-        case Score_500: Print_Str("+10\x80"); break;
-        default: break;
-        }
+        beam_set_position(30, -TEXT_SMALL_WIDTH + 15);
+        Print_Str((void* const)stringScore[PLAYER.scoreGained]);
         --GAME.ticksScoreGainedVisible;
     }
     game_draw_eye();

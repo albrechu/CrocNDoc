@@ -63,7 +63,7 @@
 #define TILE_HEIGHT_3_4     (TILE_HEIGHT - TILE_HEIGHT_4) 
 #define PLATFORM_TOLERANCE   8
 #define PLATFORM_TOLERANCE_2 (PLATFORM_TOLERANCE >> 1)
-#define ENTITIES_ACTIVE_MAX 6  // Maximum of entities that can be active.
+#define ENTITIES_ACTIVE_MAX 5  // Maximum of entities that can be active.
 #define ENTITIES_MAX        16 // Maximum of entities that can be in a level.
 #define TEXT_BIG_HEIGHT     -8
 #define TEXT_BIG_WIDTH      80
@@ -74,17 +74,20 @@
 
 #define ID_INVALID -1
 #define ID_CAMERA   0
+#define ID_PREPARE  1
 
 /////////////////////////////////////////////////////////////////////////
 //	Macro References
 //
-#define WORLD  g_world
-#define GAME   g_game
-#define SOUND  g_sound
-#define CAMERA WORLD.list.entities[ID_CAMERA]
-#define PLAYER GAME.player
-#define BTNS   Vec_Buttons
+#define WORLD	  g_world
+#define GAME	  g_game
+#define SOUND	  g_sound
+#define CAMERA	  WORLD.list.entities[ID_CAMERA]
+#define PREPARE   WORLD.list.entities[ID_PREPARE]
+#define PLAYER	  GAME.player
+#define BTNS	  Vec_Buttons
 #define BTN_STATE Vec_Btn_State
+#define EVENT_ENT WORLD.eventEntity
 
 /////////////////////////////////////////////////////////////////////////
 //	Macro Helper Functions
@@ -111,8 +114,8 @@
 #define ARRAY_SIZE(arr)   (sizeof(arr) / sizeof((arr)[0]))
 #define ELEMENT_SIZE(arr) (sizeof((arr)[0]))
 
-#define LOCAL_POS(e, dy, dx)  const i16 dy = CAMERA.position.y - e->position.y; \
-							  const i16 dx = e->position.x - CAMERA.position.x 
+#define LOCAL_POS(e, dy, dx)  const i16 dy = CAMERA.position.y - (e)->position.y; \
+							  const i16 dx = (e)->position.x - CAMERA.position.x 
 #define GRAVITY_DOWN() (WORLD.gravity > 0)
 #define GRAVITY_UP()   (WORLD.gravity < 0)
 
@@ -137,3 +140,28 @@
 
 #define TEXT_SET_SMALL() Vec_Text_Height = TEXT_SMALL_HEIGHT, Vec_Text_Width = TEXT_SMALL_WIDTH
 #define TEXT_SET_BIG() Vec_Text_Height = TEXT_BIG_HEIGHT, Vec_Text_Width = TEXT_BIG_WIDTH
+
+
+#define draw_entity(dy, dx, meshLeft, meshRight, meshLeftR, meshRightR) \
+    if (GRAVITY_DOWN()) \
+    { \
+        if (dx >= 0) \
+        { \
+            draw_stack_push(meshLeft, dy, dx - (e->hitbox.x >> 1)); \
+        } \
+        else \
+        { \
+            draw_stack_push(meshRight, dy, dx + (e->hitbox.x >> 1)); \
+        } \
+    } \
+    else \
+    { \
+        if (dx >= 0) \
+        { \
+            draw_stack_push(meshLeftR, dy, dx - (e->hitbox.x >> 1)); \
+        } \
+        else \
+        { \
+            draw_stack_push(meshRightR, dy, dx + (e->hitbox.x >> 1)); \
+        } \
+    }

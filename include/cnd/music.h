@@ -41,6 +41,11 @@ extern const music_t* g_tracks[4];
 /////////////////////////////////////////////////////////////////////////
 //	Sound Effects
 //
-extern const sfx_t g_splash;
+extern const sfx_t g_hit;
+extern const sfx_t g_explosion1;
+extern const sfx_t g_explosion2;
+extern const sfx_t g_coinAchieved;
+extern const sfx_t g_fly;
+extern const sfx_t g_swap;
 
 

@@ -8,6 +8,8 @@
 #include <cnd/mesh.h>
 #include <lib/assert.h>
 #include <cnd/draw_queue.h>
+#include <cnd/sound.h>
+#include <cnd/music.h>
 
 /////////////////////////////////////////////////////////////////////////
 //	Functions
@@ -18,30 +20,30 @@ void croc_draw_default(entity e)
     {
         if (e->transform < 0)
         {
-            draw_stack_push(croc_idle_left[WORLD.freq16], 4, 0);
-            draw_stack_push(croc_arm[1], 7 + (WORLD.freq16 << 1), -5);
-            WORLD.eyePosition = (v2i){ 13 + (WORLD.freq16 << 1), -4 };
+            draw_stack_push(croc_idle_left[WORLD.freq16], 4, (Hitbox_CrocX >> 1));
+            draw_stack_push(croc_arm[1], 7 + (WORLD.freq16 << 1), -5 +(Hitbox_CrocX >> 1));
+            WORLD.eyePosition = (v2i){ 13 + (WORLD.freq16 << 1), -4 + (Hitbox_CrocX >> 1) };
         }
         else
         {
-            draw_stack_push(croc_idle_right[WORLD.freq16], 4, 0);
-            draw_stack_push(croc_arm[0], 7 + (WORLD.freq16 << 1), 1);
-            WORLD.eyePosition = (v2i){ 13 + (WORLD.freq16 << 1), 4 };
+            draw_stack_push(croc_idle_right[WORLD.freq16], 4, 0 - (Hitbox_CrocX >> 1));
+            draw_stack_push(croc_arm[0], 7 + (WORLD.freq16 << 1), 1 - (Hitbox_CrocX >> 1));
+            WORLD.eyePosition = (v2i){ 13 + (WORLD.freq16 << 1), 4 - (Hitbox_CrocX >> 1) };
         }
     }
     else
     {
         if (e->transform < 0)
         {
-            draw_stack_push(croc_idle_left[0], 4, 0);
-            draw_stack_push(croc_arm[1], 7, -5);
-            WORLD.eyePosition = (v2i){ 13, -4 };
+            draw_stack_push(croc_idle_left[0], 4, (Hitbox_CrocX >> 1));
+            draw_stack_push(croc_arm[1], 7, -5 + (Hitbox_CrocX >> 1));
+            WORLD.eyePosition = (v2i){ 13, -4 + (Hitbox_CrocX >> 1) };
         }
         else
         {
-            draw_stack_push(croc_idle_right[0], 4, 0);
-            draw_stack_push(croc_arm[0], 7, 1);
-            WORLD.eyePosition = (v2i){ 13, 4 };
+            draw_stack_push(croc_idle_right[0], 4, 0 - (Hitbox_CrocX >> 1));
+            draw_stack_push(croc_arm[0], 7, 1 - (Hitbox_CrocX >> 1));
+            WORLD.eyePosition = (v2i){ 13, 4 - (Hitbox_CrocX >> 1) };
         }
     }
 }
@@ -52,30 +54,30 @@ void croc_draw_mirrored(entity e)
     {
         if (e->transform < 0)
         {
-            draw_stack_push(croc_idle_left_r[WORLD.freq16], -4, 0);
-            draw_stack_push(croc_arm_r[1], -8 - (WORLD.freq16 << 1), -5);
-            WORLD.eyePosition = (v2i){ -13 - (WORLD.freq16 << 1), -4 };
+            draw_stack_push(croc_idle_left_r[WORLD.freq16], -4, (Hitbox_CrocX >> 1));
+            draw_stack_push(croc_arm_r[1], -8 - (WORLD.freq16 << 1), -5 + (Hitbox_CrocX >> 1));
+            WORLD.eyePosition = (v2i){ -13 - (WORLD.freq16 << 1), -4 + (Hitbox_CrocX >> 1) };
         }
         else
         {
-            draw_stack_push(croc_idle_right_r[WORLD.freq16], -4, 0);
-            draw_stack_push(croc_arm_r[0], -8 - (WORLD.freq16 << 1), 2);
-            WORLD.eyePosition = (v2i){ -13 - (WORLD.freq16 << 1), 4 };
+            draw_stack_push(croc_idle_right_r[WORLD.freq16], -4, 0 - (Hitbox_CrocX >> 1));
+            draw_stack_push(croc_arm_r[0], -8 - (WORLD.freq16 << 1), 2 - (Hitbox_CrocX >> 1));
+            WORLD.eyePosition = (v2i){ -13 - (WORLD.freq16 << 1), 4 - (Hitbox_CrocX >> 1) };
         }
     }
     else
     {
         if (e->transform < 0)
         {
-            draw_stack_push(croc_idle_left_r[0], -4, 0);
-            draw_stack_push(croc_arm_r[1], -8, -5);
-            WORLD.eyePosition = (v2i){ -13, -4 };
+            draw_stack_push(croc_idle_left_r[0], -4, 0 + (Hitbox_CrocX >> 1));
+            draw_stack_push(croc_arm_r[1], -8, -5 + (Hitbox_CrocX >> 1));
+            WORLD.eyePosition = (v2i){ -13, -4 + (Hitbox_CrocX >> 1) };
         }
         else
         {
-            draw_stack_push(croc_idle_right_r[0], -4, 0);
-            draw_stack_push(croc_arm_r[0], -8, 2);
-            WORLD.eyePosition = (v2i){ -13, 4 };
+            draw_stack_push(croc_idle_right_r[0], -4, 0 - (Hitbox_CrocX >> 1));
+            draw_stack_push(croc_arm_r[0], -8, 2 - (Hitbox_CrocX >> 1));
+            WORLD.eyePosition = (v2i){ -13, 4 - (Hitbox_CrocX >> 1) };
         }
     }
 }
@@ -119,7 +121,7 @@ void croc_draw_local_move(entity e, i8 const y, i8 const x)
 void update_croc_hit(entity e)
 {
     character_off_ground_impulse_response(e);
-    if (--e->data[0] == 0)
+    if (--e->velocityCache == 0)
     {
         e->isAttacking = false;
         e->update      = update_croc_air;
@@ -132,38 +134,42 @@ void update_croc_hit(entity e)
             e->offGroundImpulseResponseTicks = 0;
         }
 
-        void* data = (void*)cloud[e->data[0] & 0x7];
+        void* data = (void*)cloud[e->velocityCache & 0x7];
         if (GRAVITY_DOWN())
         {
+            if (e->velocity.y < -Velocity_AirTerminal)
+                e->velocity.y = -Velocity_AirTerminal;
             if (e->transform > 0)
             {
                 e->velocity.x = Velocity_Hit;
                 draw_stack_push(croc_idle_right[1], 4, 0);
-                draw_stack_push(data, 10, 23 - (e->data[0] << 1));
+                draw_stack_push(data, 10, 23 - (e->velocityCache << 1));
                 WORLD.eyePosition = (v2i){ 15, 4 };
             }
             else
             {
                 e->velocity.x = -Velocity_Hit;
                 draw_stack_push(croc_idle_left[1], 4, 0);
-                draw_stack_push(data, 10, -14 + (e->data[0] << 1));
+                draw_stack_push(data, 10, -14 + (e->velocityCache << 1));
                 WORLD.eyePosition = (v2i){ 15, -4 };
             }
         }
         else
         {
+            if (e->velocity.y > Velocity_AirTerminal)
+                e->velocity.y = Velocity_AirTerminal;
             if (e->transform > 0)
             {
                 e->velocity.x = Velocity_Hit;
                 draw_stack_push(croc_idle_right_r[1], -4, 0);
-                draw_stack_push(data, -10, 23 - (e->data[0] << 1));
+                draw_stack_push(data, -10, 23 - (e->velocityCache << 1));
                 WORLD.eyePosition = (v2i){ -15, 4 };
             }
             else
             {
                 e->velocity.x = -Velocity_Hit;
                 draw_stack_push(croc_idle_left_r[1], -4, 0);
-                draw_stack_push(data, -10, -14 + (e->data[0] << 1));
+                draw_stack_push(data, -10, -14 + (e->velocityCache << 1));
                 WORLD.eyePosition = (v2i){ -15, -4 };
             }
         }
@@ -222,7 +228,7 @@ void prefab_croc(entity e)
 {
     e->update       = update_croc_air;
     e->kill         = update_kill;
-    e->score        = 0;
+    e->score        = Score_0;
     e->inLocalSpace = true;
     e->type         = Character_Croc;
     e->state        = CharacterState_Idle;
@@ -241,14 +247,15 @@ void prefab_croc_prepare(entity e)
 
 void croc_hit()
 {
-    if (CAMERA.isGrounded)
+    if (CAMERA.isGrounded || (GAME.event == Event_MoonWalk))
     {
         CAMERA.isAttacking = true;
         if ((CAMERA.substance & Substance_Water) == 0)
         {
             CAMERA.update = update_croc_hit;
+            sound_push_sfx(&g_hit);
         }
-        CAMERA.data[0] = 12;
+        CAMERA.velocityCache = 12;
     }
 }
 
@@ -324,10 +331,14 @@ void update_croc_air(entity e)
 
     if (GRAVITY_DOWN())
     {
+        if (e->velocity.y < -Velocity_AirTerminal)
+            e->velocity.y = -Velocity_AirTerminal;
         croc_draw_default(e);
     }
     else
     {
+        if (e->velocity.y > Velocity_AirTerminal)
+            e->velocity.y = Velocity_AirTerminal;
         croc_draw_mirrored(e);
     }
 }
@@ -392,14 +403,14 @@ void update_croc_water(entity e)
 
     if (GRAVITY_DOWN())
     {
-        if (e->velocity.y < -2)
-            e->velocity.y = -2;
+        if (e->velocity.y < -Velocity_WaterTerminal)
+            e->velocity.y = -Velocity_WaterTerminal;
         croc_draw_default(e);
     }
     else
     {
-        if (e->velocity.y > 2)
-            e->velocity.y = 2;
+        if (e->velocity.y > Velocity_WaterTerminal)
+            e->velocity.y = Velocity_WaterTerminal;
         croc_draw_mirrored(e);
     }
 }

@@ -6,6 +6,8 @@
 #include <cnd/world.h>
 #include <cnd/draw_queue.h>
 #include <cnd/globals.h>
+#include <cnd/sound.h>
+#include <cnd/music.h>
 
 /////////////////////////////////////////////////////////////////////////
 //	Functions
@@ -38,8 +40,9 @@ void update_coin(entity e)
 
 void prefab_coin(entity e)
 {
-    e->score = Score_500;
     e->update = update_coin_achieved;
     e->animation.remainder = 20;
     e->kill   = update_kill_revive;
+    add_score(Score_800);
+    sound_push_sfx(&g_coinAchieved);
 }

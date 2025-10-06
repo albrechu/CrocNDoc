@@ -9,6 +9,8 @@
 #include <cnd/xutils.h>
 #include <cnd/draw_queue.h>
 #include <lib/assert.h>
+#include <cnd/sound.h>
+#include <cnd/music.h>
 
 /////////////////////////////////////////////////////////////////////////
 //	Functions
@@ -18,10 +20,11 @@ void update_barrel_thrown(entity e)
     if (e->isGrounded)
     {
         e->update = update_death;
+        sound_push_sfx(&g_explosion2);
     }
     else
     {
-        e->velocity.x = e->data[0];
+        e->velocity.x = e->velocityCache;
     }
 
     if (e->inLocalSpace)
@@ -82,6 +85,6 @@ void prefab_barrel_throw(entity e)
     e->isGrounded = false;
     e->velocity.x = CAMERA.transform * Velocity_ThrowX;
     e->velocity.y = WORLD.gravity * Velocity_ThrowY;
-    e->data[0] = e->velocity.x;
+    e->velocityCache = e->velocity.x;
     entity_set_animation(e, explosion2, ELEMENT_SIZE(explosion2), ARRAY_SIZE(explosion2));
 }

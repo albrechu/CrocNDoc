@@ -8,6 +8,8 @@
 #include <cnd/xutils.h>
 #include <cnd/draw_queue.h>
 
+
+
 /////////////////////////////////////////////////////////////////////////
 //	Functions
 //
@@ -23,19 +25,37 @@ void update_bandit(entity e)
         i8 localDy       = I8(dy);
 		const i8 localDx = I8(dx);
 
-		if (GRAVITY_DOWN())
-		{
-			draw_stack_push(dx >= 0 ? spider_left_r : spider_right_r, localDy, localDx);
-		}
-		else
-		{
-			draw_stack_push(dx >= 0 ? spider_left : spider_right, localDy, localDx);
-		}
+        //draw_entity(localDy, localDx, spider_left_r, spider_right_r, spider_left, spider_right);
 		
+        if (GRAVITY_DOWN()) 
+        { 
+            if (localDx >= 0)
+            { 
+                draw_stack_push(spider_left_r, localDy, localDx - (e->hitbox.x >> 1) + 6);
+            } 
+            else 
+            { 
+                draw_stack_push(spider_right_r, localDy, localDx + (e->hitbox.x >> 1) - 6);
+            } 
+        } 
+        else 
+        { 
+            if (localDx >= 0) 
+            { 
+                draw_stack_push(spider_left, localDy, localDx - (e->hitbox.x >> 1) + 6);
+            } 
+            else 
+            { 
+                draw_stack_push(spider_right, localDy, localDx + (e->hitbox.x >> 1) - 6);
+            } 
+        }
+
         if (NEAR_CENTER(e))
         {
             if (entity_intersects_camera(e, localDy, localDx))
+            {
                 entity_exchange_blows(e, localDy);
+            }
         }
     }
 }

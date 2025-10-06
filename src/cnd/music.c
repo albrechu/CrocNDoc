@@ -1391,17 +1391,32 @@ const music_t g_crocodileCacophony =
             },
 };
 
-const sfx_t g_splash =
+const sfx_t g_hit =
 {
-    0b00001100, 1, -10, 0x02
+    0b00001100, 1, 0, 0x0F
 };
 
 const sfx_t g_explosion1 =
 {
-    0b00001100, 1, -10, 0x02
+    0b00001100, 0, 0, 0x0A
 };
 
 const sfx_t g_explosion2 =
 {
-    0b00001100, 1, -10, 0x02
+    0b00011100, 0, 0, 0x0A
+};
+
+const sfx_t g_coinAchieved = 
+{
+    0b00000111, 0, -1, 0x40
+};
+
+const sfx_t g_fly =
+{
+    0b00001000, 0, 0, 0x80
+};
+
+const sfx_t g_swap =
+{
+    0b00000111, 1, 0x0F, 0x40
 };

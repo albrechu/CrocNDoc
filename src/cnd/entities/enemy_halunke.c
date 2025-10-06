@@ -23,14 +23,7 @@ void update_halunke(entity e)
 		const i8 localDx = I8(dx);
 		const i8 localDy = I8(dy);
 
-		if (GRAVITY_DOWN())
-		{
-			draw_stack_push(localDx >= 0 ? halunke_left : halunke_right, localDy, localDx);
-		}
-		else
-		{
-			draw_stack_push(localDx >= 0 ? halunke_left_r : halunke_right_r, localDy, localDx);
-		}
+		draw_entity(localDy, localDx, halunke_left, halunke_right, halunke_left_r, halunke_right_r);
 
 		if (NEAR_CENTER(e))
 		{

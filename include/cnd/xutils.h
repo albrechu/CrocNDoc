@@ -86,10 +86,8 @@ force_inline void beam_set_position(const i8 y, const i8 x)
 	Moveto_d(y, x);
 }
 
-u8 manhattan(i8 const a, i8 const b)
-{
-    const i8 aMask = a >> 7;
-    const i8 bMask = b >> 7;
-    return U8((a ^ aMask) - aMask) + U8((b ^ bMask) - bMask);
-}
+u8  manhattan(i8 const a, i8 const b);
+u16 random();
+void random_mix_seed(u8 value);
+
 

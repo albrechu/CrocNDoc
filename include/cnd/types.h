@@ -112,48 +112,57 @@ typedef union rect_t
 //
 enum Velocity_
 {
-    Velocity_Gravity    = 1,
-    Velocity_Run        = 2,
-    Velocity_MoonWalk   = 5,
-    Velocity_Hit        = 6,
-	Velocity_Friction   = 1,
-    Velocity_Jump       = 10,
-    Velocity_Breaching  = 12,
-    Velocity_SwimUp     = 10,
-    Velocity_KillUpWind = 10,
-    Velocity_ThrowX     = 5,
-    Velocity_ThrowY     = 8,
-    Velocity_Jumper     = 12,
+    Velocity_Gravity        = 1,
+    Velocity_Run            = 2,
+    Velocity_MoonWalk       = 5,
+    Velocity_Hit            = 7,
+	Velocity_Friction       = 1,
+    Velocity_Jump           = 10,
+    Velocity_Breaching      = 12,
+    Velocity_SwimUp         = 10,
+    Velocity_KillUpWind     = 10,
+    Velocity_ThrowX         = 5,
+    Velocity_ThrowY         = 8,
+    Velocity_Jumper         = 12,
+    Velocity_WaterTerminal  = 2,
+    Velocity_AirTerminal    = 13,
 };
 typedef i8 Velocity;
 
 enum Event_
 {
-    Event_None,
+    Event_EnemyShuffle,
     Event_Storm,
     Event_MoonWalk,
     Event_TheFloorIsLava,
-    Event_IcyRoads,
     Event_YouAreBeingFollowed,
-    Event_EarthQuake,
     Event_Tiny,
+    Event_TimeAttack,
+    Event_None,
+    Event_Disabled,
+    Event_Max,
 };
 typedef i8 Event;
 
 enum Hitbox_
 {
-    Hitbox_CrocY    = 20,
-    Hitbox_CrocX    = 10,
-    Hitbox_DocY     = 13,
-    Hitbox_DocX     = 7,
-    Hitbox_HalunkeY = 10,
-    Hitbox_HalunkeX = 20,
-    Hitbox_SchuftY = 12,
-    Hitbox_SchuftX = -12,
-    Hitbox_SchelmY = 10,
-    Hitbox_SchelmX = 6,
-    Hitbox_BanditY = 14,
-    Hitbox_BanditX = 14,
+    Hitbox_CrocY            = 17,
+    Hitbox_CrocX            = 10,
+    Hitbox_DocY             = 13,
+    Hitbox_DocX             = 7,
+    Hitbox_HalunkeY         = 10,
+    Hitbox_HalunkeX         = 20,
+    Hitbox_SchuftY          = 12,
+    Hitbox_SchuftX          = -12,
+    Hitbox_SchelmY          = 10,
+    Hitbox_SchelmX          = 6,
+    Hitbox_BanditY          = 10,
+    Hitbox_BanditX          = 10,
+    Hitbox_GaunerY          = 10,
+    Hitbox_GaunerX          = 12,
+    Hitbox_BoesewichtY      = 12,
+    Hitbox_BoesewichtX      = 10,
+    Hitbox_SpikedBallRadius = 5
 };
 
 /** 
@@ -249,7 +258,8 @@ enum Enemy_
     // Enemy_Dieb
     // Enemy_Schlawiner
     // Enemy_Gaunerkönig
-    EntityType_Max,
+    Entity_Max,
+    Entity_Stub = Entity_Max,
 };
 typedef u8 EntityType;
 
@@ -400,12 +410,13 @@ typedef i8 Stage;
 
 enum Score_
 {
-    Score_0    = 0,
-    Score_50   = 1,
-    Score_100  = 2,
-    Score_200  = 4,
-    Score_500  = 10,
-    Score_1000 = 20,
+    Score_0   = -1,
+    Score_50  = 0,
+    Score_100 = 1,
+    Score_200 = 2,
+    Score_400 = 3,
+    Score_800 = 4,
+    Score_Max,
 };
 
 enum GameState_
@@ -462,19 +473,27 @@ struct entity_t
     idx_t  globalId;      
     bool   isEnemy; 
     bool   isAllocated;
-    u8     score;
+    i8     score;
 
     // [[ Optional ]]
     i8          transform;   // x-direction the entity is facing. 1 for right, -1 for left
     v2i         hitbox;
-    EntityType  type;        // May store the entity type 
     EntityState state;       // May store its state
-    bool        isAttacking; 
     Material    substance;     
     i8          invincibilityTicks;
     i8          offGroundImpulseResponseTicks;
     i8          recoveryTicks;
-    i8          data[2]; 
+    union
+    {
+        i8   glideBlocked;
+        bool isAttacking; 
+    };
+    i8 velocityCache; 
+    union
+    {
+        u8         timer; 
+        EntityType type; 
+    };
 };
 //static_assert(sizeof(entity_t) == 34);
 
@@ -484,7 +503,7 @@ typedef struct player_t
     Action   action;   
     u16      score;                // Current player score (attempt).
     u8       stagesDone;
-    u8       scoreGained;
+    i8       scoreGained;
     bool     isOtherCharacterDead; // Croc or Doc dead?
     i8       lives;                // Lives available
 } player_t, *player;
@@ -510,16 +529,27 @@ typedef struct sfx_t
 {
     i8 enable;	 // noise (bits 5-3) and tone channel (bits 2-0) enable (0b00nnnccc), 
     i8 noise;	 // noise source sweep, =0 up, >0 down, <0 inhibit  
-    i8 volume;	 // volume sweep, =0 up, >0 down, <0 inhibit
+    i8 volume;	 // volume sweep, =0 up, >0 down, <0 inhibit    
     u8 duration; // explosion duration, 0x01 longest to 0x80 shortest 
 } sfx_t;
+
+enum SoundFlags_
+{
+    SoundFlags_Off   = 0,
+    SoundFlags_Music = 1,
+    SoundFlags_Sfx   = 2,
+    SoundFlags_All = SoundFlags_Music | SoundFlags_Sfx,
+};
+typedef i8 SoundFlags;
 
 typedef struct sound_t
 {
     music_t const* music;
-    sfx_t   const* sfx[3];
-
-    i8 soundEffects;
+    sfx_t   const* sfx;
+    i8*   musicPtr;
+    SoundFlags flags;
+    bool  reloadMusic;
+    bool  reloadSfx;
 } sound_t;
 
 typedef struct game_t
@@ -558,20 +588,16 @@ typedef struct entity_list_t
     entity   iterator;
     entity_t entities[ENTITIES_ACTIVE_MAX];
     handle   free[ENTITIES_ACTIVE_MAX]; 
-    handle   alive[ENTITIES_ACTIVE_MAX];
     i8       freeCount;
-    i8       aliveCount;
 } entity_list_t;
 
 typedef struct world_t
 {
     // Level information
-    const Tile*    tiles; // Tiles of the selected level
-    const level_t* level; // Selected Level
+    const Tile*       tiles; // Tiles of the selected level
+    const level_t*    level; // Selected Level
     entity_list_t  list;  // Entity allocation list (free list).
-    // Entities
-    //entity_t        entities[ENTITIES_ACTIVE_MAX];   // Contains active entities in the scene.
-    //idx_t           entityIdxs[ENTITIES_ACTIVE_MAX]; // Contains indices into entities for easier swapping.
+    entity_t       eventEntity;
     last_sighting_t lastSeen[ENTITIES_MAX];          // Information about all entities in the scene.
     
     // State
@@ -588,8 +614,12 @@ typedef struct world_t
 
     // Physics
     i8 gravity; // Earth attraction
-    i8 wind;    // Wind strength
+    union
+    {
+        i8 wind; // Wind strength
+        i8 heat;
+        i8 moon;
+        u8 time;
+    };
     i8 windPhase;
-    i8 heat;
-    i8 moon;
 } world_t;
