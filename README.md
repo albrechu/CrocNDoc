@@ -1,5 +1,5 @@
 # Croc & Doc
-This is Croc&Doc, a 2D platformer for the vector-based Vectrex gaming console. [PLAY](https://drsnuggles.github.io/jsvecx/?rom=https://github.com/albrechu/CrocNDoc/releases/download/release-1.2/crocndoc.zip)
+This is Croc&Doc, a 2D platformer for the vector-based Vectrex gaming console. [PLAY](https://drsnuggles.github.io/jsvecx/?rom=http://eitidaten.fh-pforzheim.de%2Fdaten%2Fmitarbeiter%2Fjohannsen%2Fvectrex_2025%2Fdownload%2Fcroc_n_doc.zip)
 
 Dangerous creatures roam the levels.    | Understand the gravitas of the situation.
 :--------------------------------------:|:-----------------------------------------:
